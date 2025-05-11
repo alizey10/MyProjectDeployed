@@ -61,8 +61,8 @@ const VerticalMenu = ({ scrollMenu }) => {
           suffix={<Chip label='4' size='small' color='error' />}
         >
           <MenuItem
-            // href={`${process.env.NEXT_PUBLIC_PRO_URL}/dashboards/crm`} // to be replaced with new pages
-            // suffix={<Chip label='Pro' size='small' color='primary' variant='tonal' />} // need if need to show the notification count
+            href={`/organization`} // to be replaced with new pages
+            suffix={<Chip label='1' size='small' color='primary' variant='tonal' />} // need if need to show the notification count
             target='_blank'
           >
             Organization Manager
