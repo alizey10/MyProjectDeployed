@@ -8,7 +8,6 @@ import Button from '@mui/material/Button'
 import Pagination from '@mui/material/Pagination'
 import CircularProgress from '@mui/material/CircularProgress'
 import Box from '@mui/material/Box'
-import CustomAvatar from '@core/components/mui/Avatar'
 import tableStyles from '@core/styles/table.module.css'
 
 const OrganizationDataTable = ({
@@ -32,7 +31,6 @@ const OrganizationDataTable = ({
             <thead>
               <tr>
                 <th>Organization</th>
-                <th>ID</th>
                 <th>Phone</th>
                 <th>City</th>
                 <th>Country</th>
@@ -44,20 +42,16 @@ const OrganizationDataTable = ({
               </tr>
             </thead>
             <tbody>
-              {orgData.map((org, index) => (
+              {orgData?.map((org, index) => (
                 <tr key={index}>
                   <td>
                     <div className='flex items-center gap-3'>
-                      <CustomAvatar src={`/images/avatars/${(index % 8) + 1}.png`} size={34} />
                       <div className='flex flex-col'>
                         <Typography color='text.primary' className='font-medium'>
                           {org.organizationName}
                         </Typography>
                       </div>
                     </div>
-                  </td>
-                  <td>
-                    <Typography>{org.organizationId}</Typography>
                   </td>
                   <td>
                     <Typography>{org.phone}</Typography>

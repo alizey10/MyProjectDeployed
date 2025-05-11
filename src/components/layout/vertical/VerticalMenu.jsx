@@ -1,12 +1,11 @@
 // MUI Imports
-import Chip from '@mui/material/Chip'
 import { useTheme } from '@mui/material/styles'
 
 // Third-party Imports
 import PerfectScrollbar from 'react-perfect-scrollbar'
 
 // Component Imports
-import { Menu, SubMenu, MenuItem, MenuSection } from '@menu/vertical-menu'
+import { Menu, MenuItem } from '@menu/vertical-menu'
 
 // Hook Imports
 import useVerticalNav from '@menu/hooks/useVerticalNav'
@@ -33,6 +32,7 @@ const VerticalMenu = ({ scrollMenu }) => {
   return (
     // eslint-disable-next-line lines-around-comment
     /* Custom scrollbar instead of browser scroll, remove if you want browser scroll only */
+
     <ScrollWrapper
       {...(isBreakpointReached
         ? {
@@ -53,42 +53,36 @@ const VerticalMenu = ({ scrollMenu }) => {
         menuSectionStyles={menuSectionStyles(theme)}
       >
         <MenuItem href='/' active='true' icon={<i className='ri-bar-chart-box-line' />}>
-          Analytics
+          Dashboard
         </MenuItem>
-        <MenuSection
-          label='Managers'
-          icon={<i className='ri-home-smile-line' />}
-          suffix={<Chip label='4' size='small' color='error' />}
+        <MenuItem
+          href={`/organization`}
+          icon={<i class='ri-organization-chart'></i>}
+          // suffix={<Chip size='small' color='primary' variant='tonal' />} // need if need to show the notification count
         >
-          <MenuItem
-            href={`/organization`} // to be replaced with new pages
-            suffix={<Chip label='1' size='small' color='primary' variant='tonal' />} // need if need to show the notification count
-            target='_blank'
-          >
-            Organization Manager
-          </MenuItem>
-          <MenuItem
-            // href={`${process.env.NEXT_PUBLIC_PRO_URL}/dashboards/crm`} // to be replaced with new pages
-            // suffix={<Chip label='Pro' size='small' color='primary' variant='tonal' />} // need if need to show the notification count
-            target='_blank'
-          >
-            Branch Manager
-          </MenuItem>
-          <MenuItem
-            // href={`${process.env.NEXT_PUBLIC_PRO_URL}/dashboards/crm`} // to be replaced with new pages
-            // suffix={<Chip label='Pro' size='small' color='primary' variant='tonal' />} // need if need to show the notification count
-            target='_blank'
-          >
-            Gateway Manager
-          </MenuItem>
-          <MenuItem
-            // href={`${process.env.NEXT_PUBLIC_PRO_URL}/dashboards/crm`} // to be replaced with new pages
-            // suffix={<Chip label='Pro' size='small' color='primary' variant='tonal' />} // need if need to show the notification count
-            target='_blank'
-          >
-            Sensor Manager
-          </MenuItem>
-        </MenuSection>
+          Organization Manager
+        </MenuItem>
+        <MenuItem
+          icon={<i class='ri-git-branch-line'></i>}
+          // href={`${process.env.NEXT_PUBLIC_PRO_URL}/dashboards/crm`} // to be replaced with new pages
+          // suffix={<Chip label='Pro' size='small' color='primary' variant='tonal' />} // need if need to show the notification count
+        >
+          Branch Manager
+        </MenuItem>
+        <MenuItem
+          icon={<i class='ri-refund-line'></i>}
+          // href={`${process.env.NEXT_PUBLIC_PRO_URL}/dashboards/crm`} // to be replaced with new pages
+          // suffix={<Chip label='Pro' size='small' color='primary' variant='tonal' />} // need if need to show the notification count
+        >
+          Gateway Manager
+        </MenuItem>
+        <MenuItem
+          icon={<i class='ri-sensor-line'></i>}
+          // href={`${process.env.NEXT_PUBLIC_PRO_URL}/dashboards/crm`} // to be replaced with new pages
+          // suffix={<Chip label='Pro' size='small' color='primary' variant='tonal' />} // need if need to show the notification count
+        >
+          Sensor Manager
+        </MenuItem>
       </Menu>
     </ScrollWrapper>
   )
