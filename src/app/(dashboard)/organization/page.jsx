@@ -6,7 +6,7 @@ import Button from '@mui/material/Button'
 import OrganizationDataTable from '@views/dashboard/OrganizationTable'
 import ConfirmDialog from '@components/Dialog'
 import AddOrEditOrganizationDialog from '@components/EditOrganizationDialog'
-import OrganizationService from '@services/apiServices'
+import OrganizationService from '@services/organizationService'
 
 const PAGE_SIZE = 5
 
@@ -62,7 +62,7 @@ const OrganizationPage = () => {
     setLoading(true)
     const data = await OrganizationService.getOrganizations(currentPage, PAGE_SIZE)
     if (data) {
-      setOrgs(data)
+      setOrgs(data.data)
       setTotalPages(Math.ceil(9 / PAGE_SIZE) || 0)
     }
     setLoading(false)
@@ -116,15 +116,15 @@ const OrganizationPage = () => {
       />
 
       <Grid container spacing={6}>
-        <Grid item xs={12}>
+        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
           <Button
             variant='contained'
             color='success'
-            sx={{ mt: '5px', ml: '5px' }}
+            sx={{ mt: '0px', ml: '5px' }}
             startIcon={<i className='ri-add-line' />}
             onClick={handleAdd}
           >
-            Add Organization
+            Organization
           </Button>
         </Grid>
         <Grid item xs={12}>

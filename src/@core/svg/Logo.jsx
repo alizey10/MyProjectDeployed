@@ -19,7 +19,7 @@ const Logo = props => {
         fill='url(#hubGradient)'
         letter-spacing='-2'
       >
-        HUB
+        VSpine
       </text>
     </svg>
   )
