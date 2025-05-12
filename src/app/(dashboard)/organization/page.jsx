@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react'
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
-import OrganizationDataTable from '@views/dashboard/OrganizationTable'
+import DataTable from '@/views/common/DataTable'
 import ConfirmDialog from '@components/Dialog'
-import AddOrEditOrganizationDialog from '@components/EditOrganizationDialog'
+import DialogBox from '@/views/common/DialogBox'
 import OrganizationService from '@services/organizationService'
 
 const PAGE_SIZE = 10
 
-const OrganizationPage = () => {
+const OrganizationManagerPage = () => {
   const [orgs, setOrgs] = useState([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -26,6 +26,7 @@ const OrganizationPage = () => {
     setEditData(org)
     setEditDialogOpen(true)
   }
+
   const handleAdd = () => {
     setEditData(null)
     setIsCreateMode(true)
@@ -95,6 +96,27 @@ const OrganizationPage = () => {
     setSelectedOrg(null)
   }
 
+  const columns = [
+    { label: 'Organization', field: 'organizationName' },
+    { label: 'Phone', field: 'phone' },
+    { label: 'City', field: 'city' },
+    { label: 'Country', field: 'country' },
+    { label: 'Address', field: 'address' },
+    { label: 'Post Code', field: 'postCode' },
+    { label: 'POC', field: 'poc' },
+    { label: 'Created', field: 'dateCreated' }
+  ]
+
+  const fields = [
+    { label: 'Organization Name', name: 'organizationName', placeholder: 'TopNotch Ltd.', icon: '🏢' },
+    { label: 'Phone', name: 'phone', placeholder: '0311-0000000', icon: '📞' },
+    { label: 'City', name: 'city', placeholder: 'Lahore', icon: '🏙️' },
+    { label: 'Country', name: 'country', placeholder: 'Pakistan', icon: '🌏' },
+    { label: 'Address', name: 'address', placeholder: 'Street 1, Sector 4', icon: '🏠' },
+    { label: 'Post Code', name: 'postCode', placeholder: '54000', icon: '📬' },
+    { label: 'POC', name: 'poc', placeholder: 'John Doe', icon: '👤' }
+  ]
+
   return (
     <>
       <ConfirmDialog
@@ -105,16 +127,16 @@ const OrganizationPage = () => {
         onCancel={handleCancelDelete}
       />
 
-      <AddOrEditOrganizationDialog
+      <DialogBox
         title={isCreateMode ? 'Add Organization' : 'Edit Organization'}
         open={editDialogOpen}
         onClose={() => {
           setEditDialogOpen(false)
           setIsCreateMode(false)
         }}
-        isCreateMode={isCreateMode ? true : false}
-        orgData={isCreateMode ? '' : editData}
+        data={isCreateMode ? '' : editData}
         onSave={handleSaveEdit}
+        fields={fields}
       />
 
       <Grid container spacing={6}>
@@ -130,11 +152,12 @@ const OrganizationPage = () => {
           </Button>
         </Grid>
         <Grid item xs={12}>
-          <OrganizationDataTable
-            orgData={orgs}
+          <DataTable
+            columns={columns}
+            data={orgs}
             currentPage={page}
             totalPages={totalPages}
-            loading={loading || deleting} // pass here
+            loading={loading || deleting}
             onPageChange={newPage => setPage(newPage)}
             onEdit={handleEdit}
             onDelete={handleDeleteClick}
@@ -145,4 +168,4 @@ const OrganizationPage = () => {
   )
 }
 
-export default OrganizationPage
+export default OrganizationManagerPage

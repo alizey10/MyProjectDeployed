@@ -1,5 +1,6 @@
 // MUI Imports
 import { useTheme } from '@mui/material/styles'
+import Chip from '@mui/material/Chip'
 
 // Third-party Imports
 import PerfectScrollbar from 'react-perfect-scrollbar'
@@ -58,28 +59,28 @@ const VerticalMenu = ({ scrollMenu }) => {
         <MenuItem
           href={`/organization`}
           icon={<i class='ri-organization-chart'></i>}
-          // suffix={<Chip size='small' color='primary' variant='tonal' />} // need if need to show the notification count
+          // suffix={<Chip label='5' size='small' color='primary' variant='tonal' />}
         >
           Organization Manager
         </MenuItem>
         <MenuItem
           icon={<i class='ri-git-branch-line'></i>}
-          // href={`${process.env.NEXT_PUBLIC_PRO_URL}/dashboards/crm`} // to be replaced with new pages
-          // suffix={<Chip label='Pro' size='small' color='primary' variant='tonal' />} // need if need to show the notification count
+          href={`/branch`}
+          suffix={<Chip label='new' size='small' color='primary' variant='tonal' />}
         >
           Branch Manager
         </MenuItem>
         <MenuItem
           icon={<i class='ri-refund-line'></i>}
-          // href={`${process.env.NEXT_PUBLIC_PRO_URL}/dashboards/crm`} // to be replaced with new pages
-          // suffix={<Chip label='Pro' size='small' color='primary' variant='tonal' />} // need if need to show the notification count
+          href={`/gateway`}
+          suffix={<Chip label='new' size='small' color='primary' variant='tonal' />} // need if need to show the notification count
         >
           Gateway Manager
         </MenuItem>
         <MenuItem
           icon={<i class='ri-sensor-line'></i>}
-          // href={`${process.env.NEXT_PUBLIC_PRO_URL}/dashboards/crm`} // to be replaced with new pages
-          // suffix={<Chip label='Pro' size='small' color='primary' variant='tonal' />} // need if need to show the notification count
+          href={`/sensor`}
+          suffix={<Chip label='new' size='small' color='primary' variant='tonal' />} // need if need to show the notification count
         >
           Sensor Manager
         </MenuItem>
