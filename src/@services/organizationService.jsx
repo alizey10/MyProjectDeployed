@@ -11,11 +11,11 @@ class OrganizationService extends BaseService {
   }
 
   async deleteOrganization(organizationId) {
-    return await this.Delete(`/${organizationId}`)
+    return await this.Delete(`${organizationId}`)
   }
 
   async updateOrganization(organizationId, payload) {
-    return await this.Put(`/${organizationId}`, payload)
+    return await this.Put(`${organizationId}`, payload)
   }
 
   async createOrganization(payload) {

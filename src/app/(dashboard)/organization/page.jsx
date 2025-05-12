@@ -8,7 +8,7 @@ import ConfirmDialog from '@components/Dialog'
 import AddOrEditOrganizationDialog from '@components/EditOrganizationDialog'
 import OrganizationService from '@services/organizationService'
 
-const PAGE_SIZE = 5
+const PAGE_SIZE = 10
 
 const OrganizationPage = () => {
   const [orgs, setOrgs] = useState([])
@@ -48,6 +48,7 @@ const OrganizationPage = () => {
     if (isCreateMode) {
       const result = await OrganizationService.createOrganization(payload)
       success = !!result
+      setIsCreateMode(false)
     } else {
       success = await OrganizationService.updateOrganization(editData.organizationId, payload)
     }
@@ -63,7 +64,8 @@ const OrganizationPage = () => {
     const data = await OrganizationService.getOrganizations(currentPage, PAGE_SIZE)
     if (data) {
       setOrgs(data.data)
-      setTotalPages(Math.ceil(9 / PAGE_SIZE) || 0)
+      let _totalRecords = data.data[0]?.totalRecord
+      setTotalPages(Math.ceil(_totalRecords / PAGE_SIZE) || 0)
     }
     setLoading(false)
   }
