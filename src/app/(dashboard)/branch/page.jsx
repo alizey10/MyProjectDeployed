@@ -7,6 +7,7 @@ import DataTable from '@/views/common/DataTable'
 import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/common/DialogBox'
 import BranchService from '@services/branchService'
+import OrganizationService from '@services/organizationService'
 
 const PAGE_SIZE = 10
 
@@ -21,6 +22,18 @@ const BranchPage = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
+  const [organization, setOrganization] = useState([])
+
+  useEffect(() => {
+    const fetchOrganization = async () => {
+      const organizations = await OrganizationService.getOrganizations(0, 0)
+      const newData = organizations.data
+      console.log('.............', newData)
+      setOrganization(newData)
+    }
+
+    fetchOrganization()
+  }, [])
 
   const handleEdit = branch => {
     setEditData(branch)
@@ -37,10 +50,11 @@ const BranchPage = () => {
     const payload = {
       branchName: updatedData.branchName,
       phone: updatedData.phone,
+      email: updatedData.email,
+      organizationId: updatedData.organizationId,
       city: updatedData.city,
       country: updatedData.country,
       address: updatedData.address,
-      postCode: updatedData.postCode,
       poc: updatedData.poc
     }
 
@@ -62,7 +76,7 @@ const BranchPage = () => {
 
   const loadBranches = async currentPage => {
     setLoading(true)
-    const data = await BranchService.getBranches(currentPage, PAGE_SIZE)
+    const data = await BranchService.getBranchs(currentPage, PAGE_SIZE)
     if (data) {
       setBranches(data.data)
       let _totalRecords = data.data[0]?.totalRecord
@@ -100,10 +114,10 @@ const BranchPage = () => {
   const columns = [
     { label: 'Branch Name', field: 'branchName' },
     { label: 'Phone', field: 'phone' },
+    { label: 'Email', field: 'email' },
     { label: 'City', field: 'city' },
     { label: 'Country', field: 'country' },
     { label: 'Address', field: 'address' },
-    { label: 'Post Code', field: 'postCode' },
     { label: 'POC', field: 'poc' },
     { label: 'Created', field: 'dateCreated' }
   ]
@@ -111,11 +125,11 @@ const BranchPage = () => {
   // Define fields for DialogBox
   const fields = [
     { label: 'Branch Name', name: 'branchName', placeholder: 'Branch ABC', icon: '🏢' },
+    { label: 'email', name: 'email', placeholder: 'test@gmail.com', icon: '📬' },
     { label: 'Phone', name: 'phone', placeholder: '0311-0000000', icon: '📞' },
     { label: 'City', name: 'city', placeholder: 'Karachi', icon: '🏙️' },
     { label: 'Country', name: 'country', placeholder: 'Pakistan', icon: '🌏' },
     { label: 'Address', name: 'address', placeholder: 'Street 1, Sector 4', icon: '🏠' },
-    { label: 'Post Code', name: 'postCode', placeholder: '54000', icon: '📬' },
     { label: 'POC', name: 'poc', placeholder: 'John Doe', icon: '👤' }
   ]
 
@@ -137,6 +151,7 @@ const BranchPage = () => {
           setIsCreateMode(false)
         }}
         data={isCreateMode ? '' : editData}
+        organization={organization}
         onSave={handleSaveEdit}
         fields={fields}
       />
