@@ -3,7 +3,7 @@ import BaseService from './baseService'
 class BranchService extends BaseService {
   constructor() {
     super()
-    this.controllerName = 'branch'
+    this.controllerName = 'Branch'
   }
 
   async getBranchs(page = 1, pageSize = 20) {

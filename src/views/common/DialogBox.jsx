@@ -1,17 +1,22 @@
 'use client'
 
 import { useEffect } from 'react'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import Grid from '@mui/material/Grid'
-import Button from '@mui/material/Button'
-import TextField from '@mui/material/TextField'
-import InputAdornment from '@mui/material/InputAdornment'
+import {
+  TextField,
+  InputAdornment,
+  InputLabel,
+  Button,
+  Grid,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Dialog,
+  Select,
+  MenuItem
+} from '@mui/material'
 import { useForm } from 'react-hook-form'
 
-const DialogBox = ({ open, title, onClose, data, onSave, fields }) => {
+const DialogBox = ({ open, title, onClose, data, onSave, fields, organization }) => {
   const { register, handleSubmit, reset } = useForm({
     defaultValues: data || {}
   })
@@ -35,7 +40,25 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields }) => {
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <form id='edit-form' onSubmit={handleSubmit(onSubmit)}>
-          <Grid container spacing={5} mt={0.5}>
+          <Grid container spacing={4} mt={0.5}>
+            {organization?.length > 0 && !data && (
+              <>
+                <InputLabel sx={{ marginLeft: '1rem' }}>Organization</InputLabel>
+                <Select
+                  label='Organization'
+                  defaultValue={organization[0]?.organizationId}
+                  fullWidth
+                  sx={{ marginLeft: '1rem' }}
+                  {...register('organizationId')}
+                >
+                  {organization.map(org => (
+                    <MenuItem key={org.organizationId} value={org.organizationId}>
+                      {org.organizationName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </>
+            )}
             {fields.map((field, index) => (
               <Grid item xs={12} md={6} key={index}>
                 <TextField
