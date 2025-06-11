@@ -84,6 +84,13 @@ const VerticalMenu = ({ scrollMenu }) => {
         >
           Sensor Manager
         </MenuItem>
+        <MenuItem
+          icon={<i className='ri-building-2-line'></i>}
+          href={`/floor`}
+          suffix={<Chip label='new' size='small' color='primary' variant='tonal' />} // need if need to show the notification count
+        >
+          Floor Manager
+        </MenuItem>
       </Menu>
     </ScrollWrapper>
   )

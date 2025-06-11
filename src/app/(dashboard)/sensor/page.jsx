@@ -5,8 +5,9 @@ import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
 import DataTable from '@/views/common/DataTable'
 import ConfirmDialog from '@components/Dialog'
-import DialogBox from '@/views/common/DialogBox'
+import DialogBox from '@/views/sensor/DialogBox'
 import SensorService from '@services/sensorService'
+import OrganizationService from '@services/organizationService'
 
 const PAGE_SIZE = 10
 
@@ -21,6 +22,18 @@ const SensorManagerPage = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
+  const [organization, setOrganization] = useState([])
+
+  useEffect(() => {
+    const fetchOrganization = async () => {
+      const organizations = await OrganizationService.getOrganizations(0, 0)
+      const newData = organizations.data
+      console.log('.............', newData)
+      setOrganization(newData)
+    }
+
+    fetchOrganization()
+  }, [])
 
   const handleEdit = sensor => {
     setEditData(sensor)
@@ -37,10 +50,18 @@ const SensorManagerPage = () => {
     const payload = {
       sensorName: updatedData.sensorName,
       organizationId: updatedData.organizationId,
+      organizationName: updatedData.organizationName,
       branchId: updatedData.branchId,
+      branchName: updatedData.branchName,
+      gatewayName: updatedData.gatewayName,
       gatewayId: updatedData.gatewayId,
       floorSectionId: updatedData.floorSectionId,
-      linkedDevice: updatedData.linkedDevice
+      floorSectionName: updatedData.floorSectionName,
+      sensorId: updatedData.sensorId,
+      linkedDevice: updatedData.linkedDevice,
+      minTemperature: updatedData.minTemperature,
+      maxTemperature: updatedData.maxTemperature,
+      alertType: updatedData.alertType
     }
 
     let success
@@ -99,21 +120,29 @@ const SensorManagerPage = () => {
   const columns = [
     { label: 'Sensor Name', field: 'sensorName' },
     { label: 'Organization Id', field: 'organizationId' },
+    { label: 'Organization Name', field: 'organizationName' },
     { label: 'Branch Id', field: 'branchId' },
+    { label: 'Branch Name', field: 'branchName' },
     { label: 'Gateway Id', field: 'gatewayId' },
+    { label: 'Gateway Name', field: 'gatewayName' },
     { label: 'Floor Section Id', field: 'floorSectionId' },
+    { label: 'Floor Section Name', field: 'floorSectionName' },
+    { label: 'Sensor Id', field: 'sensorId' },
     { label: 'Linked Device', field: 'linkedDevice' },
+    { label: 'Min Temperature', field: 'minTemperature' },
+    { label: 'Max Temperature', field: 'maxTemperature' },
+    { label: 'Alert Type', field: 'alertType' },
     { label: 'Created', field: 'dateCreated' }
   ]
 
   // Define fields for DialogBox
   const fields = [
     { label: 'Sensor Name', name: 'sensorName', placeholder: 'Temperature Sensor', icon: '📡' },
-    { label: 'Organization Id', name: 'organizationId', placeholder: '123', icon: '🏢' },
-    { label: 'Branch Id', name: 'branchId', placeholder: '456', icon: '🏠' },
-    { label: 'Gateway Id', name: 'gatewayId', placeholder: '789', icon: '🌐' },
-    { label: 'Floor Section Id', name: 'floorSectionId', placeholder: '101', icon: '🏢' },
-    { label: 'Linked Device', name: 'linkedDevice', placeholder: 'Sensor Device', icon: '🔌' }
+    { label: 'Sensor Id', name: 'sensorId', placeholder: 'S1234', icon: '🔢' },
+    { label: 'Linked Device', name: 'linkedDevice', placeholder: 'Sensor Device', icon: '🔌' },
+    { label: 'Min Temperature', name: 'minTemperature', placeholder: '0', icon: '🌡️' },
+    { label: 'Max Temperature', name: 'maxTemperature', placeholder: '100', icon: '🌡️' },
+    { label: 'Alert Type', name: 'alertType', placeholder: '1', icon: '⚠️' }
   ]
 
   return (
@@ -134,6 +163,7 @@ const SensorManagerPage = () => {
           setIsCreateMode(false)
         }}
         data={isCreateMode ? '' : editData}
+        organization={organization}
         onSave={handleSaveEdit}
         fields={fields}
       />
