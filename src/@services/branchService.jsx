@@ -10,6 +10,10 @@ class BranchService extends BaseService {
     return await this.Get('', { Page: page, PageSize: pageSize })
   }
 
+  async getBranchsByOrgId(page = 1, pageSize = 20, organizationId) {
+    return await this.Get('', { Page: page, PageSize: pageSize, organizationId: organizationId })
+  }
+
   async deleteBranch(branchId) {
     return await this.Delete(`${branchId}`)
   }

@@ -5,8 +5,9 @@ import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
 import DataTable from '@/views/common/DataTable'
 import ConfirmDialog from '@components/Dialog'
-import DialogBox from '@/views/common/DialogBox'
+import DialogBox from '@/views/gateway/DialogBox'
 import GatewayService from '@services/gatewayService'
+import OrganizationService from '@services/organizationService'
 
 const PAGE_SIZE = 10
 
@@ -21,6 +22,18 @@ const GatewayManagerPage = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
+  const [organization, setOrganization] = useState([])
+
+  useEffect(() => {
+    const fetchOrganization = async () => {
+      const organizations = await OrganizationService.getOrganizations(0, 0)
+      const newData = organizations.data
+      console.log('.............', newData)
+      setOrganization(newData)
+    }
+
+    fetchOrganization()
+  }, [])
 
   const handleEdit = gateway => {
     setEditData(gateway)
@@ -36,6 +49,7 @@ const GatewayManagerPage = () => {
   const handleSaveEdit = async updatedData => {
     const payload = {
       gatewayName: updatedData.gatewayName,
+      gatewayId: updatedData.gatewayId,
       organizationId: updatedData.organizationId,
       branchId: updatedData.branchId
     }
@@ -91,18 +105,17 @@ const GatewayManagerPage = () => {
     setConfirmDialogOpen(false)
     setSelectedGateway(null)
   }
-
   const columns = [
+    { label: 'Gateway Id', field: 'gatewayId' },
     { label: 'Gateway', field: 'gatewayName' },
     { label: 'Organization Id', field: 'organizationId' },
-    { label: 'Branch Id', field: 'branchId' },
-    { label: 'Created', field: 'dateCreated' }
+    { label: 'Branch Id', field: 'branchId' }
+    // { label: 'Created', field: 'dateCreated' }
   ]
 
   const fields = [
-    { label: 'Gateway Name', name: 'gatewayName', placeholder: 'Main Gateway', icon: '🌐' },
-    { label: 'Organization Id', name: 'organizationId', placeholder: '123', icon: '🏢' },
-    { label: 'Branch Id', name: 'branchId', placeholder: '456', icon: '🏠' }
+    { label: 'Gateway Id', name: 'gatewayId', placeholder: '123', icon: '' },
+    { label: 'Gateway Name', name: 'gatewayName', placeholder: 'Main Gateway', icon: '' }
   ]
 
   return (
@@ -124,6 +137,7 @@ const GatewayManagerPage = () => {
         }}
         data={isCreateMode ? '' : editData}
         onSave={handleSaveEdit}
+        organization={organization}
         fields={fields}
       />
 
