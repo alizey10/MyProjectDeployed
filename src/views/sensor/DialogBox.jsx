@@ -20,7 +20,6 @@ import gatewayService from '@/@services/gatewayService'
 import floorService from '@/@services/floorService'
 
 const DialogBox = ({ open, title, onClose, data, onSave, fields, organization }) => {
-  debugger
   const [branches, SetBranches] = useState([])
   const [gateways, SetGateways] = useState([])
   const [Floor, SetFloor] = useState([])
