@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+
 import {
   TextField,
   InputAdornment,
@@ -25,6 +26,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
     if (open) {
       reset(data || {})
     }
+
     if (!data) {
       reset({})
     }
