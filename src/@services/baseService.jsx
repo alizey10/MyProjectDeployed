@@ -1,4 +1,4 @@
-import axios, { CancelTokenSource, AxiosResponse } from 'axios'
+import axios from 'axios'
 
 export default class BaseService {
   controllerName = 'ping'
@@ -18,6 +18,7 @@ export default class BaseService {
 
   async Get(action, body) {
     const headers = await this.assembleHeaders()
+
     try {
       const response = await axios.get(this.assembleEndpoint(action, body), {
         headers: { ...headers }
@@ -59,6 +60,7 @@ export default class BaseService {
 
   async Put(action, body) {
     const headers = await this.assembleHeaders()
+
     try {
       const response = await axios.put(this.assembleEndpoint(action), body, {
         headers: { ...headers }
@@ -87,6 +89,7 @@ export default class BaseService {
   assembleEndpoint(action, data) {
     const apiAddress = process.env.NEXT_PUBLIC_HEALTH_AND_SAFETY_API_ADDRESS
     let endpoint
+
     if (action) endpoint = `${apiAddress}/${this.controllerName}/${action}`
     else endpoint = `${apiAddress}/${this.controllerName}`
 

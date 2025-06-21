@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
+
 import DataTable from '@/views/common/DataTable'
 import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/common/DialogBox'
@@ -48,6 +50,7 @@ const OrganizationManagerPage = () => {
 
     if (isCreateMode) {
       const result = await OrganizationService.createOrganization(payload)
+
       success = !!result
       setIsCreateMode(false)
     } else {
@@ -63,11 +66,14 @@ const OrganizationManagerPage = () => {
   const loadOrganizations = async currentPage => {
     setLoading(true)
     const data = await OrganizationService.getOrganizations(currentPage, PAGE_SIZE)
+
     if (data) {
       setOrgs(data.data)
       let _totalRecords = data.data[0]?.totalRecord
+
       setTotalPages(Math.ceil(_totalRecords / PAGE_SIZE) || 0)
     }
+
     setLoading(false)
   }
 
@@ -83,10 +89,13 @@ const OrganizationManagerPage = () => {
   const handleConfirmDelete = async () => {
     setConfirmDialogOpen(false)
     setDeleting(true)
+
     if (selectedOrg) {
       const success = await OrganizationService.deleteOrganization(selectedOrg.organizationId)
+
       if (success) await loadOrganizations(page)
     }
+
     setDeleting(false)
     setSelectedOrg(null)
   }

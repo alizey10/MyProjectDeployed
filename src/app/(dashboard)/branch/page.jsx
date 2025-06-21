@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
+
 import DataTable from '@/views/common/DataTable'
 import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/common/DialogBox'
@@ -28,6 +30,7 @@ const BranchPage = () => {
     const fetchOrganization = async () => {
       const organizations = await OrganizationService.getOrganizations(0, 0)
       const newData = organizations.data
+
       console.log('.............', newData)
       setOrganization(newData)
     }
@@ -62,6 +65,7 @@ const BranchPage = () => {
 
     if (isCreateMode) {
       const result = await BranchService.createBranch(payload)
+
       success = !!result
       setIsCreateMode(false)
     } else {
@@ -77,11 +81,14 @@ const BranchPage = () => {
   const loadBranches = async currentPage => {
     setLoading(true)
     const data = await BranchService.getBranchs(currentPage, PAGE_SIZE)
+
     if (data) {
       setBranches(data.data)
       let _totalRecords = data.data[0]?.totalRecord
+
       setTotalPages(Math.ceil(_totalRecords / PAGE_SIZE) || 0)
     }
+
     setLoading(false)
   }
 
@@ -97,10 +104,13 @@ const BranchPage = () => {
   const handleConfirmDelete = async () => {
     setConfirmDialogOpen(false)
     setDeleting(true)
+
     if (selectedBranch) {
       const success = await BranchService.deleteBranch(selectedBranch.branchId)
+
       if (success) await loadBranches(page)
     }
+
     setDeleting(false)
     setSelectedBranch(null)
   }

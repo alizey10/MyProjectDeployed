@@ -59,6 +59,7 @@ const VerticalMenu = ({ scrollMenu }) => {
         <MenuItem
           href={`/organization`}
           icon={<i class='ri-organization-chart'></i>}
+
           // suffix={<Chip label='5' size='small' color='primary' variant='tonal' />}
         >
           Organization Manager
@@ -66,28 +67,32 @@ const VerticalMenu = ({ scrollMenu }) => {
         <MenuItem
           icon={<i class='ri-git-branch-line'></i>}
           href={`/branch`}
-          suffix={<Chip label='new' size='small' color='primary' variant='tonal' />}
+
+          // suffix={<Chip label='new' size='small' color='primary' variant='tonal' />}
         >
           Branch Manager
         </MenuItem>
         <MenuItem
           icon={<i class='ri-refund-line'></i>}
           href={`/gateway`}
-          suffix={<Chip label='new' size='small' color='primary' variant='tonal' />} // need if need to show the notification count
+
+          // suffix={<Chip label='new' size='small' color='primary' variant='tonal' />}
         >
           Gateway Manager
         </MenuItem>
         <MenuItem
           icon={<i class='ri-sensor-line'></i>}
           href={`/sensor`}
-          suffix={<Chip label='new' size='small' color='primary' variant='tonal' />} // need if need to show the notification count
+
+          // suffix={<Chip label='new' size='small' color='primary' variant='tonal' />}
         >
           Sensor Manager
         </MenuItem>
         <MenuItem
           icon={<i className='ri-building-2-line'></i>}
           href={`/floor`}
-          suffix={<Chip label='new' size='small' color='primary' variant='tonal' />} // need if need to show the notification count
+
+          // suffix={<Chip label='new' size='small' color='primary' variant='tonal' />}
         >
           Floor Manager
         </MenuItem>

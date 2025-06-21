@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
+
 import DataTable from '@/views/floor/DataTable'
 import DialogBox from '@/views/common/DialogBox'
 import floorService from '@/@services/floorService'
@@ -24,8 +26,10 @@ const FloorPage = () => {
   const handleSaveEdit = async updatedData => {
     let success
     const result = await floorService.createFloor(JSON.stringify(updatedData.floorName))
+
     success = !!result
     setOpen(false)
+
     if (success) {
       await loadFloor(page)
     }
@@ -34,11 +38,14 @@ const FloorPage = () => {
   const loadFloor = async currentPage => {
     setLoading(true)
     const data = await floorService.getFloor(currentPage, PAGE_SIZE)
+
     if (data) {
       setFloor(data.data)
       let _totalRecords = data.data[0]?.totalRecord
+
       setTotalPages(Math.ceil(_totalRecords / PAGE_SIZE) || 0)
     }
+
     setLoading(false)
   }
 

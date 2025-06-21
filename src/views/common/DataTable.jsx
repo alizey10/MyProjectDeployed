@@ -7,6 +7,7 @@ import Button from '@mui/material/Button'
 import Pagination from '@mui/material/Pagination'
 import CircularProgress from '@mui/material/CircularProgress'
 import Box from '@mui/material/Box'
+
 import tableStyles from '@core/styles/table.module.css'
 
 const DataTable = ({
