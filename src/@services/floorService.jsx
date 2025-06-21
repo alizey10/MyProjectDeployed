@@ -12,6 +12,7 @@ class FloorService extends BaseService {
 
   async createFloor(payload) {
     console.log('payload', payload)
+
     return await this.Post('', payload)
   }
 }

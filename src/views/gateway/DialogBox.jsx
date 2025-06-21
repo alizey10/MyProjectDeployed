@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+
 import {
   TextField,
   InputAdornment,
@@ -15,10 +16,12 @@ import {
   MenuItem
 } from '@mui/material'
 import { useForm } from 'react-hook-form'
+
 import branchService from '@/@services/branchService'
 
 const DialogBox = ({ open, title, onClose, data, onSave, fields, organization }) => {
   const [branches, SetBranches] = useState([])
+
   const { register, handleSubmit, reset } = useForm({
     defaultValues: data || {}
   })
@@ -28,6 +31,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
       getBranches(data?.organizationId)
       reset(data || {})
     }
+
     if (!data) {
       reset({})
     }
@@ -40,6 +44,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
 
   const getBranches = async orgId => {
     const _branches = await branchService.getBranchsByOrgId(0, 0, orgId)
+
     SetBranches(_branches.data)
   }
 
@@ -60,6 +65,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
                   {...register('organizationId')}
                   onChange={event => {
                     const orgId = event.target.value
+
                     getBranches(orgId)
                   }}
                 >

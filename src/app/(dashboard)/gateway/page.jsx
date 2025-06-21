@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
+
 import DataTable from '@/views/common/DataTable'
 import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/gateway/DialogBox'
@@ -28,6 +30,7 @@ const GatewayManagerPage = () => {
     const fetchOrganization = async () => {
       const organizations = await OrganizationService.getOrganizations(0, 0)
       const newData = organizations.data
+
       console.log('.............', newData)
       setOrganization(newData)
     }
@@ -58,6 +61,7 @@ const GatewayManagerPage = () => {
 
     if (isCreateMode) {
       const result = await GatewayService.createGateway(payload)
+
       success = !!result
       setIsCreateMode(false)
     } else {
@@ -73,11 +77,14 @@ const GatewayManagerPage = () => {
   const loadGateways = async currentPage => {
     setLoading(true)
     const data = await GatewayService.getGateways(currentPage, PAGE_SIZE)
+
     if (data) {
       setGateways(data.data)
       let _totalRecords = data.data[0]?.totalRecord
+
       setTotalPages(Math.ceil(_totalRecords / PAGE_SIZE) || 0)
     }
+
     setLoading(false)
   }
 
@@ -93,10 +100,13 @@ const GatewayManagerPage = () => {
   const handleConfirmDelete = async () => {
     setConfirmDialogOpen(false)
     setDeleting(true)
+
     if (selectedGateway) {
       const success = await GatewayService.deleteGateway(selectedGateway.gatewayId)
+
       if (success) await loadGateways(page)
     }
+
     setDeleting(false)
     setSelectedGateway(null)
   }
@@ -105,11 +115,13 @@ const GatewayManagerPage = () => {
     setConfirmDialogOpen(false)
     setSelectedGateway(null)
   }
+
   const columns = [
     { label: 'Gateway Id', field: 'gatewayId' },
     { label: 'Gateway', field: 'gatewayName' },
     { label: 'Organization Id', field: 'organizationId' },
     { label: 'Branch Id', field: 'branchId' }
+
     // { label: 'Created', field: 'dateCreated' }
   ]
 

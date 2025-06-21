@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+
 import {
   TextField,
   InputAdornment,
@@ -15,6 +16,7 @@ import {
   MenuItem
 } from '@mui/material'
 import { useForm } from 'react-hook-form'
+
 import branchService from '@/@services/branchService'
 import gatewayService from '@/@services/gatewayService'
 import floorService from '@/@services/floorService'
@@ -34,10 +36,11 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
       getGateWayByBranch(data?.branchId)
       reset(data || {})
     }
+
     if (!data) {
       reset({})
     }
-  }, [open, data, reset])
+  }, [open, data, reset, getGateWayByBranch])
 
   const onSubmit = updatedData => {
     reset(updatedData)
@@ -46,17 +49,20 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
 
   const getBranches = async orgId => {
     const _branches = await branchService.getBranchsByOrgId(0, 0, orgId)
+
     SetBranches(_branches.data)
   }
 
   const getGateWayByBranch = async branchId => {
     const _gateways = await gatewayService.getGatewayByBranchId(0, 0, branchId)
+
     SetGateways(_gateways.data)
     getFloorSection()
   }
 
   const getFloorSection = async () => {
     const _floorSection = await floorService.getFloor(0, 0)
+
     SetFloor(_floorSection.data)
   }
 
@@ -78,9 +84,11 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
                   onChange={event => {
                     const orgId = event.target.value
                     const selectedOrganization = organization.find(org => org.organizationId === orgId)
+
                     if (selectedOrganization) {
                       setValue('organizationName', selectedOrganization.organizationName)
                     }
+
                     getBranches(orgId)
                   }}
                 >
@@ -104,9 +112,11 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
                   onChange={event => {
                     const branchId = event.target.value
                     const selectedBranch = branches.find(branch => branch.branchId === branchId)
+
                     if (selectedBranch) {
                       setValue('branchName', selectedBranch.branchName)
                     }
+
                     getGateWayByBranch(branchId)
                   }}
                 >
@@ -130,6 +140,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
                   onChange={event => {
                     const selectedValue = event.target.value
                     const selectedGateway = gateways.find(gateway => gateway.gatewayId === selectedValue)
+
                     if (selectedGateway) {
                       setValue('gatewayName', selectedGateway.gatewayName)
                     }
@@ -156,6 +167,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
                   onChange={event => {
                     const selectedValue = event.target.value
                     const selectedFloor = Floor.find(floor => floor.floorSectionId === selectedValue)
+
                     if (selectedFloor) {
                       setValue('floorSectionName', selectedFloor.floorSectionName)
                     }

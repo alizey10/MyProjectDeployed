@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
+
 import DataTable from '@/views/common/DataTable'
 import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/sensor/DialogBox'
@@ -28,6 +30,7 @@ const SensorManagerPage = () => {
     const fetchOrganization = async () => {
       const organizations = await OrganizationService.getOrganizations(0, 0)
       const newData = organizations.data
+
       console.log('.............', newData)
       setOrganization(newData)
     }
@@ -68,6 +71,7 @@ const SensorManagerPage = () => {
 
     if (isCreateMode) {
       const result = await SensorService.createSensor(payload)
+
       success = !!result
       setIsCreateMode(false)
     } else {
@@ -83,11 +87,14 @@ const SensorManagerPage = () => {
   const loadSensors = async currentPage => {
     setLoading(true)
     const data = await SensorService.getSensors(currentPage, PAGE_SIZE)
+
     if (data) {
       setSensors(data.data)
       let _totalRecords = data.data[0]?.totalRecord
+
       setTotalPages(Math.ceil(_totalRecords / PAGE_SIZE) || 0)
     }
+
     setLoading(false)
   }
 
@@ -103,10 +110,13 @@ const SensorManagerPage = () => {
   const handleConfirmDelete = async () => {
     setConfirmDialogOpen(false)
     setDeleting(true)
+
     if (selectedSensor) {
       const success = await SensorService.deleteSensor(selectedSensor.sensorId)
+
       if (success) await loadSensors(page)
     }
+
     setDeleting(false)
     setSelectedSensor(null)
   }
