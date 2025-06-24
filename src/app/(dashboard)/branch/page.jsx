@@ -122,6 +122,7 @@ const BranchPage = () => {
 
   // Define columns for DataTable
   const columns = [
+    { label: 'Organization', field: 'organizationName' },
     { label: 'Branch Name', field: 'branchName' },
     { label: 'Phone', field: 'phone' },
     { label: 'Email', field: 'email' },
@@ -134,13 +135,13 @@ const BranchPage = () => {
 
   // Define fields for DialogBox
   const fields = [
-    { label: 'Branch Name', name: 'branchName', placeholder: 'Branch ABC', icon: '🏢' },
-    { label: 'email', name: 'email', placeholder: 'test@gmail.com', icon: '📬' },
-    { label: 'Phone', name: 'phone', placeholder: '0311-0000000', icon: '📞' },
-    { label: 'City', name: 'city', placeholder: 'Karachi', icon: '🏙️' },
-    { label: 'Country', name: 'country', placeholder: 'Pakistan', icon: '🌏' },
-    { label: 'Address', name: 'address', placeholder: 'Street 1, Sector 4', icon: '🏠' },
-    { label: 'POC', name: 'poc', placeholder: 'John Doe', icon: '👤' }
+    { label: 'Branch Name', name: 'branchName', placeholder: 'Branch ABC', icon: '🏢', required: true },
+    { label: 'email', name: 'email', placeholder: 'test@gmail.com', icon: '📬', required: true },
+    { label: 'Phone', name: 'phone', placeholder: '0311-0000000', icon: '📞', required: true },
+    { label: 'City', name: 'city', placeholder: 'Karachi', icon: '🏙️', required: true },
+    { label: 'Country', name: 'country', placeholder: 'Pakistan', icon: '🌏', required: true },
+    { label: 'Address', name: 'address', placeholder: 'Street 1, Sector 4', icon: '🏠', required: true },
+    { label: 'POC', name: 'poc', placeholder: 'John Doe', icon: '👤', required: true }
   ]
 
   return (

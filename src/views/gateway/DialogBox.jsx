@@ -13,18 +13,33 @@ import {
   DialogTitle,
   Dialog,
   Select,
-  MenuItem
+  MenuItem,
+  CircularProgress,
+  FormHelperText,
+  Box
 } from '@mui/material'
 import { useForm } from 'react-hook-form'
 
 import branchService from '@/@services/branchService'
 
 const DialogBox = ({ open, title, onClose, data, onSave, fields, organization }) => {
-  const [branches, SetBranches] = useState([])
+  const [branches, SetBranches] = useState([]) // Stores the fetched branches
+  const [isLoading, setIsLoading] = useState(false) // Loader state for fetching branches
+  const [isSubmitting, setIsSubmitting] = useState(false) // Loader state for form submission
+  const [branchError, setBranchError] = useState('') // Error message when no branches found
 
-  const { register, handleSubmit, reset } = useForm({
-    defaultValues: data || {}
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isValid },
+    watch
+  } = useForm({
+    defaultValues: data || {},
+    mode: 'onChange'
   })
+
+  const formValues = watch()
 
   useEffect(() => {
     if (open && data) {
@@ -33,36 +48,103 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
     }
 
     if (!data) {
-      reset({})
+      SetBranches('')
+      setBranchError('')
+      reset('')
     }
   }, [open, data, reset])
 
-  const onSubmit = updatedData => {
-    reset(updatedData)
-    onSave(updatedData)
+  const onSubmit = async updatedData => {
+    setIsSubmitting(true) // Show loader on form submission
+
+    try {
+      await onSave(updatedData)
+      reset('')
+    } catch (error) {
+      console.error('Error saving data', error)
+    } finally {
+      setIsSubmitting(false) // Hide loader after save
+    }
   }
 
   const getBranches = async orgId => {
-    const _branches = await branchService.getBranchsByOrgId(0, 0, orgId)
+    if (!orgId) return
 
-    SetBranches(_branches.data)
+    setIsLoading(true)
+    setBranchError('')
+
+    try {
+      const _branches = await branchService.getBranchsByOrgId(0, 0, orgId)
+
+      SetBranches(_branches.data)
+
+      if (_branches.data.length === 0) {
+        setBranchError('No branches found for this organization.')
+      }
+    } catch (error) {
+      setBranchError('Error fetching branches. Please try again.')
+      console.error(error)
+    } finally {
+      setIsLoading(false) // Hide loader after branches are fetched
+    }
+  }
+
+  // Validation rules for fields
+  const getValidationRules = field => {
+    if (field.required) {
+      return {
+        required: `${field.label} is required`
+      }
+    }
+
+    return {}
+  }
+
+  // Check if any field is empty
+  const isAnyFieldEmpty = () => {
+    return Object.values(formValues).some(value => value === '' || value === undefined || value === null)
+  }
+
+  const formKey = data ? 'edit-mode' : 'add-mode'
+
+  const handleClose = (event, reason) => {
+    reset({})
+    onClose()
   }
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth='md'>
+    <Dialog onClose={handleClose} open={open} fullWidth maxWidth='md' key={formKey}>
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ position: 'relative' }}>
+        {/* Loader for the entire dialog */}
+        {isLoading || isSubmitting ? (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'rgba(255, 255, 255, 0.7)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        ) : null}
+
         <form id='edit-form' onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={4} mt={0.5}>
             {organization?.length > 0 && (
-              <>
-                <InputLabel sx={{ marginLeft: '1rem' }}>Organization</InputLabel>
+              <Grid item xs={12}>
+                <InputLabel>Organization</InputLabel>
                 <Select
                   label='Organization'
-                  defaultValue={data?.organizationId}
+                  defaultValue={data?.organizationId || organization[0]?.organizationId}
                   fullWidth
-                  sx={{ marginLeft: '1rem' }}
-                  {...register('organizationId')}
+                  {...register('organizationId', { required: 'Organization is required' })}
                   onChange={event => {
                     const orgId = event.target.value
 
@@ -75,36 +157,48 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
                     </MenuItem>
                   ))}
                 </Select>
-              </>
+              </Grid>
             )}
-            {branches?.length > 0 && (
-              <>
-                <InputLabel sx={{ marginLeft: '1rem', marginTop: '1rem' }}>Branches</InputLabel>
-                <Select
-                  label='Branches'
-                  defaultValue={branches[0]?.branchId}
-                  fullWidth
-                  sx={{ marginLeft: '1rem' }}
-                  {...register('branchId')}
-                >
-                  {branches.map(org => (
-                    <MenuItem key={org.branchId} value={org.branchId}>
-                      {org.branchName}
+
+            <Grid item xs={12}>
+              <InputLabel>Branches</InputLabel>
+              <Select
+                label='Branches'
+                defaultValue={data?.branchId}
+                fullWidth
+                {...register('branchId', { required: 'Branch is required' })}
+              >
+                {branches?.length > 0 ? (
+                  branches.map(branch => (
+                    <MenuItem key={branch.branchId} value={branch.branchId}>
+                      {branch.branchName}
                     </MenuItem>
-                  ))}
-                </Select>
-              </>
-            )}
+                  ))
+                ) : (
+                  <MenuItem disabled value=''>
+                    No branches available
+                  </MenuItem>
+                )}
+              </Select>
+              {branchError && !isLoading && (
+                <FormHelperText error sx={{ marginLeft: '1rem', marginTop: '0.5rem' }}>
+                  {branchError}
+                </FormHelperText>
+              )}
+            </Grid>
+
             {fields.map((field, index) => (
               <Grid item xs={12} md={6} key={index}>
                 <TextField
                   fullWidth
                   label={field.label}
                   placeholder={field.placeholder}
-                  {...register(field.name)}
+                  {...register(field.name, getValidationRules(field))}
                   InputProps={{
                     startAdornment: field.icon ? <InputAdornment position='start'>{field.icon}</InputAdornment> : null
                   }}
+                  error={!!errors[field.name]}
+                  helperText={errors[field.name]?.message}
                 />
               </Grid>
             ))}
@@ -114,7 +208,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
       <DialogActions>
         <Button
           onClick={() => {
-            reset()
+            reset({})
             onClose()
           }}
           color='secondary'
@@ -122,8 +216,13 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
         >
           Cancel
         </Button>
-        <Button type='submit' form='edit-form' variant='contained'>
-          Save
+        <Button
+          type='submit'
+          form='edit-form'
+          variant='contained'
+          disabled={isAnyFieldEmpty() || isSubmitting || !isValid || branchError} // Disable if any field is empty or form is submitting
+        >
+          {isSubmitting ? <CircularProgress size={24} color='inherit' /> : 'Save'}{' '}
         </Button>
       </DialogActions>
     </Dialog>

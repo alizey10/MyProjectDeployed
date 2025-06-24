@@ -128,16 +128,13 @@ const SensorManagerPage = () => {
 
   // Define columns for DataTable
   const columns = [
+    { label: 'Sensor Id', field: 'sensorId' },
     { label: 'Sensor Name', field: 'sensorName' },
-    { label: 'Organization Id', field: 'organizationId' },
     { label: 'Organization Name', field: 'organizationName' },
-    { label: 'Branch Id', field: 'branchId' },
     { label: 'Branch Name', field: 'branchName' },
     { label: 'Gateway Id', field: 'gatewayId' },
     { label: 'Gateway Name', field: 'gatewayName' },
-    { label: 'Floor Section Id', field: 'floorSectionId' },
     { label: 'Floor Section Name', field: 'floorSectionName' },
-    { label: 'Sensor Id', field: 'sensorId' },
     { label: 'Linked Device', field: 'linkedDevice' },
     { label: 'Min Temperature', field: 'minTemperature' },
     { label: 'Max Temperature', field: 'maxTemperature' },
@@ -147,12 +144,12 @@ const SensorManagerPage = () => {
 
   // Define fields for DialogBox
   const fields = [
-    { label: 'Sensor Name', name: 'sensorName', placeholder: 'Temperature Sensor', icon: '📡' },
-    { label: 'Sensor Id', name: 'sensorId', placeholder: 'S1234', icon: '🔢' },
-    { label: 'Linked Device', name: 'linkedDevice', placeholder: 'Sensor Device', icon: '🔌' },
-    { label: 'Min Temperature', name: 'minTemperature', placeholder: '0', icon: '🌡️' },
-    { label: 'Max Temperature', name: 'maxTemperature', placeholder: '100', icon: '🌡️' },
-    { label: 'Alert Type', name: 'alertType', placeholder: '1', icon: '⚠️' }
+    { label: 'Sensor Name', name: 'sensorName', placeholder: 'Temperature Sensor', icon: '📡', required: true },
+    { label: 'Sensor Id', name: 'sensorId', placeholder: 'S1234', icon: '🔢', required: true },
+    { label: 'Linked Device', name: 'linkedDevice', placeholder: 'Sensor Device', icon: '🔌', required: true },
+    { label: 'Min Temperature', name: 'minTemperature', placeholder: '0', icon: '🌡️', required: true },
+    { label: 'Max Temperature', name: 'maxTemperature', placeholder: '100', icon: '🌡️', required: true },
+    { label: 'Alert Type', name: 'alertType', placeholder: '1', icon: '⚠️', required: true }
   ]
 
   return (

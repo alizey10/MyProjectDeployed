@@ -117,13 +117,13 @@ const OrganizationManagerPage = () => {
   ]
 
   const fields = [
-    { label: 'Organization Name', name: 'organizationName', placeholder: 'TopNotch Ltd.', icon: '🏢' },
-    { label: 'Phone', name: 'phone', placeholder: '0311-0000000', icon: '📞' },
-    { label: 'City', name: 'city', placeholder: 'Lahore', icon: '🏙️' },
-    { label: 'Country', name: 'country', placeholder: 'Pakistan', icon: '🌏' },
-    { label: 'Address', name: 'address', placeholder: 'Street 1, Sector 4', icon: '🏠' },
-    { label: 'Post Code', name: 'postCode', placeholder: '54000', icon: '📬' },
-    { label: 'POC', name: 'poc', placeholder: 'John Doe', icon: '👤' }
+    { label: 'Organization Name', name: 'organizationName', placeholder: 'TopNotch Ltd.', icon: '🏢', required: true },
+    { label: 'Phone', name: 'phone', placeholder: '0311-0000000', icon: '📞', required: true },
+    { label: 'City', name: 'city', placeholder: 'Lahore', icon: '🏙️', required: true },
+    { label: 'Country', name: 'country', placeholder: 'Pakistan', icon: '🌏', required: true },
+    { label: 'Address', name: 'address', placeholder: 'Street 1, Sector 4', icon: '🏠', required: true },
+    { label: 'Post Code', name: 'postCode', placeholder: '54000', icon: '📬', required: true },
+    { label: 'POC', name: 'poc', placeholder: 'John Doe', icon: '👤', required: true }
   ]
 
   return (

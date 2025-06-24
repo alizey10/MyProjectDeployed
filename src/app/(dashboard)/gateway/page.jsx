@@ -119,15 +119,15 @@ const GatewayManagerPage = () => {
   const columns = [
     { label: 'Gateway Id', field: 'gatewayId' },
     { label: 'Gateway', field: 'gatewayName' },
-    { label: 'Organization Id', field: 'organizationId' },
-    { label: 'Branch Id', field: 'branchId' }
+    { label: 'Organization', field: 'organizationName' },
+    { label: 'Branch', field: 'branchName' }
 
     // { label: 'Created', field: 'dateCreated' }
   ]
 
   const fields = [
-    { label: 'Gateway Id', name: 'gatewayId', placeholder: '123', icon: '' },
-    { label: 'Gateway Name', name: 'gatewayName', placeholder: 'Main Gateway', icon: '' }
+    { label: 'Gateway Id', name: 'gatewayId', placeholder: '123', icon: '', required: true },
+    { label: 'Gateway Name', name: 'gatewayName', placeholder: 'Main Gateway', icon: '', required: true }
   ]
 
   return (

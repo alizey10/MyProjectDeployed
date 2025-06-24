@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import {
   TextField,
@@ -13,14 +13,27 @@ import {
   DialogTitle,
   Dialog,
   Select,
-  MenuItem
+  MenuItem,
+  CircularProgress
 } from '@mui/material'
 import { useForm } from 'react-hook-form'
 
 const DialogBox = ({ open, title, onClose, data, onSave, fields, organization }) => {
-  const { register, handleSubmit, reset } = useForm({
-    defaultValues: data || {}
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isValid },
+    setValue,
+    watch
+  } = useForm({
+    defaultValues: data || {},
+    mode: 'onChange'
   })
+
+  const [isLoading, setIsLoading] = useState(false)
+
+  const formValues = watch()
 
   useEffect(() => {
     if (open) {
@@ -32,9 +45,33 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
     }
   }, [open, data, reset])
 
-  const onSubmit = updatedData => {
-    reset(updatedData)
-    onSave(updatedData)
+  const onSubmit = async updatedData => {
+    setIsLoading(true)
+
+    try {
+      await onSave(updatedData)
+      reset(updatedData)
+    } catch (error) {
+      console.error('Error saving data', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Validation rules for fields
+  const getValidationRules = field => {
+    if (field.required) {
+      return {
+        required: `${field.label} is required`
+      }
+    }
+
+    return {}
+  }
+
+  // Check if any field is empty
+  const isAnyFieldEmpty = () => {
+    return Object.values(formValues).some(value => value === '')
   }
 
   return (
@@ -44,14 +81,13 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
         <form id='edit-form' onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={4} mt={0.5}>
             {organization?.length > 0 && !data && (
-              <>
-                <InputLabel sx={{ marginLeft: '1rem' }}>Organization</InputLabel>
+              <Grid item xs={12}>
+                <InputLabel>Organization</InputLabel>
                 <Select
                   label='Organization'
                   defaultValue={organization[0]?.organizationId}
                   fullWidth
-                  sx={{ marginLeft: '1rem' }}
-                  {...register('organizationId')}
+                  {...register('organizationId', { required: 'Organization is required' })}
                 >
                   {organization.map(org => (
                     <MenuItem key={org.organizationId} value={org.organizationId}>
@@ -59,7 +95,10 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
                     </MenuItem>
                   ))}
                 </Select>
-              </>
+                {errors.organizationId && (
+                  <p style={{ color: 'red', fontSize: '12px' }}>{errors.organizationId.message}</p>
+                )}
+              </Grid>
             )}
             {fields.map((field, index) => (
               <Grid item xs={12} md={6} key={index}>
@@ -67,10 +106,12 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
                   fullWidth
                   label={field.label}
                   placeholder={field.placeholder}
-                  {...register(field.name)}
+                  {...register(field.name, getValidationRules(field))}
                   InputProps={{
                     startAdornment: field.icon ? <InputAdornment position='start'>{field.icon}</InputAdornment> : null
                   }}
+                  error={!!errors[field.name]}
+                  helperText={errors[field.name]?.message}
                 />
               </Grid>
             ))}
@@ -88,8 +129,8 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
         >
           Cancel
         </Button>
-        <Button type='submit' form='edit-form' variant='contained'>
-          Save
+        <Button type='submit' form='edit-form' variant='contained' disabled={isAnyFieldEmpty() || isLoading}>
+          {isLoading ? <CircularProgress size={24} color='inherit' /> : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>

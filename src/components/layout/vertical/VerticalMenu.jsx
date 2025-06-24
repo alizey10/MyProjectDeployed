@@ -58,14 +58,14 @@ const VerticalMenu = ({ scrollMenu }) => {
         </MenuItem>
         <MenuItem
           href={`/organization`}
-          icon={<i class='ri-organization-chart'></i>}
+          icon={<i className='ri-organization-chart'></i>}
 
           // suffix={<Chip label='5' size='small' color='primary' variant='tonal' />}
         >
           Organization Manager
         </MenuItem>
         <MenuItem
-          icon={<i class='ri-git-branch-line'></i>}
+          icon={<i className='ri-git-branch-line'></i>}
           href={`/branch`}
 
           // suffix={<Chip label='new' size='small' color='primary' variant='tonal' />}
@@ -73,7 +73,7 @@ const VerticalMenu = ({ scrollMenu }) => {
           Branch Manager
         </MenuItem>
         <MenuItem
-          icon={<i class='ri-refund-line'></i>}
+          icon={<i className='ri-refund-line'></i>}
           href={`/gateway`}
 
           // suffix={<Chip label='new' size='small' color='primary' variant='tonal' />}
@@ -81,7 +81,7 @@ const VerticalMenu = ({ scrollMenu }) => {
           Gateway Manager
         </MenuItem>
         <MenuItem
-          icon={<i class='ri-sensor-line'></i>}
+          icon={<i className='ri-sensor-line'></i>}
           href={`/sensor`}
 
           // suffix={<Chip label='new' size='small' color='primary' variant='tonal' />}

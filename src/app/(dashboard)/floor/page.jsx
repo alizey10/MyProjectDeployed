@@ -54,13 +54,10 @@ const FloorPage = () => {
   }, [page])
 
   // Define columns for DataTable
-  const columns = [
-    { label: 'Floor Id', field: 'floorSectionId' },
-    { label: 'Floor Name', field: 'floorSectionName' }
-  ]
+  const columns = [{ label: 'Floor Name', field: 'floorSectionName' }]
 
   // Define fields for DialogBox
-  const fields = [{ label: 'Floor Name', name: 'floorName', placeholder: 'First Floor', icon: '🏢' }]
+  const fields = [{ label: 'Floor Name', name: 'floorName', placeholder: 'First Floor', icon: '🏢', required: true }]
 
   return (
     <>
