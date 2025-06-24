@@ -147,9 +147,9 @@ const SensorManagerPage = () => {
     { label: 'Sensor Name', name: 'sensorName', placeholder: 'Temperature Sensor', icon: '📡', required: true },
     { label: 'Sensor Id', name: 'sensorId', placeholder: 'S1234', icon: '🔢', required: true },
     { label: 'Linked Device', name: 'linkedDevice', placeholder: 'Sensor Device', icon: '🔌', required: true },
-    { label: 'Min Temperature', name: 'minTemperature', placeholder: '0', icon: '🌡️', required: true },
-    { label: 'Max Temperature', name: 'maxTemperature', placeholder: '100', icon: '🌡️', required: true },
-    { label: 'Alert Type', name: 'alertType', placeholder: '1', icon: '⚠️', required: true }
+    { label: 'Min Temperature', name: 'minTemperature', placeholder: '0', icon: '🌡️' },
+    { label: 'Max Temperature', name: 'maxTemperature', placeholder: '100', icon: '🌡️' },
+    { label: 'Alert Type', name: 'alertType', placeholder: '1', icon: '⚠️' }
   ]
 
   return (

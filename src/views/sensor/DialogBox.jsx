@@ -163,9 +163,14 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
     }
   }
 
-  // Check if any field is empty or invalid
   const isAnyFieldEmpty = () => {
-    return Object.values(formValues).some(value => value === '' || value === undefined || value === null)
+    return fields.some(field => {
+      if (field.required) {
+        const value = formValues[field.name]
+        return value === '' || value === undefined || value === null
+      }
+      return false
+    })
   }
 
   const handleClose = (event, reason) => {
