@@ -1,5 +1,6 @@
 --For Server
 yarn build
+pm2 delete hubui
 pm2 start node_modules/next/dist/bin/next --name hubui -- start
 pm2 ls
 pm2 log

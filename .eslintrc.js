@@ -1,137 +1,71 @@
 module.exports = {
-  "extends": [
-    "next/core-web-vitals",
-    "plugin:import/recommended",
-    "prettier"
-  ],
-  "rules": {
-    "jsx-a11y/alt-text": "off",
-    "react/display-name": "off",
-    "react/no-children-prop": "off",
-    "@next/next/no-img-element": "off",
-    "@next/next/no-page-custom-font": "off",
-    "lines-around-comment": [
-      "error",
+  extends: ['next/core-web-vitals', 'plugin:import/recommended', 'prettier'],
+  rules: {
+    'jsx-a11y/alt-text': 'off',
+    'react/display-name': 'off',
+    'react/no-children-prop': 'off',
+    '@next/next/no-img-element': 'off',
+    '@next/next/no-page-custom-font': 'off',
+    'lines-around-comment': [
+      'error',
       {
-        "beforeBlockComment": true,
-        "beforeLineComment": true,
-        "allowBlockStart": true,
-        "allowObjectStart": true,
-        "allowArrayStart": true
+        beforeBlockComment: true,
+        beforeLineComment: true,
+        allowBlockStart: true,
+        allowObjectStart: true,
+        allowArrayStart: true
       }
     ],
-    "padding-line-between-statements": [
-      "error",
+    // Turned off globally
+    'padding-line-between-statements': 'off',
+    'newline-before-return': 'off',
+    'import/newline-after-import': [
+      'error',
       {
-        "blankLine": "any",
-        "prev": "export",
-        "next": "export"
-      },
-      {
-        "blankLine": "always",
-        "prev": [
-          "const",
-          "let",
-          "var"
-        ],
-        "next": "*"
-      },
-      {
-        "blankLine": "any",
-        "prev": [
-          "const",
-          "let",
-          "var"
-        ],
-        "next": [
-          "const",
-          "let",
-          "var"
-        ]
-      },
-      {
-        "blankLine": "always",
-        "prev": "*",
-        "next": [
-          "function",
-          "multiline-const",
-          "multiline-block-like"
-        ]
-      },
-      {
-        "blankLine": "always",
-        "prev": [
-          "function",
-          "multiline-const",
-          "multiline-block-like"
-        ],
-        "next": "*"
+        count: 1
       }
     ],
-    "newline-before-return": "error",
-    "import/newline-after-import": [
-      "error",
+    'import/order': [
+      'error',
       {
-        "count": 1
-      }
-    ],
-    "import/order": [
-      "error",
-      {
-        "groups": [
-          "builtin",
-          "external",
-          [
-            "internal",
-            "parent",
-            "sibling",
-            "index"
-          ],
-          [
-            "object",
-            "unknown"
-          ]
-        ],
-        "pathGroups": [
+        groups: ['builtin', 'external', ['internal', 'parent', 'sibling', 'index'], ['object', 'unknown']],
+        pathGroups: [
           {
-            "pattern": "react",
-            "group": "external",
-            "position": "before"
+            pattern: 'react',
+            group: 'external',
+            position: 'before'
           },
           {
-            "pattern": "next/**",
-            "group": "external",
-            "position": "before"
+            pattern: 'next/**',
+            group: 'external',
+            position: 'before'
           },
           {
-            "pattern": "~/**",
-            "group": "external",
-            "position": "before"
+            pattern: '~/**',
+            group: 'external',
+            position: 'before'
           },
           {
-            "pattern": "@/**",
-            "group": "internal"
+            pattern: '@/**',
+            group: 'internal'
           }
         ],
-        "pathGroupsExcludedImportTypes": [
-          "react",
-          "type"
-        ],
-        "newlines-between": "always-and-inside-groups"
+        pathGroupsExcludedImportTypes: ['react', 'type'],
+        'newlines-between': 'always-and-inside-groups'
       }
     ]
   },
-  "settings": {
-    "react": {
-      "version": "detect"
+  settings: {
+    react: {
+      version: 'detect'
     },
-    "import/parsers": {},
-    "import/resolver": {
-      "node": {},
-      "typescript": {
-        "project": "./jsconfig.json"
+    'import/parsers': {},
+    'import/resolver': {
+      node: {},
+      typescript: {
+        project: './jsconfig.json'
       }
     }
   },
-  "overrides": []
-};
+  overrides: []
+}
