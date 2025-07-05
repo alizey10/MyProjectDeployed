@@ -29,8 +29,8 @@ const barLineScatterData = Array.from({ length: 30 }, (_, i) => ({
 }))
 
 const COLORS = [
-  '#4CAF50', // Active Organisations - green
-  '#F44336', // Inactive Organisations - red
+  '#4CAF50', // Active Organizations - green
+  '#F44336', // Inactive Organizations - red
   '#2196F3', // Active Branches - blue
   '#FF9800', // Inactive Branches - orange
   '#9C27B0', // Active Gateways - purple
@@ -40,7 +40,7 @@ const COLORS = [
 ]
 
 const EntityType = {
-  0: 'Organisations',
+  0: 'Organizations',
   1: 'Branches',
   2: 'Gateways',
   3: 'Sensors'
@@ -57,7 +57,7 @@ const AlarmAndOrgCharts = ({ entityCounts }) => {
       const entityLabel = EntityType[item.entity]
       if (entityLabel) {
         formatted.push({ name: `Active ${entityLabel}`, value: item.activeCount })
-        formatted.push({ name: `In Active ${entityLabel}`, value: item.inActiveCount })
+        formatted.push({ name: `Inactive ${entityLabel}`, value: item.inActiveCount })
       }
     })
     formatted.filter(entry => entry.value > 0)
