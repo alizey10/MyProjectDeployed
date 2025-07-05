@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 
+import { toast } from 'react-toastify'
+
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
 
@@ -10,6 +12,7 @@ import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/sensor/DialogBox'
 import SensorService from '@services/sensorService'
 import OrganizationService from '@services/organizationService'
+import GatewayService from '@services/gatewayService'
 
 const PAGE_SIZE = 10
 
@@ -31,7 +34,6 @@ const SensorManagerPage = () => {
       const organizations = await OrganizationService.getOrganizations(0, 0)
       const newData = organizations.data
 
-      console.log('.............', newData)
       setOrganization(newData)
     }
 
@@ -71,11 +73,16 @@ const SensorManagerPage = () => {
 
     if (isCreateMode) {
       const result = await SensorService.createSensor(payload)
-
+      if (result?.status === 201) toast.success('Record Saved')
+      else if (result?.status === 500) toast.info('Internal Server Error')
+      toast.error(result?.response?.data)
       success = !!result
       setIsCreateMode(false)
     } else {
       success = await SensorService.updateSensor(editData.sensorId, payload)
+      success = await GatewayService.updateGateway(editData.gatewayId, payload)
+      if (success?.status === 200) toast.success('Record Updated')
+      toast.error(success?.response?.data)
     }
 
     if (success) {
@@ -114,7 +121,10 @@ const SensorManagerPage = () => {
     if (selectedSensor) {
       const success = await SensorService.deleteSensor(selectedSensor.sensorId)
 
-      if (success) await loadSensors(page)
+      if (success) {
+        toast.success('Record Deleted')
+        await loadSensors(page)
+      }
     }
 
     setDeleting(false)
@@ -166,8 +176,8 @@ const SensorManagerPage = () => {
         title={isCreateMode ? 'Add Sensor' : 'Edit Sensor'}
         open={editDialogOpen}
         onClose={() => {
-          setEditDialogOpen(false)
           setIsCreateMode(false)
+          setEditDialogOpen(false)
         }}
         data={isCreateMode ? '' : editData}
         organization={organization}

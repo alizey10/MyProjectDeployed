@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 
+import { toast } from 'react-toastify'
+
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
 
@@ -26,6 +28,9 @@ const FloorPage = () => {
   const handleSaveEdit = async updatedData => {
     let success
     const result = await floorService.createFloor(JSON.stringify(updatedData.floorName))
+    if (result?.status === 201) toast.success('Record Saved')
+    else if (result?.status === 500) toast.info('Internal Server Error')
+    toast.error(result?.response?.data)
 
     success = !!result
     setOpen(false)

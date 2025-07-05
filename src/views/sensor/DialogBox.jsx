@@ -268,7 +268,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
                 {...register('gatewayId', { required: 'Gateway is required' })}
                 onChange={handleGatewayChange}
               >
-                {gateways.length > 0 ? (
+                {gateways?.length > 0 ? (
                   gateways.map(gateway => (
                     <MenuItem key={gateway.gatewayId} value={gateway.gatewayId}>
                       {gateway.gatewayName}
@@ -284,7 +284,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
             </Grid>
 
             {/* Independent Floor Dropdown */}
-            {floors.length > 0 && (
+            {floors?.length > 0 && (
               <Grid item xs={12}>
                 <InputLabel>Floor</InputLabel>
                 <Select

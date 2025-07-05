@@ -6,6 +6,8 @@ import ThemeProvider from '@components/theme'
 // Util Imports
 import { getMode, getSettingsFromCookie } from '@core/utils/serverHelpers'
 
+// At the top of the file
+
 const Providers = props => {
   // Props
   const { children, direction } = props

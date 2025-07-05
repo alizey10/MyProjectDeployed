@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 
+import { toast } from 'react-toastify'
+
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
 
@@ -30,8 +32,6 @@ const BranchPage = () => {
     const fetchOrganization = async () => {
       const organizations = await OrganizationService.getOrganizations(0, 0)
       const newData = organizations.data
-
-      console.log('.............', newData)
       setOrganization(newData)
     }
 
@@ -51,6 +51,7 @@ const BranchPage = () => {
 
   const handleSaveEdit = async updatedData => {
     const payload = {
+      BranchId: updatedData.branchId,
       branchName: updatedData.branchName,
       phone: updatedData.phone,
       email: updatedData.email,
@@ -65,11 +66,15 @@ const BranchPage = () => {
 
     if (isCreateMode) {
       const result = await BranchService.createBranch(payload)
-
+      if (result?.status === 201) toast.success('Record Saved')
+      else if (result?.status === 500) toast.info('Internal Server Error')
+      toast.error(result?.response?.data)
       success = !!result
       setIsCreateMode(false)
     } else {
       success = await BranchService.updateBranch(editData.branchId, payload)
+      if (success?.status === 200) toast.success('Record Updated')
+      toast.error(success?.response?.data)
     }
 
     if (success) {
@@ -108,7 +113,10 @@ const BranchPage = () => {
     if (selectedBranch) {
       const success = await BranchService.deleteBranch(selectedBranch.branchId)
 
-      if (success) await loadBranches(page)
+      if (success) {
+        toast.success('Record Deleted')
+        await loadBranches(page)
+      }
     }
 
     setDeleting(false)
@@ -135,6 +143,7 @@ const BranchPage = () => {
 
   // Define fields for DialogBox
   const fields = [
+    { label: 'Branch Id', name: 'branchId', placeholder: 'IDXCV205', icon: '🏢', required: true },
     { label: 'Branch Name', name: 'branchName', placeholder: 'Branch ABC', icon: '🏢', required: true },
     { label: 'email', name: 'email', placeholder: 'test@gmail.com', icon: '📬' },
     { label: 'Phone', name: 'phone', placeholder: '0311-0000000', icon: '📞' },

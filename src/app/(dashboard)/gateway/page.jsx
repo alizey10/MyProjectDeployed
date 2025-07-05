@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 
+import { toast } from 'react-toastify'
+
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
 
@@ -31,7 +33,6 @@ const GatewayManagerPage = () => {
       const organizations = await OrganizationService.getOrganizations(0, 0)
       const newData = organizations.data
 
-      console.log('.............', newData)
       setOrganization(newData)
     }
 
@@ -61,11 +62,15 @@ const GatewayManagerPage = () => {
 
     if (isCreateMode) {
       const result = await GatewayService.createGateway(payload)
-
+      if (result?.status === 201) toast.success('Record Saved')
+      else if (result?.status === 500) toast.info('Internal Server Error')
+      toast.error(result?.response?.data)
       success = !!result
       setIsCreateMode(false)
     } else {
       success = await GatewayService.updateGateway(editData.gatewayId, payload)
+      if (success?.status === 200) toast.success('Record Updated')
+      toast.error(success?.response?.data)
     }
 
     if (success) {
@@ -104,7 +109,10 @@ const GatewayManagerPage = () => {
     if (selectedGateway) {
       const success = await GatewayService.deleteGateway(selectedGateway.gatewayId)
 
-      if (success) await loadGateways(page)
+      if (success) {
+        toast.success('Record Deleted')
+        await loadGateways(page)
+      }
     }
 
     setDeleting(false)

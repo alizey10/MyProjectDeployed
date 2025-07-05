@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 
+import { toast } from 'react-toastify'
+
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
 
@@ -37,6 +39,7 @@ const OrganizationManagerPage = () => {
 
   const handleSaveEdit = async updatedData => {
     const payload = {
+      OrganizationId: updatedData.organizationId,
       organizationName: updatedData.organizationName,
       phone: updatedData.phone,
       city: updatedData.city,
@@ -50,11 +53,14 @@ const OrganizationManagerPage = () => {
 
     if (isCreateMode) {
       const result = await OrganizationService.createOrganization(payload)
-
+      if (result?.status === 201) toast.success('Record Saved')
+      toast.error(result?.response?.data)
       success = !!result
       setIsCreateMode(false)
     } else {
       success = await OrganizationService.updateOrganization(editData.organizationId, payload)
+      if (success?.status === 200) toast.success('Record Updated')
+      toast.error(success?.response?.data)
     }
 
     if (success) {
@@ -93,7 +99,10 @@ const OrganizationManagerPage = () => {
     if (selectedOrg) {
       const success = await OrganizationService.deleteOrganization(selectedOrg.organizationId)
 
-      if (success) await loadOrganizations(page)
+      if (success) {
+        toast.success('Record Deleted')
+        await loadOrganizations(page)
+      }
     }
 
     setDeleting(false)
@@ -117,10 +126,11 @@ const OrganizationManagerPage = () => {
   ]
 
   const fields = [
+    { label: 'Organization Id', name: 'organizationId', placeholder: '2000FXCV', icon: '🏢', required: true },
     { label: 'Organization Name', name: 'organizationName', placeholder: 'TopNotch Ltd.', icon: '🏢', required: true },
     { label: 'Phone', name: 'phone', placeholder: '0311-0000000', icon: '📞' },
     { label: 'City', name: 'city', placeholder: 'Lahore', icon: '🏙️' },
-    { label: 'Country', name: 'country', placeholder: 'Pakistan', icon: '🌏' },
+    { label: 'Country', name: 'country', placeholder: 'Pakistan', icon: '🌏', required: true },
     { label: 'Address', name: 'address', placeholder: 'Street 1, Sector 4', icon: '🏠' },
     { label: 'Post Code', name: 'postCode', placeholder: '54000', icon: '📬' },
     { label: 'POC', name: 'poc', placeholder: 'John Doe', icon: '👤' }
