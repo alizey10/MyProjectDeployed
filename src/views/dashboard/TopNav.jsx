@@ -11,6 +11,8 @@ import BranchService from '@services/branchService'
 import FloorService from '@services/floorService'
 import ReportServices from '@services/reportService'
 
+import Countries from '../../../countries.json'
+
 const TopNav = ({ onFiltersChange }) => {
   const [organizations, setOrganizations] = useState([])
   const [branches, setBranches] = useState([])
@@ -145,9 +147,9 @@ const TopNav = ({ onFiltersChange }) => {
             <FormControl fullWidth error={!!errors.country}>
               <InputLabel>Country</InputLabel>
               <Select defaultValue='' {...register('country')} onChange={e => setValue('country', e.target.value)}>
-                {['Pakistan', 'USA', 'Canada'].map((country, idx) => (
-                  <MenuItem key={idx} value={country}>
-                    {country}
+                {Countries?.map((country, idx) => (
+                  <MenuItem key={idx} value={country.name}>
+                    {country.name}
                   </MenuItem>
                 ))}
               </Select>
