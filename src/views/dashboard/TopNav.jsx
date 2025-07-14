@@ -56,6 +56,7 @@ const TopNav = ({ onFiltersChange }) => {
         setFloorSections(floorRes?.data?.data || [])
       } catch (err) {
         console.error('Error fetching initial data:', err)
+        toast.error(err.message)
       }
       setLoading(false)
     }
