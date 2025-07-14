@@ -11,6 +11,7 @@ import DataTable from '@/views/common/DataTable'
 import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/common/DialogBox'
 import OrganizationService from '@services/organizationService'
+import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 
 const PAGE_SIZE = 10
 
@@ -49,38 +50,56 @@ const OrganizationManagerPage = () => {
       poc: updatedData.poc
     }
 
-    let success
+    try {
+      const result = isCreateMode
+        ? await OrganizationService.createOrganization(payload)
+        : await OrganizationService.updateOrganization(editData.organizationId, payload)
 
-    if (isCreateMode) {
-      const result = await OrganizationService.createOrganization(payload)
-      if (result?.status === 201) toast.success('Record Saved')
-      toast.error(result?.response?.data)
-      success = !!result
-      setIsCreateMode(false)
-    } else {
-      success = await OrganizationService.updateOrganization(editData.organizationId, payload)
-      if (success?.status === 200) toast.success('Record Updated')
-      toast.error(success?.response?.data)
-    }
+      const code = getStatusCode(result)
+      const message = getMessage(result)
 
-    if (success) {
+      if (code !== HttpStatus.OK && code !== HttpStatus.Created) {
+        toast.error(message)
+        return
+      } else {
+        toast.success(message)
+      }
+
+      if (isCreateMode) {
+        setIsCreateMode(false)
+      }
+
       setEditDialogOpen(false)
       await loadOrganizations(page)
+    } catch (error) {
+      const message = error?.response?.data?.message || 'Unexpected error occurred.'
+      toast.error(message)
+      console.error('Save failed:', error)
     }
   }
 
   const loadOrganizations = async currentPage => {
     setLoading(true)
-    const data = await OrganizationService.getOrganizations(currentPage, PAGE_SIZE)
 
-    if (data) {
-      setOrgs(data.data)
-      let _totalRecords = data.data[0]?.totalRecord
+    try {
+      const response = await OrganizationService.getOrganizations(currentPage, PAGE_SIZE)
 
-      setTotalPages(Math.ceil(_totalRecords / PAGE_SIZE) || 0)
+      if (!response.data?.success) {
+        toast.error(getMessage(response))
+        return
+      }
+
+      const _data = response.data?.data || []
+      setOrgs(_data)
+
+      const _totalRecords = _data[0]?.totalRecord || 0
+      setTotalPages(Math.ceil(_totalRecords / PAGE_SIZE))
+    } catch (error) {
+      toast.error(getMessage(error))
+      console.error('Error loading organizations:', error)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -115,11 +134,12 @@ const OrganizationManagerPage = () => {
   }
 
   const columns = [
+    { label: 'Organization Id', field: 'organizationId' },
     { label: 'Organization', field: 'organizationName' },
-    { label: 'Phone', field: 'phone' },
-    { label: 'City', field: 'city' },
     { label: 'Country', field: 'country' },
+    { label: 'City', field: 'city' },
     { label: 'Address', field: 'address' },
+    { label: 'Phone', field: 'phone' },
     { label: 'Post Code', field: 'postCode' },
     { label: 'POC', field: 'poc' },
     { label: 'Created', field: 'dateCreated' }
@@ -128,10 +148,10 @@ const OrganizationManagerPage = () => {
   const fields = [
     { label: 'Organization Id', name: 'organizationId', placeholder: '2000FXCV', icon: '🏢', required: true },
     { label: 'Organization Name', name: 'organizationName', placeholder: 'TopNotch Ltd.', icon: '🏢', required: true },
-    { label: 'Phone', name: 'phone', placeholder: '0311-0000000', icon: '📞' },
-    { label: 'City', name: 'city', placeholder: 'Lahore', icon: '🏙️' },
     { label: 'Country', name: 'country', placeholder: 'Pakistan', icon: '🌏', required: true },
+    { label: 'City', name: 'city', placeholder: 'Lahore', icon: '🏙️' },
     { label: 'Address', name: 'address', placeholder: 'Street 1, Sector 4', icon: '🏠' },
+    { label: 'Phone', name: 'phone', placeholder: '0311-0000000', icon: '📞' },
     { label: 'Post Code', name: 'postCode', placeholder: '54000', icon: '📬' },
     { label: 'POC', name: 'poc', placeholder: 'John Doe', icon: '👤' }
   ]

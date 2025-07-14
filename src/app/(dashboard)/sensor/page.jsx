@@ -13,6 +13,7 @@ import DialogBox from '@/views/sensor/DialogBox'
 import SensorService from '@services/sensorService'
 import OrganizationService from '@services/organizationService'
 import GatewayService from '@services/gatewayService'
+import { getStatusCode, getMessage, HttpStatus } from '@/utils/getStatusCode'
 
 const PAGE_SIZE = 10
 
@@ -31,10 +32,15 @@ const SensorManagerPage = () => {
 
   useEffect(() => {
     const fetchOrganization = async () => {
-      const organizations = await OrganizationService.getOrganizations(0, 0)
-      const newData = organizations.data
+      try {
+        const response = await OrganizationService.getOrganizations(0, 0)
+        const data = response?.data?.data || []
 
-      setOrganization(newData)
+        setOrganization(data)
+      } catch (error) {
+        toast.error(getMessage(error))
+        console.error('Error fetching organizations:', error)
+      }
     }
 
     fetchOrganization()
@@ -68,41 +74,74 @@ const SensorManagerPage = () => {
       maxTemperature: updatedData.maxTemperature,
       alertType: updatedData.alertType
     }
+    setLoading(true)
 
-    let success
+    try {
+      let result
 
-    if (isCreateMode) {
-      const result = await SensorService.createSensor(payload)
-      if (result?.status === 201) toast.success('Record Saved')
-      else if (result?.status === 500) toast.info('Internal Server Error')
-      toast.error(result?.response?.data)
-      success = !!result
-      setIsCreateMode(false)
-    } else {
-      success = await SensorService.updateSensor(editData.sensorId, payload)
-      success = await GatewayService.updateGateway(editData.gatewayId, payload)
-      if (success?.status === 200) toast.success('Record Updated')
-      toast.error(success?.response?.data)
-    }
+      if (isCreateMode) {
+        result = await SensorService.createSensor(payload)
+        const code = getStatusCode(result)
+        const message = getMessage(result)
 
-    if (success) {
+        if (code !== HttpStatus.OK && code !== HttpStatus.Created) {
+          toast.error(message)
+          return
+        } else {
+          toast.success(message)
+        }
+        if (isCreateMode) {
+          setIsCreateMode(false)
+        }
+
+        setEditDialogOpen(false)
+      } else {
+        const sensorUpdate = await SensorService.updateSensor(editData.sensorId, payload)
+        const gatewayUpdate = await GatewayService.updateGateway(editData.gatewayId, payload)
+
+        const sensorStatus = getStatusCode(sensorUpdate)
+        const gatewayStatus = getStatusCode(gatewayUpdate)
+
+        if (sensorStatus === HttpStatus.OK && gatewayStatus === HttpStatus.OK) {
+          toast.success('Record Updated')
+        } else {
+          toast.error(getMessage(sensorUpdate) || getMessage(gatewayUpdate))
+          return
+        }
+      }
+
       setEditDialogOpen(false)
       await loadSensors(page)
+    } catch (error) {
+      toast.error(getMessage(error))
+      console.error('Error saving sensor:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
   const loadSensors = async currentPage => {
     setLoading(true)
-    const data = await SensorService.getSensors(currentPage, PAGE_SIZE)
 
-    if (data) {
-      setSensors(data.data)
-      let _totalRecords = data.data[0]?.totalRecord
+    try {
+      const response = await SensorService.getSensors(currentPage, PAGE_SIZE)
 
-      setTotalPages(Math.ceil(_totalRecords / PAGE_SIZE) || 0)
+      if (!response?.data?.success) {
+        toast.error(getMessage(response))
+        return
+      }
+
+      const sensors = response.data?.data || []
+      setSensors(sensors)
+
+      const totalRecords = sensors[0]?.totalRecord || 0
+      setTotalPages(Math.ceil(totalRecords / PAGE_SIZE))
+    } catch (error) {
+      toast.error(getMessage(error))
+      console.error('Error loading sensors:', error)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -138,12 +177,14 @@ const SensorManagerPage = () => {
 
   // Define columns for DataTable
   const columns = [
-    { label: 'Sensor Id', field: 'sensorId' },
-    { label: 'Sensor Name', field: 'sensorName' },
+    { label: 'Organization Id', field: 'organizationId' },
     { label: 'Organization Name', field: 'organizationName' },
+    { label: 'Branch Id', field: 'branchId' },
     { label: 'Branch Name', field: 'branchName' },
     { label: 'Gateway Id', field: 'gatewayId' },
     { label: 'Gateway Name', field: 'gatewayName' },
+    { label: 'Sensor Id', field: 'sensorId' },
+    { label: 'Sensor Name', field: 'sensorName' },
     { label: 'Floor Section Name', field: 'floorSectionName' },
     { label: 'Linked Device', field: 'linkedDevice' },
     { label: 'Min Temperature', field: 'minTemperature' },
@@ -176,8 +217,8 @@ const SensorManagerPage = () => {
         title={isCreateMode ? 'Add Sensor' : 'Edit Sensor'}
         open={editDialogOpen}
         onClose={() => {
-          setIsCreateMode(false)
           setEditDialogOpen(false)
+          setIsCreateMode(false)
         }}
         data={isCreateMode ? '' : editData}
         organization={organization}

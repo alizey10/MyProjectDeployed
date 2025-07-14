@@ -12,6 +12,7 @@ import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/gateway/DialogBox'
 import GatewayService from '@services/gatewayService'
 import OrganizationService from '@services/organizationService'
+import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 
 const PAGE_SIZE = 10
 
@@ -31,8 +32,8 @@ const GatewayManagerPage = () => {
   useEffect(() => {
     const fetchOrganization = async () => {
       const organizations = await OrganizationService.getOrganizations(0, 0)
-      const newData = organizations.data
-
+      if (!organizations.data.success) toast.error(organization.data.message)
+      const newData = organizations.data.data
       setOrganization(newData)
     }
 
@@ -58,39 +59,60 @@ const GatewayManagerPage = () => {
       branchId: updatedData.branchId
     }
 
-    let success
+    try {
+      const result = isCreateMode
+        ? await GatewayService.createGateway(payload)
+        : await GatewayService.updateGateway(editData.gatewayId, payload)
 
-    if (isCreateMode) {
-      const result = await GatewayService.createGateway(payload)
-      if (result?.status === 201) toast.success('Record Saved')
-      else if (result?.status === 500) toast.info('Internal Server Error')
-      toast.error(result?.response?.data)
-      success = !!result
-      setIsCreateMode(false)
-    } else {
-      success = await GatewayService.updateGateway(editData.gatewayId, payload)
-      if (success?.status === 200) toast.success('Record Updated')
-      toast.error(success?.response?.data)
-    }
+      const code = getStatusCode(result)
+      const message = getMessage(result)
 
-    if (success) {
+      if (code === HttpStatus.Conflict) {
+        toast.error(message)
+        return
+      }
+
+      if (!result?.data?.success) {
+        toast.error(message)
+        return
+      }
+
+      toast.success(message)
+
+      if (isCreateMode) {
+        setIsCreateMode(false)
+      }
+
       setEditDialogOpen(false)
       await loadGateways(page)
+    } catch (error) {
+      toast.error(getMessage(error))
+      console.error('Error saving gateway:', error)
     }
   }
 
   const loadGateways = async currentPage => {
     setLoading(true)
-    const data = await GatewayService.getGateways(currentPage, PAGE_SIZE)
 
-    if (data) {
-      setGateways(data.data)
-      let _totalRecords = data.data[0]?.totalRecord
+    try {
+      const response = await GatewayService.getGateways(currentPage, PAGE_SIZE)
 
-      setTotalPages(Math.ceil(_totalRecords / PAGE_SIZE) || 0)
+      if (!response?.data?.success) {
+        toast.error(getMessage(response))
+        return
+      }
+
+      const data = response.data?.data || []
+      setGateways(data)
+
+      const totalRecords = data[0]?.totalRecord || 0
+      setTotalPages(Math.ceil(totalRecords / PAGE_SIZE))
+    } catch (error) {
+      toast.error(getMessage(error))
+      console.error('Failed to load gateways:', error)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -127,7 +149,9 @@ const GatewayManagerPage = () => {
   const columns = [
     { label: 'Gateway Id', field: 'gatewayId' },
     { label: 'Gateway', field: 'gatewayName' },
+    { label: 'Organization Id', field: 'organizationId' },
     { label: 'Organization', field: 'organizationName' },
+    { label: 'Branch Id', field: 'branchId' },
     { label: 'Branch', field: 'branchName' }
 
     // { label: 'Created', field: 'dateCreated' }

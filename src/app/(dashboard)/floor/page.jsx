@@ -10,6 +10,7 @@ import Button from '@mui/material/Button'
 import DataTable from '@/views/floor/DataTable'
 import DialogBox from '@/views/common/DialogBox'
 import floorService from '@/@services/floorService'
+import { getStatusCode, getMessage, HttpStatus } from '@/utils/getStatusCode'
 
 const PAGE_SIZE = 10
 
@@ -17,7 +18,6 @@ const FloorPage = () => {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
-  const [isCreateMode, setIsCreateMode] = useState(false)
   const [open, setOpen] = useState(false)
   const [floor, setFloor] = useState([])
 
@@ -26,32 +26,54 @@ const FloorPage = () => {
   }
 
   const handleSaveEdit = async updatedData => {
-    let success
-    const result = await floorService.createFloor(JSON.stringify(updatedData.floorName))
-    if (result?.status === 201) toast.success('Record Saved')
-    else if (result?.status === 500) toast.info('Internal Server Error')
-    toast.error(result?.response?.data)
+    setLoading(true)
+    let success = false
 
-    success = !!result
-    setOpen(false)
+    try {
+      const result = await floorService.createFloor(JSON.stringify(updatedData.floorName))
+      const code = getStatusCode(result)
 
-    if (success) {
-      await loadFloor(page)
+      if (code === HttpStatus.Created) {
+        toast.success('Record Saved')
+        success = true
+      } else {
+        toast.error(getMessage(result))
+      }
+    } catch (error) {
+      toast.error(getMessage(error))
+      console.error('Error creating floor:', error)
+    } finally {
+      setOpen(false)
+      setLoading(false)
+
+      if (success) {
+        await loadFloor(page)
+      }
     }
   }
 
   const loadFloor = async currentPage => {
     setLoading(true)
-    const data = await floorService.getFloor(currentPage, PAGE_SIZE)
 
-    if (data) {
-      setFloor(data.data)
-      let _totalRecords = data.data[0]?.totalRecord
+    try {
+      const response = await floorService.getFloor(currentPage, PAGE_SIZE)
 
-      setTotalPages(Math.ceil(_totalRecords / PAGE_SIZE) || 0)
+      if (!response?.data?.success) {
+        toast.error(getMessage(response))
+        return
+      }
+
+      const floors = response.data.data || []
+      setFloor(floors)
+
+      const totalRecords = floors[0]?.totalRecord || 0
+      setTotalPages(Math.ceil(totalRecords / PAGE_SIZE))
+    } catch (error) {
+      toast.error(getMessage(error))
+      console.error('Error loading floors:', error)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   useEffect(() => {

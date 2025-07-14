@@ -23,10 +23,10 @@ import { useForm } from 'react-hook-form'
 import branchService from '@/@services/branchService'
 
 const DialogBox = ({ open, title, onClose, data, onSave, fields, organization }) => {
-  const [branches, SetBranches] = useState([]) // Stores the fetched branches
-  const [isLoading, setIsLoading] = useState(false) // Loader state for fetching branches
-  const [isSubmitting, setIsSubmitting] = useState(false) // Loader state for form submission
-  const [branchError, setBranchError] = useState('') // Error message when no branches found
+  const [branches, SetBranches] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [branchError, setBranchError] = useState('')
 
   const {
     register,
@@ -42,17 +42,24 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
   const formValues = watch()
 
   useEffect(() => {
-    if (open && data) {
-      getBranches(data?.organizationId)
-      reset(data || {})
+    const fetchInitialData = async () => {
+      if (open) {
+        let orgId = data?.organizationId || organization?.[0]?.organizationId
+
+        if (data) {
+          reset(data || {})
+        } else {
+          reset({ organizationId: orgId })
+        }
+
+        if (orgId) {
+          await getBranches(orgId)
+        }
+      }
     }
 
-    if (!data) {
-      SetBranches('')
-      setBranchError('')
-      reset('')
-    }
-  }, [open, data, reset])
+    fetchInitialData()
+  }, [open])
 
   const onSubmit = async updatedData => {
     setIsSubmitting(true) // Show loader on form submission
@@ -76,9 +83,9 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
     try {
       const _branches = await branchService.getBranchsByOrgId(0, 0, orgId)
 
-      SetBranches(_branches.data)
+      SetBranches(_branches.data.data)
 
-      if (_branches.data.length === 0) {
+      if (_branches.data.data.length === 0) {
         setBranchError('No branches found for this organization.')
       }
     } catch (error) {
@@ -145,10 +152,9 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
                   defaultValue={data?.organizationId || organization[0]?.organizationId}
                   fullWidth
                   {...register('organizationId', { required: 'Organization is required' })}
-                  onChange={event => {
+                  onChange={async event => {
                     const orgId = event.target.value
-
-                    getBranches(orgId)
+                    await getBranches(orgId)
                   }}
                 >
                   {organization.map(org => (

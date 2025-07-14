@@ -2,9 +2,20 @@
 
 import { useEffect, useState } from 'react'
 
-import { InputLabel, MenuItem, Grid, Select, FormControl, FormHelperText, Box, CircularProgress } from '@mui/material'
+import {
+  InputLabel,
+  MenuItem,
+  Grid,
+  Select,
+  FormControl,
+  FormHelperText,
+  Box,
+  CircularProgress,
+  Button
+} from '@mui/material'
 
 import { useForm } from 'react-hook-form'
+import { toast } from 'react-toastify'
 
 import OrganizationService from '@services/organizationService'
 import BranchService from '@services/branchService'
@@ -38,10 +49,11 @@ const TopNav = ({ onFiltersChange }) => {
       setLoading(true)
       try {
         const orgRes = await OrganizationService.getOrganizations(0, 0)
-        setOrganizations(orgRes?.data || [])
-
+        setOrganizations(orgRes?.data?.data || [])
+        if (!orgRes?.data.success) toast.error(orgRes?.data.message)
         const floorRes = await FloorService.getFloor(0, 0)
-        setFloorSections(floorRes?.data || [])
+        if (!floorRes?.data.success) toast.error(floorRes?.data.message)
+        setFloorSections(floorRes?.data?.data || [])
       } catch (err) {
         console.error('Error fetching initial data:', err)
       }
@@ -59,7 +71,8 @@ const TopNav = ({ onFiltersChange }) => {
       setLoading(true)
       try {
         const res = await BranchService.getBranchsByOrgId(0, 0, organizationId)
-        setBranches(res.data || [])
+        setBranches(res.data?.data || [])
+        if (!res?.data.success) toast.error(res?.data.message)
       } catch (err) {
         console.error('Error loading branches:', err)
       }
@@ -87,7 +100,7 @@ const TopNav = ({ onFiltersChange }) => {
             country,
             branchId,
             floorSectionId,
-            entityCounts: response.data
+            entityCounts: response.data?.data
           })
         }
       } catch (err) {
@@ -121,12 +134,12 @@ const TopNav = ({ onFiltersChange }) => {
       )}
 
       <form id='edit-form' onSubmit={handleSubmit(() => {})}>
-        <Grid container spacing={4} mt={0.5} mb={2}>
-          <Grid item xs={3}>
+        <Grid container spacing={2} mt={0.5} mb={2}>
+          <Grid item xs={12} sm={6} md={3}>
             <FormControl fullWidth error={!!errors.organizationId}>
               <InputLabel>Organization</InputLabel>
               <Select
-                defaultValue=''
+                value={watch('organizationId') || ''}
                 {...register('organizationId')}
                 onChange={e => {
                   setValue('organizationId', e.target.value)
@@ -143,10 +156,14 @@ const TopNav = ({ onFiltersChange }) => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={3}>
+          <Grid item xs={12} sm={6} md={3}>
             <FormControl fullWidth error={!!errors.country}>
               <InputLabel>Country</InputLabel>
-              <Select defaultValue='' {...register('country')} onChange={e => setValue('country', e.target.value)}>
+              <Select
+                value={watch('country') || ''}
+                {...register('country')}
+                onChange={e => setValue('country', e.target.value)}
+              >
                 {Countries?.map((country, idx) => (
                   <MenuItem key={idx} value={country.name}>
                     {country.name}
@@ -157,10 +174,14 @@ const TopNav = ({ onFiltersChange }) => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={3}>
+          <Grid item xs={12} sm={6} md={3}>
             <FormControl fullWidth error={!!errors.branch}>
               <InputLabel>Branch</InputLabel>
-              <Select defaultValue='' {...register('branch')} onChange={e => setValue('branch', e.target.value)}>
+              <Select
+                value={watch('branch') || ''}
+                {...register('branch')}
+                onChange={e => setValue('branch', e.target.value)}
+              >
                 {branches.map((branch, idx) => (
                   <MenuItem key={idx} value={branch.branchId}>
                     {branch.branchName}
@@ -171,11 +192,11 @@ const TopNav = ({ onFiltersChange }) => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={3}>
+          <Grid item xs={12} sm={6} md={3}>
             <FormControl fullWidth error={!!errors.floorSectionId}>
               <InputLabel>Floor Section</InputLabel>
               <Select
-                defaultValue=''
+                value={watch('floorSectionId') || ''}
                 {...register('floorSectionId')}
                 onChange={e => setValue('floorSectionId', e.target.value)}
               >
@@ -187,6 +208,22 @@ const TopNav = ({ onFiltersChange }) => {
               </Select>
               <FormHelperText>{errors.floorSectionId?.message}</FormHelperText>
             </FormControl>
+          </Grid>
+
+          {/* Clear Filter Button */}
+          <Grid item xs={12}>
+            <Button
+              variant='outlined'
+              color='secondary'
+              onClick={() => {
+                setValue('floorSectionId', '')
+                setValue('organizationId', '')
+                setValue('country', '')
+                setValue('branch', '')
+              }}
+            >
+              Clear Filters
+            </Button>
           </Grid>
         </Grid>
       </form>

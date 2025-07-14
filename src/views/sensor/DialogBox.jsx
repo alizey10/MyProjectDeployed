@@ -50,10 +50,10 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
     setIsLoading(true)
     const _branches = await branchService.getBranchsByOrgId(0, 0, orgId)
 
-    setBranches(_branches.data)
+    setBranches(_branches.data.data)
 
     // If no branches exist, set error
-    if (_branches.data.length === 0) {
+    if (_branches.data.data.length === 0) {
       setBranchError('No branches found for this organization.')
     } else {
       setBranchError('')
@@ -67,10 +67,10 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
 
     const _gateways = await gatewayService.getGatewayByBranchId(0, 0, branchId)
 
-    setGateways(_gateways.data)
+    setGateways(_gateways.data.data)
 
     // If no gateways exist, set error
-    if (_gateways.data.length === 0) {
+    if (_gateways.data.data.length === 0) {
       setGatewayError('No gateways found for this branch.')
     } else {
       setGatewayError('')
@@ -82,7 +82,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
   const getFloors = useCallback(async () => {
     const _floors = await floorService.getFloor(0, 0)
 
-    setFloors(_floors.data)
+    setFloors(_floors.data.data)
   }, [])
 
   // Initialize form and fetch data

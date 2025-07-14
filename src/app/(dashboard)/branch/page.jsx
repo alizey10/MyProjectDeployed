@@ -12,6 +12,7 @@ import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/common/DialogBox'
 import BranchService from '@services/branchService'
 import OrganizationService from '@services/organizationService'
+import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 
 const PAGE_SIZE = 10
 
@@ -31,7 +32,8 @@ const BranchPage = () => {
   useEffect(() => {
     const fetchOrganization = async () => {
       const organizations = await OrganizationService.getOrganizations(0, 0)
-      const newData = organizations.data
+      if (!organizations.data.success) toast.error(organization.data.message)
+      const newData = organizations.data.data
       setOrganization(newData)
     }
 
@@ -62,39 +64,56 @@ const BranchPage = () => {
       poc: updatedData.poc
     }
 
-    let success
+    try {
+      const result = isCreateMode
+        ? await BranchService.createBranch(payload)
+        : await BranchService.updateBranch(editData.branchId, payload)
 
-    if (isCreateMode) {
-      const result = await BranchService.createBranch(payload)
-      if (result?.status === 201) toast.success('Record Saved')
-      else if (result?.status === 500) toast.info('Internal Server Error')
-      toast.error(result?.response?.data)
-      success = !!result
-      setIsCreateMode(false)
-    } else {
-      success = await BranchService.updateBranch(editData.branchId, payload)
-      if (success?.status === 200) toast.success('Record Updated')
-      toast.error(success?.response?.data)
-    }
+      const code = getStatusCode(result)
+      const message = getMessage(result)
 
-    if (success) {
+      if (code !== HttpStatus.OK && code !== HttpStatus.Created) {
+        toast.error(message)
+        return
+      } else {
+        toast.success(message)
+      }
+
+      if (isCreateMode) {
+        setIsCreateMode(false)
+      }
+
       setEditDialogOpen(false)
       await loadBranches(page)
+    } catch (error) {
+      toast.error(getMessage(error))
+      console.error('Branch save failed:', error)
     }
   }
 
   const loadBranches = async currentPage => {
     setLoading(true)
-    const data = await BranchService.getBranchs(currentPage, PAGE_SIZE)
 
-    if (data) {
-      setBranches(data.data)
-      let _totalRecords = data.data[0]?.totalRecord
+    try {
+      const response = await BranchService.getBranchs(currentPage, PAGE_SIZE)
 
-      setTotalPages(Math.ceil(_totalRecords / PAGE_SIZE) || 0)
+      if (!response?.data?.success) {
+        toast.error(getMessage(response))
+        return
+      }
+
+      const data = response.data.data || []
+
+      setBranches(data)
+
+      const totalRecords = data[0]?.totalRecord || 0
+      setTotalPages(Math.ceil(totalRecords / PAGE_SIZE))
+    } catch (error) {
+      toast.error(getMessage(error))
+      console.error('Failed to load branches:', error)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -130,13 +149,15 @@ const BranchPage = () => {
 
   // Define columns for DataTable
   const columns = [
+    { label: 'Branch Id', field: 'branchId' },
     { label: 'Branch Name', field: 'branchName' },
+    { label: 'Organization Id', field: 'organizationId' },
     { label: 'Organization', field: 'organizationName' },
-    { label: 'Phone', field: 'phone' },
-    { label: 'Email', field: 'email' },
-    { label: 'City', field: 'city' },
     { label: 'Country', field: 'country' },
+    { label: 'City', field: 'city' },
     { label: 'Address', field: 'address' },
+    { label: 'Email', field: 'email' },
+    { label: 'Phone', field: 'phone' },
     { label: 'POC', field: 'poc' },
     { label: 'Created', field: 'dateCreated' }
   ]
@@ -145,11 +166,11 @@ const BranchPage = () => {
   const fields = [
     { label: 'Branch Id', name: 'branchId', placeholder: 'IDXCV205', icon: '🏢', required: true },
     { label: 'Branch Name', name: 'branchName', placeholder: 'Branch ABC', icon: '🏢', required: true },
+    { label: 'Country', name: 'country', placeholder: 'Pakistan', icon: '🌏' },
+    { label: 'City', name: 'city', placeholder: 'Karachi', icon: '🏙️' },
+    { label: 'Address', name: 'address', placeholder: 'Street 1, Sector 4', icon: '🏠' },
     { label: 'email', name: 'email', placeholder: 'test@gmail.com', icon: '📬' },
     { label: 'Phone', name: 'phone', placeholder: '0311-0000000', icon: '📞' },
-    { label: 'City', name: 'city', placeholder: 'Karachi', icon: '🏙️' },
-    { label: 'Country', name: 'country', placeholder: 'Pakistan', icon: '🌏' },
-    { label: 'Address', name: 'address', placeholder: 'Street 1, Sector 4', icon: '🏠' },
     { label: 'POC', name: 'poc', placeholder: 'John Doe', icon: '👤' }
   ]
 
