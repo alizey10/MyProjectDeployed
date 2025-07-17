@@ -1,5 +1,7 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useStat, useRef } from 'react'
+
+import { Box, Grid, Typography, Paper, Popover, Button } from '@mui/material'
 
 import {
   ResponsiveContainer,
@@ -19,8 +21,6 @@ import {
   Cell,
   Legend
 } from 'recharts'
-import { Box, Grid, Typography, Paper, Popover, Button } from '@mui/material'
-import React, { useRef } from 'react'
 
 const barLineScatterData = Array.from({ length: 30 }, (_, i) => ({
   day: i + 1,
