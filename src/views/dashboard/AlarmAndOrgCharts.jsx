@@ -19,7 +19,8 @@ import {
   Cell,
   Legend
 } from 'recharts'
-import { Box, Grid, Typography, Paper } from '@mui/material'
+import { Box, Grid, Typography, Paper, Popover, Button } from '@mui/material'
+import React, { useRef } from 'react'
 
 const barLineScatterData = Array.from({ length: 30 }, (_, i) => ({
   day: i + 1,
@@ -48,6 +49,9 @@ const EntityType = {
 
 const AlarmAndOrgCharts = ({ entityCounts }) => {
   const [pieData, setPieData] = useState([])
+  const [legendPopover, setLegendPopover] = useState({ open: false, anchor: null, entity: null, status: null })
+  const [popover, setPopover] = useState({ open: false, anchor: null, entry: null })
+  const pieChartRef = useRef(null)
 
   useEffect(() => {
     if (!entityCounts || !Array.isArray(entityCounts)) return
@@ -67,6 +71,59 @@ const AlarmAndOrgCharts = ({ entityCounts }) => {
   const filteredPieData = pieData.filter(entry => entry.value > 0)
   const renderLabel = ({ value }) => (value === 0 ? null : `${value}`)
 
+  // Handle legend color click
+  const handleLegendClick = (event, entity, status) => {
+    console.log('Legend clicked:', entity, status)
+    setLegendPopover({ open: true, anchor: { mouseX: event.clientX, mouseY: event.clientY }, entity, status })
+  }
+
+  const handleLegendPopoverClose = () => {
+    console.log('Legend clicked:', entity, status)
+
+    setLegendPopover({ open: false, anchor: null, entity: null, status: null })
+  }
+
+  // Helper to get filtered data for legend popover
+  const getLegendData = () => {
+    if (!legendPopover.entity || !legendPopover.status) return []
+    return pieData.filter(entry => {
+      const isActive = legendPopover.status === 'active'
+      return (
+        (isActive ? entry.name.startsWith('Active') : entry.name.startsWith('Inactive')) &&
+        entry.name.includes(legendPopover.entity)
+      )
+    })
+  }
+
+  const handleCellClick = (event, entry) => {
+    setPopover({
+      open: true,
+      anchor: { mouseX: event.clientX, mouseY: event.clientY },
+      entry
+    })
+  }
+
+  const handleCellMouseEnter = (event, entry) => {
+    setPopover({
+      open: true,
+      anchor: { mouseX: event.clientX, mouseY: event.clientY },
+      entry
+    })
+  }
+
+  const handleCellMouseLeave = () => {
+    setPopover({ open: false, anchor: null, entry: null })
+  }
+
+  const handlePopoverClose = () => {
+    setPopover({ open: false, anchor: null, entry: null })
+  }
+
+  // Add a handler for mouse leave on the PieChart area
+  const handlePieChartMouseLeave = () => {
+    setPopover({ open: false, anchor: null, entry: null })
+  }
+
   return (
     <Grid container spacing={4}>
       {/* Left Chart */}
@@ -76,7 +133,7 @@ const AlarmAndOrgCharts = ({ entityCounts }) => {
             Overview
           </Typography>
           <ResponsiveContainer width='100%' height={387}>
-            <PieChart>
+            <PieChart ref={pieChartRef} onMouseLeave={handlePieChartMouseLeave}>
               <Pie
                 data={filteredPieData}
                 cx='50%'
@@ -90,12 +147,91 @@ const AlarmAndOrgCharts = ({ entityCounts }) => {
                 label={renderLabel}
               >
                 {filteredPieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                    onClick={e => handleCellClick(e, entry)}
+                    onMouseMove={e => handleCellMouseEnter(e, entry)}
+                    onMouseLeave={handleCellMouseLeave}
+                    style={{ cursor: 'pointer' }}
+                  />
                 ))}
               </Pie>
+              {/* Custom Legend with clickable colors */}
+              <Box display='flex' flexWrap='wrap' mt={2}>
+                {Object.values(EntityType).map((entity, i) => (
+                  <Box key={entity} display='flex' alignItems='center' mr={2} mb={1}>
+                    {/* Active color */}
+                    <Box
+                      sx={{ width: 20, height: 20, bgcolor: COLORS[i * 2], cursor: 'pointer', borderRadius: '50%' }}
+                      onClick={e => handleLegendClick(e, entity, 'active')}
+                      mr={1}
+                    />
+                    <Typography variant='body2' mr={1}>
+                      Active {entity}
+                    </Typography>
+                    {/* Inactive color */}
+                    <Box
+                      sx={{ width: 20, height: 20, bgcolor: COLORS[i * 2 + 1], cursor: 'pointer', borderRadius: '50%' }}
+                      onClick={e => handleLegendClick(e, entity, 'inactive')}
+                      mr={1}
+                    />
+                    <Typography variant='body2'>Inactive {entity}</Typography>
+                  </Box>
+                ))}
+              </Box>
               <Legend />
             </PieChart>
           </ResponsiveContainer>
+          {/* Popover for legend color click */}
+          <Popover
+            open={legendPopover.open}
+            anchorReference='anchorPosition'
+            anchorPosition={
+              legendPopover.anchor ? { top: legendPopover.anchor.mouseY, left: legendPopover.anchor.mouseX } : undefined
+            }
+            onClose={handleLegendPopoverClose}
+            disableRestoreFocus
+          >
+            <Box p={2} minWidth={200}>
+              <Typography variant='subtitle1' mb={1}>
+                {legendPopover.status === 'active' ? 'Active' : 'Inactive'} {legendPopover.entity} Data
+              </Typography>
+              {getLegendData().length > 0 ? (
+                getLegendData().map((entry, idx) => (
+                  <Box key={idx} mb={1}>
+                    <Typography variant='body2'>
+                      {entry.name}: {entry.value}
+                    </Typography>
+                    {/* Show more details if needed */}
+                  </Box>
+                ))
+              ) : (
+                <Typography variant='body2'>No data available.</Typography>
+              )}
+              <Box mt={1} textAlign='right'>
+                <Button size='small' onClick={handleLegendPopoverClose}>
+                  Close
+                </Button>
+              </Box>
+            </Box>
+          </Popover>
+          {/* Popover for Pie section click */}
+          <Popover
+            open={popover.open}
+            anchorReference='anchorPosition'
+            anchorPosition={popover.anchor ? { top: popover.anchor.mouseY, left: popover.anchor.mouseX } : undefined}
+            onClose={handlePopoverClose}
+            disableRestoreFocus
+          >
+            {popover.entry && (
+              <Box p={2}>
+                <Typography variant='subtitle2'>{popover.entry.name}</Typography>
+                <Typography variant='body2'>Active: {popover.entry.value}</Typography>
+                <Typography variant='body2'>Inactive: {0}</Typography>
+              </Box>
+            )}
+          </Popover>
         </Paper>
       </Grid>
       {/* Right Chart */}
