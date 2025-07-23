@@ -24,13 +24,6 @@ import {
   ReferenceArea
 } from 'recharts'
 
-const barLineScatterData = Array.from({ length: 30 }, (_, i) => ({
-  day: i + 1,
-  activeAlarms: Math.floor(20 + Math.random() * 100),
-  trend: 530 + i * 3 + Math.random() * 20,
-  tempSpike: 90 + Math.floor(Math.random() * 15)
-}))
-
 const COLORS = [
   '#4CAF50', // Active Organizations - green
   '#F44336', // Inactive Organizations - red
