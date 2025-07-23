@@ -23,6 +23,22 @@ class ReportServices extends BaseService {
 
     return await this.Get('EntityCounts', cleanParams)
   }
+
+  /**
+   * Fetch sensor summary data using selected filters
+   * @param {Object} params - Filter parameters
+   * @param {string} params.OrganizationId
+   * @param {string} params.OrgCountry
+   * @param {string} params.BranchId
+   * @param {number} params.FloorSectionId
+   * @returns {Promise<any>}
+   */
+  async getSensorSummary(params) {
+    const cleanParams = Object.fromEntries(
+      Object.entries(params).map(([key, value]) => [key, value === undefined ? '' : value])
+    )
+    return await this.Get('SensorSummary', cleanParams)
+  }
 }
 
 export default new ReportServices()

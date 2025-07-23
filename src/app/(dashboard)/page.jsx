@@ -14,9 +14,9 @@ import TopNav from '@/views/dashboard/TopNav'
 import AlarmAndOrgCharts from '@/views/dashboard/AlarmAndOrgCharts'
 
 const DashboardAnalytics = () => {
-  const [entityCount, setEnityCount] = useState([])
+  const [filterData, setFilterData] = useState({})
   const filteredChanges = data => {
-    setEnityCount(data?.entityCounts)
+    setFilterData(data)
   }
   return (
     <>
@@ -24,7 +24,7 @@ const DashboardAnalytics = () => {
         <TopNav onFiltersChange={filteredChanges} />
       </Grid>
       <Grid item xs={12} md={12} lg={12}>
-        <AlarmAndOrgCharts entityCounts={entityCount} />
+        <AlarmAndOrgCharts onFiltersChange={filterData} />
       </Grid>
     </>
   )

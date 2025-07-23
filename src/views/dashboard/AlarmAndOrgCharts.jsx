@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useStat, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 import { Box, Grid, Typography, Paper, Popover, Button } from '@mui/material'
 
@@ -19,7 +19,9 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend
+  Legend,
+  ReferenceLine,
+  ReferenceArea
 } from 'recharts'
 
 const barLineScatterData = Array.from({ length: 30 }, (_, i) => ({
@@ -47,7 +49,8 @@ const EntityType = {
   3: 'Sensors'
 }
 
-const AlarmAndOrgCharts = ({ entityCounts }) => {
+const AlarmAndOrgCharts = ({ onFiltersChange }) => {
+  const { entityCounts, sensorData } = onFiltersChange
   const [pieData, setPieData] = useState([])
   const [legendPopover, setLegendPopover] = useState({ open: false, anchor: null, entity: null, status: null })
   const [popover, setPopover] = useState({ open: false, anchor: null, entry: null })
@@ -73,7 +76,6 @@ const AlarmAndOrgCharts = ({ entityCounts }) => {
 
   // Handle legend color click
   const handleLegendClick = (event, entity, status) => {
-    console.log('Legend clicked:', entity, status)
     setLegendPopover({ open: true, anchor: { mouseX: event.clientX, mouseY: event.clientY }, entity, status })
   }
 
@@ -122,6 +124,36 @@ const AlarmAndOrgCharts = ({ entityCounts }) => {
   // Add a handler for mouse leave on the PieChart area
   const handlePieChartMouseLeave = () => {
     setPopover({ open: false, anchor: null, entry: null })
+  }
+
+  // Validate sensorData before computations
+  const isSensorDataValid = Array.isArray(sensorData) && sensorData.length > 0
+
+  // Only compute chart data if sensorData is valid
+  const grouped = {}
+  let allTimes = []
+  let chartData = []
+  let minTemp, maxTemp
+
+  if (isSensorDataValid) {
+    sensorData.forEach(item => {
+      if (!grouped[item.sensorName]) grouped[item.sensorName] = []
+      grouped[item.sensorName].push({
+        ...item,
+        time: new Date(item.serverTime).toLocaleTimeString()
+      })
+    })
+    allTimes = Array.from(new Set(sensorData.map(item => new Date(item.serverTime).toLocaleTimeString())))
+    chartData = allTimes.map(time => {
+      const entry = { time }
+      Object.keys(grouped).forEach(sensor => {
+        const found = grouped[sensor].find(d => d.time === time)
+        entry[sensor] = found ? found.currentTemperature : null
+      })
+      return entry
+    })
+    minTemp = Math.min(...sensorData.map(d => d.minTemperature))
+    maxTemp = Math.max(...sensorData.map(d => d.maxTemperature))
   }
 
   return (
@@ -238,26 +270,38 @@ const AlarmAndOrgCharts = ({ entityCounts }) => {
       <Grid item xs={12} md={6}>
         <Paper elevation={3} sx={{ p: 2 }}>
           <Typography variant='h6' mb={2}>
-            Alarm Metrics
+            Sensor
           </Typography>
-          <ResponsiveContainer width='100%' height={300}>
-            <ComposedChart data={barLineScatterData}>
-              <CartesianGrid stroke='#eee' strokeDasharray='3 3' />
-              <XAxis dataKey='day' />
-              <YAxis yAxisId='left' />
-              <YAxis yAxisId='right' orientation='right' />
-              <Tooltip />
-              <Bar yAxisId='left' dataKey='activeAlarms' fill='#8884d8' />
-              <Line yAxisId='right' type='monotone' dataKey='trend' stroke='#2c82c9' strokeWidth={2} />
-              <Scatter yAxisId='left' dataKey='tempSpike' fill='red' />
-            </ComposedChart>
+          <ResponsiveContainer width='100%' height={387}>
+            {isSensorDataValid ? (
+              <ComposedChart data={chartData}>
+                <CartesianGrid stroke='#eee' strokeDasharray='3 3' />
+                <XAxis dataKey='time' minTickGap={20} label={{ value: 'Time', position: 'insideBottom', offset: -3 }} />
+                <YAxis label={{ value: 'Temperature', angle: -90, position: 'insideLeft', offset: 10 }} />
+                <Tooltip />
+                <Legend />
+                <ReferenceArea y1={minTemp} y2={maxTemp} fill='#b2fab4' fillOpacity={0.2} />
+                <ReferenceLine y={minTemp} label='Min' stroke='#8884d8' strokeDasharray='3 3' />
+                <ReferenceLine y={maxTemp} label='Max' stroke='#82ca9d' strokeDasharray='3 3' />
+                {Object.keys(grouped).map((sensor, idx) => (
+                  <Line
+                    key={sensor}
+                    type='monotone'
+                    dataKey={sensor}
+                    stroke={`hsl(${(idx * 60) % 360}, 70%, 50%)`}
+                    dot={false}
+                    name={sensor}
+                  />
+                ))}
+              </ComposedChart>
+            ) : (
+              <Box display='flex' alignItems='center' justifyContent='center' height={300}>
+                <Typography variant='body2' color='textSecondary'>
+                  No sensor data available.
+                </Typography>
+              </Box>
+            )}
           </ResponsiveContainer>
-          <Box mt={1}>
-            <Typography variant='body2'>Active Alarms</Typography>
-            <Typography variant='body2'>High Temp Alarms</Typography>
-            <Typography variant='body2'>Low Temp Alarms</Typography>
-            <Typography variant='caption'>(All alarms time based)</Typography>
-          </Box>
         </Paper>
       </Grid>
     </Grid>

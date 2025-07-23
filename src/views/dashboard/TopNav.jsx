@@ -85,15 +85,23 @@ const TopNav = ({ onFiltersChange }) => {
 
   // Call EntityCounts API on any field change
   useEffect(() => {
-    const fetchEntityCounts = async () => {
+    const fetchEntityCountsAndSensorSummary = async () => {
       setLoading(true)
       try {
-        const response = await ReportServices.getEntityCounts({
-          organizationId,
-          country,
-          branchId,
-          floorSectionId
-        })
+        const [entityCountsResponse, sensorSummaryResponse] = await Promise.all([
+          ReportServices.getEntityCounts({
+            organizationId,
+            country,
+            branchId,
+            floorSectionId
+          }),
+          ReportServices.getSensorSummary({
+            OrganizationId: organizationId,
+            OrgCountry: country,
+            BranchId: branchId,
+            FloorSectionId: floorSectionId
+          })
+        ])
 
         if (onFiltersChange) {
           onFiltersChange({
@@ -101,16 +109,17 @@ const TopNav = ({ onFiltersChange }) => {
             country,
             branchId,
             floorSectionId,
-            entityCounts: response.data?.data
+            entityCounts: entityCountsResponse.data?.data,
+            sensorData: sensorSummaryResponse.data?.data
           })
         }
       } catch (err) {
-        console.error('Error fetching entity counts:', err)
+        console.error('Error fetching entity counts or sensor summary:', err)
       }
       setLoading(false)
     }
 
-    fetchEntityCounts()
+    fetchEntityCountsAndSensorSummary()
   }, [organizationId, country, branchId, floorSectionId])
 
   return (
