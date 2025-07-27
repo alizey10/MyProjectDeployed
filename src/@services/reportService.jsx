@@ -11,7 +11,7 @@ class ReportServices extends BaseService {
    * Fetch entity counts using selected filters
    * @param {Object} params - Filter parameters
    * @param {string} params.organizationId
-   * @param {string} params.country
+   * @param {string} params.OrgCountry
    * @param {string} params.branchId
    * @param {number} params.floorSectionId
    * @returns {Promise<any>}
@@ -31,6 +31,8 @@ class ReportServices extends BaseService {
    * @param {string} params.OrgCountry
    * @param {string} params.BranchId
    * @param {number} params.FloorSectionId
+   * @param {date} params.StartDate
+   * @param {date} params.EndDate
    * @returns {Promise<any>}
    */
   async getSensorSummary(params) {

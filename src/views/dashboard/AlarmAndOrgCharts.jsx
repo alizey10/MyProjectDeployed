@@ -73,8 +73,6 @@ const AlarmAndOrgCharts = ({ onFiltersChange }) => {
   }
 
   const handleLegendPopoverClose = () => {
-    console.log('Legend clicked:', entity, status)
-
     setLegendPopover({ open: false, anchor: null, entity: null, status: null })
   }
 
@@ -98,24 +96,7 @@ const AlarmAndOrgCharts = ({ onFiltersChange }) => {
     })
   }
 
-  const handleCellMouseEnter = (event, entry) => {
-    setPopover({
-      open: true,
-      anchor: { mouseX: event.clientX, mouseY: event.clientY },
-      entry
-    })
-  }
-
-  const handleCellMouseLeave = () => {
-    setPopover({ open: false, anchor: null, entry: null })
-  }
-
   const handlePopoverClose = () => {
-    setPopover({ open: false, anchor: null, entry: null })
-  }
-
-  // Add a handler for mouse leave on the PieChart area
-  const handlePieChartMouseLeave = () => {
     setPopover({ open: false, anchor: null, entry: null })
   }
 
@@ -128,15 +109,30 @@ const AlarmAndOrgCharts = ({ onFiltersChange }) => {
   let chartData = []
   let minTemp, maxTemp
 
+  // Helper to format date and time
+  const formatDateTime = isoString => {
+    if (!isoString) return ''
+    const d = new Date(isoString)
+    return d.toLocaleString('en-GB', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+  }
+
   if (isSensorDataValid) {
     sensorData.forEach(item => {
       if (!grouped[item.sensorName]) grouped[item.sensorName] = []
       grouped[item.sensorName].push({
         ...item,
-        time: new Date(item.serverTime).toLocaleTimeString()
+        time: formatDateTime(item.serverTime),
+        serverTime: item.serverTime
       })
     })
-    allTimes = Array.from(new Set(sensorData.map(item => new Date(item.serverTime).toLocaleTimeString())))
+    allTimes = Array.from(new Set(sensorData.map(item => formatDateTime(item.serverTime))))
     chartData = allTimes.map(time => {
       const entry = { time }
       Object.keys(grouped).forEach(sensor => {
@@ -158,7 +154,7 @@ const AlarmAndOrgCharts = ({ onFiltersChange }) => {
             Overview
           </Typography>
           <ResponsiveContainer width='100%' height={387}>
-            <PieChart ref={pieChartRef} onMouseLeave={handlePieChartMouseLeave}>
+            <PieChart ref={pieChartRef}>
               <Pie
                 data={filteredPieData}
                 cx='50%'
@@ -176,8 +172,6 @@ const AlarmAndOrgCharts = ({ onFiltersChange }) => {
                     key={`cell-${index}`}
                     fill={COLORS[index % COLORS.length]}
                     onClick={e => handleCellClick(e, entry)}
-                    onMouseMove={e => handleCellMouseEnter(e, entry)}
-                    onMouseLeave={handleCellMouseLeave}
                     style={{ cursor: 'pointer' }}
                   />
                 ))}
@@ -252,8 +246,14 @@ const AlarmAndOrgCharts = ({ onFiltersChange }) => {
             {popover.entry && (
               <Box p={2}>
                 <Typography variant='subtitle2'>{popover.entry.name}</Typography>
-                <Typography variant='body2'>Active: {popover.entry.value}</Typography>
-                <Typography variant='body2'>Inactive: {0}</Typography>
+                <Typography variant='h5' textAlign='center'>
+                  {popover.entry.value}
+                </Typography>
+                {popover.entry.serverTime && (
+                  <Typography variant='body2' textAlign='center' color='textSecondary'>
+                    {formatDateTime(popover.entry.serverTime)}
+                  </Typography>
+                )}
               </Box>
             )}
           </Popover>
@@ -269,7 +269,11 @@ const AlarmAndOrgCharts = ({ onFiltersChange }) => {
             {isSensorDataValid ? (
               <ComposedChart data={chartData}>
                 <CartesianGrid stroke='#eee' strokeDasharray='3 3' />
-                <XAxis dataKey='time' minTickGap={20} label={{ value: 'Time', position: 'insideBottom', offset: -3 }} />
+                <XAxis
+                  dataKey='time'
+                  minTickGap={20}
+                  label={{ value: 'Date & Time', position: 'insideBottom', offset: -3 }}
+                />
                 <YAxis label={{ value: 'Temperature', angle: -90, position: 'insideLeft', offset: 10 }} />
                 <Tooltip />
                 <Legend />

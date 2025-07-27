@@ -11,7 +11,8 @@ import {
   FormHelperText,
   Box,
   CircularProgress,
-  Button
+  Button,
+  TextField
 } from '@mui/material'
 
 import { useForm } from 'react-hook-form'
@@ -29,6 +30,8 @@ const TopNav = ({ onFiltersChange }) => {
   const [branches, setBranches] = useState([])
   const [floorSections, setFloorSections] = useState([])
   const [loading, setLoading] = useState(false)
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
 
   const {
     register,
@@ -91,7 +94,7 @@ const TopNav = ({ onFiltersChange }) => {
         const [entityCountsResponse, sensorSummaryResponse] = await Promise.all([
           ReportServices.getEntityCounts({
             organizationId,
-            country,
+            OrgCountry: country,
             branchId,
             floorSectionId
           }),
@@ -121,6 +124,40 @@ const TopNav = ({ onFiltersChange }) => {
 
     fetchEntityCountsAndSensorSummary()
   }, [organizationId, country, branchId, floorSectionId])
+
+  // Add effect for StartDate/EndDate changes (only for sensor summary)
+  useEffect(() => {
+    let checkValidity = !!startDate && !!endDate
+    if (!checkValidity) return
+    const fetchSensorSummary = async () => {
+      setLoading(true)
+      try {
+        const sensorSummaryResponse = await ReportServices.getSensorSummary({
+          OrganizationId: organizationId,
+          OrgCountry: country,
+          BranchId: branchId,
+          FloorSectionId: floorSectionId,
+          StartDate: startDate || undefined,
+          EndDate: endDate || undefined
+        })
+        if (onFiltersChange) {
+          onFiltersChange({
+            organizationId,
+            country,
+            branchId,
+            floorSectionId,
+            startDate,
+            endDate,
+            sensorData: sensorSummaryResponse.data?.data
+          })
+        }
+      } catch (err) {
+        console.error('Error fetching sensor summary:', err)
+      }
+      setLoading(false)
+    }
+    fetchSensorSummary()
+  }, [startDate, endDate])
 
   return (
     <Box position='relative'>
@@ -220,6 +257,27 @@ const TopNav = ({ onFiltersChange }) => {
             </FormControl>
           </Grid>
 
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              fullWidth
+              type='date'
+              label='Start Date'
+              value={startDate}
+              onChange={e => setStartDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              fullWidth
+              type='date'
+              label='End Date'
+              value={endDate}
+              onChange={e => setEndDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+
           {/* Clear Filter Button */}
           <Grid item xs={12}>
             <Button
@@ -230,6 +288,8 @@ const TopNav = ({ onFiltersChange }) => {
                 setValue('organizationId', '')
                 setValue('country', '')
                 setValue('branch', '')
+                setStartDate('')
+                setEndDate('')
               }}
             >
               Clear Filters
