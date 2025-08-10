@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-
+import { useSearchParams, useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 
 import Grid from '@mui/material/Grid'
@@ -17,31 +17,102 @@ import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 const PAGE_SIZE = 10
 
 const BranchPage = () => {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const statusFromUrl = searchParams.get('status') || 'active'
+
+  const [statusFilter, setStatusFilter] = useState(statusFromUrl)
   const [branches, setBranches] = useState([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
   const [deleting, setDeleting] = useState(false)
+
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [selectedBranch, setSelectedBranch] = useState(null)
+
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
+
   const [organization, setOrganization] = useState([])
 
-  useEffect(() => {
-    const fetchOrganization = async () => {
-      const organizations = await OrganizationService.getOrganizations(0, 0)
-      if (!organizations.data.success) toast.error(organization.data.message)
-      const newData = organizations.data.data
-      setOrganization(newData)
-    }
 
-    fetchOrganization()
+  const currentOrgId = searchParams.get('organizationId') || ''
+  const currentBranchId = searchParams.get('branchId') || ''
+  const currentOrgName = searchParams.get('orgName') || ''
+
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      try {
+        const res = await OrganizationService.getOrganizations(0, 0)
+        if (!res.data.success) {
+          toast.error(res.data.message)
+          return
+        }
+        setOrganization(res.data.data)
+      } catch (error) {
+        toast.error(getMessage(error))
+        console.error('Error fetching organizations:', error)
+      }
+    }
+    fetchOrganizations()
   }, [])
+
+  useEffect(() => {
+    setStatusFilter(statusFromUrl)
+    setPage(1)
+  }, [statusFromUrl])
+
+  useEffect(() => {
+    loadBranches(page, statusFilter)
+  }, [page, statusFilter])
+
+
+  const loadBranches = async (currentPage, currentStatus) => {
+    setLoading(true)
+    try {
+      const InActive = currentStatus === 'inactive'
+
+      const params = {
+        Page: currentPage,
+        PageSize: PAGE_SIZE,
+        InActive,
+      }
+
+      if (currentOrgId) params.organizationId = currentOrgId
+      if (currentOrgName) params.orgName = currentOrgName
+      if (currentBranchId) params.branchId = currentBranchId
+
+      const res = await BranchService.getBranchsWithParams(params)
+      if (!res?.data?.success) {
+        toast.error(getMessage(res))
+        return
+      }
+      const data = res.data.data || []
+      setBranches(data)
+      const totalRecords = data.length > 0 ? data[0].totalRecord : 0
+      setTotalPages(Math.ceil(totalRecords / PAGE_SIZE))
+    } catch (error) {
+      toast.error(getMessage(error))
+      console.error('Failed to load branches:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleStatusClick = newStatus => {
+    setPage(1)
+    setStatusFilter(newStatus)
+
+    const params = new URLSearchParams(Array.from(searchParams.entries()))
+    params.set('status', newStatus)
+    router.replace(`?${params.toString()}`, { scroll: false })
+  }
 
   const handleEdit = branch => {
     setEditData(branch)
+    setIsCreateMode(false)
     setEditDialogOpen(true)
   }
 
@@ -61,7 +132,7 @@ const BranchPage = () => {
       city: updatedData.city,
       country: updatedData.country,
       address: updatedData.address,
-      poc: updatedData.poc
+      poc: updatedData.poc,
     }
 
     try {
@@ -72,53 +143,26 @@ const BranchPage = () => {
       const code = getStatusCode(result)
       const message = getMessage(result)
 
-      if (code !== HttpStatus.OK && code !== HttpStatus.Created) {
+      if (code === HttpStatus.Conflict) {
         toast.error(message)
         return
-      } else {
-        toast.success(message)
       }
 
-      if (isCreateMode) {
-        setIsCreateMode(false)
-      }
-
-      setEditDialogOpen(false)
-      await loadBranches(page)
-    } catch (error) {
-      toast.error(getMessage(error))
-      console.error('Branch save failed:', error)
-    }
-  }
-
-  const loadBranches = async currentPage => {
-    setLoading(true)
-
-    try {
-      const response = await BranchService.getBranchs(currentPage, PAGE_SIZE)
-
-      if (!response?.data?.success) {
-        toast.error(getMessage(response))
+      if (!result?.data?.success) {
+        toast.error(message)
         return
       }
 
-      const data = response.data.data || []
+      toast.success(message)
+      setEditDialogOpen(false)
+      if (isCreateMode) setIsCreateMode(false)
 
-      setBranches(data)
-
-      const totalRecords = data[0]?.totalRecord || 0
-      setTotalPages(Math.ceil(totalRecords / PAGE_SIZE))
+      await loadBranches(page, statusFilter)
     } catch (error) {
       toast.error(getMessage(error))
-      console.error('Failed to load branches:', error)
-    } finally {
-      setLoading(false)
+      console.error('Error saving branch:', error)
     }
   }
-
-  useEffect(() => {
-    loadBranches(page)
-  }, [page])
 
   const handleDeleteClick = branch => {
     setSelectedBranch(branch)
@@ -128,18 +172,21 @@ const BranchPage = () => {
   const handleConfirmDelete = async () => {
     setConfirmDialogOpen(false)
     setDeleting(true)
+    if (!selectedBranch) return
 
-    if (selectedBranch) {
+    try {
       const success = await BranchService.deleteBranch(selectedBranch.branchId)
-
       if (success) {
         toast.success('Record Deleted')
-        await loadBranches(page)
+        await loadBranches(page, statusFilter)
       }
+    } catch (error) {
+      toast.error(getMessage(error))
+      console.error('Error deleting branch:', error)
+    } finally {
+      setDeleting(false)
+      setSelectedBranch(null)
     }
-
-    setDeleting(false)
-    setSelectedBranch(null)
   }
 
   const handleCancelDelete = () => {
@@ -147,7 +194,6 @@ const BranchPage = () => {
     setSelectedBranch(null)
   }
 
-  // Define columns for DataTable
   const columns = [
     { label: 'Branch Id', field: 'branchId' },
     { label: 'Branch Name', field: 'branchName' },
@@ -159,26 +205,25 @@ const BranchPage = () => {
     { label: 'Email', field: 'email' },
     { label: 'Phone', field: 'phone' },
     { label: 'POC', field: 'poc' },
-    { label: 'Created', field: 'dateCreated' }
+    { label: 'Created', field: 'dateCreated' },
   ]
 
-  // Define fields for DialogBox
   const fields = [
     { label: 'Branch Id', name: 'branchId', placeholder: 'IDXCV205', icon: '🏢', required: true },
     { label: 'Branch Name', name: 'branchName', placeholder: 'Branch ABC', icon: '🏢', required: true },
     { label: 'Country', name: 'country', placeholder: 'Pakistan', icon: '🌏' },
     { label: 'City', name: 'city', placeholder: 'Karachi', icon: '🏙️' },
     { label: 'Address', name: 'address', placeholder: 'Street 1, Sector 4', icon: '🏠' },
-    { label: 'email', name: 'email', placeholder: 'test@gmail.com', icon: '📬' },
+    { label: 'Email', name: 'email', placeholder: 'test@gmail.com', icon: '📬' },
     { label: 'Phone', name: 'phone', placeholder: '0311-0000000', icon: '📞' },
-    { label: 'POC', name: 'poc', placeholder: 'John Doe', icon: '👤' }
+    { label: 'POC', name: 'poc', placeholder: 'John Doe', icon: '👤' },
   ]
 
   return (
     <>
       <ConfirmDialog
         open={confirmDialogOpen}
-        title='Confirm Deletion'
+        title="Confirm Deletion"
         message={`Are you sure you want to delete "${selectedBranch?.branchName}"?`}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
@@ -192,36 +237,47 @@ const BranchPage = () => {
           setIsCreateMode(false)
         }}
         data={isCreateMode ? '' : editData}
-        organization={organization}
         onSave={handleSaveEdit}
+        organization={organization}
         fields={fields}
       />
 
-      <Grid container spacing={6}>
-        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+      <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
+        <Grid item>
           <Button
-            variant='contained'
-            color='success'
-            sx={{ mt: '0px', ml: '5px' }}
-            startIcon={<i className='ri-add-line' />}
-            onClick={handleAdd}
+            variant={statusFilter === 'active' ? 'contained' : 'outlined'}
+            color="primary"
+            sx={{ mr: 2 }}
+            onClick={() => handleStatusClick('active')}
           >
+            Active
+          </Button>
+          <Button
+            variant={statusFilter === 'inactive' ? 'contained' : 'outlined'}
+            color="primary"
+            onClick={() => handleStatusClick('inactive')}
+          >
+            Inactive
+          </Button>
+        </Grid>
+
+        <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button variant="contained" color="success" startIcon={<i className="ri-add-line" />} onClick={handleAdd}>
             Branch
           </Button>
         </Grid>
-        <Grid item xs={12}>
-          <DataTable
-            columns={columns}
-            data={branches}
-            currentPage={page}
-            totalPages={totalPages}
-            loading={loading || deleting}
-            onPageChange={newPage => setPage(newPage)}
-            onEdit={handleEdit}
-            onDelete={handleDeleteClick}
-          />
-        </Grid>
       </Grid>
+
+      <DataTable
+        columns={columns}
+        data={branches}
+        currentPage={page}
+        totalPages={totalPages}
+        loading={loading || deleting}
+        onPageChange={setPage}
+        onEdit={handleEdit}
+        onDelete={handleDeleteClick}
+      />
     </>
   )
 }

@@ -6,8 +6,9 @@ class SensorService extends BaseService {
     this.controllerName = 'sensor'
   }
 
-  async getSensors(page = 1, pageSize = 20) {
-    return await this.Get('', { Page: page, PageSize: pageSize })
+
+  async getSensors(page = 1, pageSize = 20, InActive = false) {
+    return await this.Get('', { Page: page, PageSize: pageSize, InActive })
   }
 
   async deleteSensor(sensorId) {

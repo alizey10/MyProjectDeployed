@@ -1,47 +1,102 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-
+import { useSearchParams, useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
-
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
-
 import DataTable from '@/views/common/DataTable'
 import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/gateway/DialogBox'
 import GatewayService from '@services/gatewayService'
 import OrganizationService from '@services/organizationService'
+
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 
 const PAGE_SIZE = 10
 
 const GatewayManagerPage = () => {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const statusFromUrl = searchParams.get('status') || 'active'
+
+  const [statusFilter, setStatusFilter] = useState(statusFromUrl)
   const [gateways, setGateways] = useState([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
   const [deleting, setDeleting] = useState(false)
+
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [selectedGateway, setSelectedGateway] = useState(null)
+
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
+
   const [organization, setOrganization] = useState([])
 
   useEffect(() => {
-    const fetchOrganization = async () => {
-      const organizations = await OrganizationService.getOrganizations(0, 0)
-      if (!organizations.data.success) toast.error(organization.data.message)
-      const newData = organizations.data.data
-      setOrganization(newData)
+    const fetchOrganizations = async () => {
+      try {
+        const res = await OrganizationService.getOrganizations(0, 0)
+        if (!res.data.success) {
+          toast.error(res.data.message)
+          return
+        }
+        setOrganization(res.data.data)
+      } catch (error) {
+        toast.error(getMessage(error))
+        console.error('Error fetching organizations:', error)
+      }
     }
-
-    fetchOrganization()
+    fetchOrganizations()
   }, [])
+
+  useEffect(() => {
+    setStatusFilter(statusFromUrl)
+    setPage(1)
+  }, [statusFromUrl])
+
+  useEffect(() => {
+    loadGateways(page, statusFilter)
+  }, [page, statusFilter])
+
+
+  const loadGateways = async (currentPage, currentStatus) => {
+    setLoading(true)
+    try {
+      const InActive = currentStatus === 'inactive' 
+      const res = await GatewayService.getGateways(currentPage, PAGE_SIZE, InActive)
+      if (!res?.data?.success) {
+        toast.error(getMessage(res))
+        return
+      }
+      const data = res.data.data || []
+      setGateways(data)
+
+      const totalRecords = data.length > 0 ? data[0].totalRecord : 0
+      setTotalPages(Math.ceil(totalRecords / PAGE_SIZE))
+    } catch (error) {
+      toast.error(getMessage(error))
+      console.error('Failed to load gateways:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleStatusClick = newStatus => {
+    setPage(1)
+    setStatusFilter(newStatus)
+
+    const params = new URLSearchParams(Array.from(searchParams.entries()))
+    params.set('status', newStatus)
+    router.replace(`?${params.toString()}`, { scroll: false })
+  }
 
   const handleEdit = gateway => {
     setEditData(gateway)
+    setIsCreateMode(false)
     setEditDialogOpen(true)
   }
 
@@ -78,46 +133,15 @@ const GatewayManagerPage = () => {
       }
 
       toast.success(message)
-
-      if (isCreateMode) {
-        setIsCreateMode(false)
-      }
-
       setEditDialogOpen(false)
-      await loadGateways(page)
+      if (isCreateMode) setIsCreateMode(false)
+
+      await loadGateways(page, statusFilter)
     } catch (error) {
       toast.error(getMessage(error))
       console.error('Error saving gateway:', error)
     }
   }
-
-  const loadGateways = async currentPage => {
-    setLoading(true)
-
-    try {
-      const response = await GatewayService.getGateways(currentPage, PAGE_SIZE)
-
-      if (!response?.data?.success) {
-        toast.error(getMessage(response))
-        return
-      }
-
-      const data = response.data?.data || []
-      setGateways(data)
-
-      const totalRecords = data[0]?.totalRecord || 0
-      setTotalPages(Math.ceil(totalRecords / PAGE_SIZE))
-    } catch (error) {
-      toast.error(getMessage(error))
-      console.error('Failed to load gateways:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadGateways(page)
-  }, [page])
 
   const handleDeleteClick = gateway => {
     setSelectedGateway(gateway)
@@ -127,18 +151,21 @@ const GatewayManagerPage = () => {
   const handleConfirmDelete = async () => {
     setConfirmDialogOpen(false)
     setDeleting(true)
+    if (!selectedGateway) return
 
-    if (selectedGateway) {
+    try {
       const success = await GatewayService.deleteGateway(selectedGateway.gatewayId)
-
       if (success) {
         toast.success('Record Deleted')
-        await loadGateways(page)
+        await loadGateways(page, statusFilter)
       }
+    } catch (error) {
+      toast.error(getMessage(error))
+      console.error('Error deleting gateway:', error)
+    } finally {
+      setDeleting(false)
+      setSelectedGateway(null)
     }
-
-    setDeleting(false)
-    setSelectedGateway(null)
   }
 
   const handleCancelDelete = () => {
@@ -153,8 +180,6 @@ const GatewayManagerPage = () => {
     { label: 'Organization', field: 'organizationName' },
     { label: 'Branch Id', field: 'branchId' },
     { label: 'Branch', field: 'branchName' }
-
-    // { label: 'Created', field: 'dateCreated' }
   ]
 
   const fields = [
@@ -185,31 +210,42 @@ const GatewayManagerPage = () => {
         fields={fields}
       />
 
-      <Grid container spacing={6}>
-        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+      <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
+        <Grid item>
           <Button
-            variant='contained'
-            color='success'
-            sx={{ mt: '0px', ml: '5px' }}
-            startIcon={<i className='ri-add-line' />}
-            onClick={handleAdd}
+            variant={statusFilter === 'active' ? 'contained' : 'outlined'}
+            color='primary'
+            sx={{ mr: 2 }}
+            onClick={() => handleStatusClick('active')}
           >
+            Active
+          </Button>
+          <Button
+            variant={statusFilter === 'inactive' ? 'contained' : 'outlined'}
+            color='primary'
+            onClick={() => handleStatusClick('inactive')}
+          >
+            Inactive
+          </Button>
+        </Grid>
+
+        <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button variant='contained' color='success' startIcon={<i className='ri-add-line' />} onClick={handleAdd}>
             Gateway
           </Button>
         </Grid>
-        <Grid item xs={12}>
-          <DataTable
-            columns={columns}
-            data={gateways}
-            currentPage={page}
-            totalPages={totalPages}
-            loading={loading || deleting}
-            onPageChange={newPage => setPage(newPage)}
-            onEdit={handleEdit}
-            onDelete={handleDeleteClick}
-          />
-        </Grid>
       </Grid>
+
+      <DataTable
+        columns={columns}
+        data={gateways}
+        currentPage={page}
+        totalPages={totalPages}
+        loading={loading || deleting}
+        onPageChange={setPage}
+        onEdit={handleEdit}
+        onDelete={handleDeleteClick}
+      />
     </>
   )
 }

@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-
+import { useSearchParams, useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
-
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
 
@@ -16,6 +15,13 @@ import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 const PAGE_SIZE = 10
 
 const OrganizationManagerPage = () => {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  const urlStatus = searchParams.get('status') || 'active'
+
+  const [status, setStatus] = useState(urlStatus)
+
   const [orgs, setOrgs] = useState([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -26,6 +32,44 @@ const OrganizationManagerPage = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
+
+  useEffect(() => {
+    setStatus(urlStatus)
+    setPage(1)
+  }, [urlStatus])
+
+  const loadOrganizations = async (currentPage, statusParam) => {
+    console.log('Requesting organizations with status:', statusParam)
+    setLoading(true)
+    try {
+      const InActive = statusParam === 'inactive'
+      const response = await OrganizationService.getOrganizations(currentPage, PAGE_SIZE, InActive)
+      console.log('Response data:', response.data)
+      if (!response.data?.success) {
+        toast.error(getMessage(response))
+        return
+      }
+      const _data = response.data?.data || []
+      setOrgs(_data)
+      const _totalRecords = _data[0]?.totalRecord || 0
+      setTotalPages(Math.ceil(_totalRecords / PAGE_SIZE))
+    } catch (error) {
+      toast.error(getMessage(error))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadOrganizations(page, status)
+  }, [page, status])
+
+  const handleStatusChange = newStatus => {
+    setStatus(newStatus)
+    setPage(1)
+
+    router.push(`/organization?status=${newStatus}`)
+  }
 
   const handleEdit = org => {
     setEditData(org)
@@ -70,41 +114,13 @@ const OrganizationManagerPage = () => {
       }
 
       setEditDialogOpen(false)
-      await loadOrganizations(page)
+      await loadOrganizations(page, status)
     } catch (error) {
       const message = error?.response?.data?.message || 'Unexpected error occurred.'
       toast.error(message)
       console.error('Save failed:', error)
     }
   }
-
-  const loadOrganizations = async currentPage => {
-    setLoading(true)
-
-    try {
-      const response = await OrganizationService.getOrganizations(currentPage, PAGE_SIZE)
-
-      if (!response.data?.success) {
-        toast.error(getMessage(response))
-        return
-      }
-
-      const _data = response.data?.data || []
-      setOrgs(_data)
-
-      const _totalRecords = _data[0]?.totalRecord || 0
-      setTotalPages(Math.ceil(_totalRecords / PAGE_SIZE))
-    } catch (error) {
-      toast.error(getMessage(error))
-      console.error('Error loading organizations:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadOrganizations(page)
-  }, [page])
 
   const handleDeleteClick = org => {
     setSelectedOrg(org)
@@ -117,10 +133,9 @@ const OrganizationManagerPage = () => {
 
     if (selectedOrg) {
       const success = await OrganizationService.deleteOrganization(selectedOrg.organizationId)
-
       if (success) {
         toast.success('Record Deleted')
-        await loadOrganizations(page)
+        await loadOrganizations(page, status)
       }
     }
 
@@ -179,15 +194,18 @@ const OrganizationManagerPage = () => {
       />
 
       <Grid container spacing={6}>
-        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Button variant={status === 'active' ? 'contained' : 'outlined'} onClick={() => handleStatusChange('active')}>
+            Active Organizations
+          </Button>
           <Button
-            variant='contained'
-            color='success'
-            sx={{ mt: '0px', ml: '5px' }}
-            startIcon={<i className='ri-add-line' />}
-            onClick={handleAdd}
+            variant={status === 'inactive' ? 'contained' : 'outlined'}
+            onClick={() => handleStatusChange('inactive')}
           >
-            Organization
+            Inactive Organizations
+          </Button>
+          <Button variant='contained' color='success' startIcon={<i className='ri-add-line' />} onClick={handleAdd}>
+            Add Organization
           </Button>
         </Grid>
         <Grid item xs={12}>

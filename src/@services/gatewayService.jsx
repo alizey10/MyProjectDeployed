@@ -6,8 +6,9 @@ class GatewayService extends BaseService {
     this.controllerName = 'gateway'
   }
 
-  async getGateways(page = 1, pageSize = 20) {
-    return await this.Get('', { Page: page, PageSize: pageSize })
+  async getGateways(page = 1, pageSize = 20, InActive = false) {
+  
+    return await this.Get('', { Page: page, PageSize: pageSize, InActive })
   }
 
   async getGatewayByBranchId(page = 0, pageSize = 0, branchId) {

@@ -6,13 +6,47 @@ class BranchService extends BaseService {
     this.controllerName = 'Branch'
   }
 
-  async getBranchs(page = 1, pageSize = 20) {
-    return await this.Get('', { Page: page, PageSize: pageSize })
+  async getBranchsWithParams(params) {
+    function buildQuery(params) {
+      return Object.entries(params)
+        .filter(([_, v]) => v !== undefined && v !== '')
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+        .join('&')
+    }
+
+    const queryString = buildQuery(params)
+    return await this.Get(queryString ? `?${queryString}` : '')
   }
 
-  async getBranchsByOrgId(page = 1, pageSize = 20, organizationId) {
-    return await this.Get('', { Page: page, PageSize: pageSize, organizationId: organizationId })
+
+  async getBranchs(page = 1, pageSize = 20, InActive = false) {
+    return await this.Get('', {
+      Page: page,
+      PageSize: pageSize,
+      InActive
+    })
   }
+
+  async getBranchsByOrgId(page = 1, pageSize = 20, organizationId, branchId, InActive = false) {
+    return await this.Get('', {
+      Page: page,
+      PageSize: pageSize,
+      OrganizationId: organizationId,
+      BranchId: branchId,
+      InActive
+    })
+  }
+
+ 
+  async getBranchsByOrgName(page = 1, pageSize = 20, organizationName, InActive = false) {
+    return await this.Get('', {
+      Page: page,
+      PageSize: pageSize,
+      OrganizationName: organizationName,
+      InActive
+    })
+  }
+
 
   async deleteBranch(branchId) {
     return await this.Delete(`${branchId}`)

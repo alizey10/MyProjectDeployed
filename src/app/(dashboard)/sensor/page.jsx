@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-
+import { useSearchParams, useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 
 import Grid from '@mui/material/Grid'
@@ -18,6 +18,12 @@ import { getStatusCode, getMessage, HttpStatus } from '@/utils/getStatusCode'
 const PAGE_SIZE = 10
 
 const SensorManagerPage = () => {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  const urlStatus = searchParams.get('status') || 'active'
+
+  const [status, setStatus] = useState(urlStatus)
   const [sensors, setSensors] = useState([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -31,23 +37,64 @@ const SensorManagerPage = () => {
   const [organization, setOrganization] = useState([])
 
   useEffect(() => {
-    const fetchOrganization = async () => {
+    setStatus(urlStatus)
+    setPage(1)
+  }, [urlStatus])
+
+  useEffect(() => {
+    const fetchOrganizations = async () => {
       try {
         const response = await OrganizationService.getOrganizations(0, 0)
-        const data = response?.data?.data || []
-
-        setOrganization(data)
+        if (!response.data.success) {
+          toast.error(response.data.message)
+          return
+        }
+        setOrganization(response.data.data)
       } catch (error) {
         toast.error(getMessage(error))
-        console.error('Error fetching organizations:', error)
       }
     }
-
-    fetchOrganization()
+    fetchOrganizations()
   }, [])
+
+  const loadSensors = async (currentPage, statusParam) => {
+    setLoading(true)
+    try {
+     
+      const InActive = statusParam === 'inactive'
+      const response = await SensorService.getSensors(currentPage, PAGE_SIZE, InActive)
+      if (!response?.data?.success) {
+        toast.error(getMessage(response))
+        setSensors([])
+        setTotalPages(1)
+        return
+      }
+      const sensorList = response.data.data || []
+      setSensors(sensorList)
+      const totalRecord = sensorList.length > 0 ? sensorList[0].totalRecord || 0 : 0
+      setTotalPages(Math.ceil(totalRecord / PAGE_SIZE))
+    } catch (error) {
+      toast.error(getMessage(error))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadSensors(page, status)
+  }, [page, status])
+
+  const handleStatusChange = newStatus => {
+    if (newStatus === status) return
+
+    setStatus(newStatus)
+    setPage(1)
+    router.push(`/sensor?status=${newStatus}`)
+  }
 
   const handleEdit = sensor => {
     setEditData(sensor)
+    setIsCreateMode(false)
     setEditDialogOpen(true)
   }
 
@@ -58,43 +105,34 @@ const SensorManagerPage = () => {
   }
 
   const handleSaveEdit = async updatedData => {
-    const payload = {
-      sensorName: updatedData.sensorName,
-      organizationId: updatedData.organizationId,
-      organizationName: updatedData.organizationName,
-      branchId: updatedData.branchId,
-      branchName: updatedData.branchName,
-      gatewayName: updatedData.gatewayName,
-      gatewayId: updatedData.gatewayId,
-      floorSectionId: updatedData.floorSectionId,
-      floorSectionName: updatedData.floorSectionName,
-      sensorId: updatedData.sensorId,
-      linkedDevice: updatedData.linkedDevice,
-      minTemperature: updatedData.minTemperature,
-      maxTemperature: updatedData.maxTemperature,
-      alertType: updatedData.alertType
-    }
     setLoading(true)
-
     try {
-      let result
+      const payload = {
+        sensorName: updatedData.sensorName,
+        organizationId: updatedData.organizationId,
+        organizationName: updatedData.organizationName,
+        branchId: updatedData.branchId,
+        branchName: updatedData.branchName,
+        gatewayName: updatedData.gatewayName,
+        gatewayId: updatedData.gatewayId,
+        floorSectionId: updatedData.floorSectionId,
+        floorSectionName: updatedData.floorSectionName,
+        sensorId: updatedData.sensorId,
+        linkedDevice: updatedData.linkedDevice,
+        minTemperature: updatedData.minTemperature,
+        maxTemperature: updatedData.maxTemperature,
+        alertType: updatedData.alertType
+      }
 
       if (isCreateMode) {
-        result = await SensorService.createSensor(payload)
+        const result = await SensorService.createSensor(payload)
         const code = getStatusCode(result)
         const message = getMessage(result)
-
-        if (code !== HttpStatus.OK && code !== HttpStatus.Created) {
+        if (![HttpStatus.OK, HttpStatus.Created].includes(code)) {
           toast.error(message)
           return
-        } else {
-          toast.success(message)
         }
-        if (isCreateMode) {
-          setIsCreateMode(false)
-        }
-
-        setEditDialogOpen(false)
+        toast.success(message)
       } else {
         const sensorUpdate = await SensorService.updateSensor(editData.sensorId, payload)
         const gatewayUpdate = await GatewayService.updateGateway(editData.gatewayId, payload)
@@ -111,42 +149,14 @@ const SensorManagerPage = () => {
       }
 
       setEditDialogOpen(false)
-      await loadSensors(page)
+      setIsCreateMode(false)
+      await loadSensors(page, status)
     } catch (error) {
       toast.error(getMessage(error))
-      console.error('Error saving sensor:', error)
     } finally {
       setLoading(false)
     }
   }
-
-  const loadSensors = async currentPage => {
-    setLoading(true)
-
-    try {
-      const response = await SensorService.getSensors(currentPage, PAGE_SIZE)
-
-      if (!response?.data?.success) {
-        toast.error(getMessage(response))
-        return
-      }
-
-      const sensors = response.data?.data || []
-      setSensors(sensors)
-
-      const totalRecords = sensors[0]?.totalRecord || 0
-      setTotalPages(Math.ceil(totalRecords / PAGE_SIZE))
-    } catch (error) {
-      toast.error(getMessage(error))
-      console.error('Error loading sensors:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadSensors(page)
-  }, [page])
 
   const handleDeleteClick = sensor => {
     setSelectedSensor(sensor)
@@ -156,18 +166,20 @@ const SensorManagerPage = () => {
   const handleConfirmDelete = async () => {
     setConfirmDialogOpen(false)
     setDeleting(true)
-
-    if (selectedSensor) {
-      const success = await SensorService.deleteSensor(selectedSensor.sensorId)
-
-      if (success) {
-        toast.success('Record Deleted')
-        await loadSensors(page)
+    try {
+      if (selectedSensor) {
+        const success = await SensorService.deleteSensor(selectedSensor.sensorId)
+        if (success) {
+          toast.success('Record Deleted')
+          await loadSensors(page, status)
+        }
       }
+    } catch (error) {
+      toast.error(getMessage(error))
+    } finally {
+      setDeleting(false)
+      setSelectedSensor(null)
     }
-
-    setDeleting(false)
-    setSelectedSensor(null)
   }
 
   const handleCancelDelete = () => {
@@ -175,7 +187,6 @@ const SensorManagerPage = () => {
     setSelectedSensor(null)
   }
 
-  // Define columns for DataTable
   const columns = [
     { label: 'Organization Id', field: 'organizationId' },
     { label: 'Organization Name', field: 'organizationName' },
@@ -193,7 +204,6 @@ const SensorManagerPage = () => {
     { label: 'Created', field: 'dateCreated' }
   ]
 
-  // Define fields for DialogBox
   const fields = [
     { label: 'Sensor Name', name: 'sensorName', placeholder: 'Temperature Sensor', icon: '📡', required: true },
     { label: 'Sensor Id', name: 'sensorId', placeholder: 'S1234', icon: '🔢', required: true },
@@ -220,37 +230,48 @@ const SensorManagerPage = () => {
           setEditDialogOpen(false)
           setIsCreateMode(false)
         }}
-        data={isCreateMode ? '' : editData}
+        data={isCreateMode ? null : editData}
         organization={organization}
         onSave={handleSaveEdit}
         fields={fields}
       />
 
-      <Grid container spacing={6}>
-        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+      <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
+        <Grid item>
           <Button
-            variant='contained'
-            color='success'
-            sx={{ mt: '0px', ml: '5px' }}
-            startIcon={<i className='ri-add-line' />}
-            onClick={handleAdd}
+            variant={status === 'active' ? 'contained' : 'outlined'}
+            color='primary'
+            sx={{ mr: 2 }}
+            onClick={() => handleStatusChange('active')}
           >
+            Active
+          </Button>
+          <Button
+            variant={status === 'inactive' ? 'contained' : 'outlined'}
+            color='primary'
+            onClick={() => handleStatusChange('inactive')}
+          >
+            Inactive
+          </Button>
+        </Grid>
+
+        <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button variant='contained' color='success' startIcon={<i className='ri-add-line' />} onClick={handleAdd}>
             Sensor
           </Button>
         </Grid>
-        <Grid item xs={12}>
-          <DataTable
-            columns={columns}
-            data={sensors}
-            currentPage={page}
-            totalPages={totalPages}
-            loading={loading || deleting}
-            onPageChange={newPage => setPage(newPage)}
-            onEdit={handleEdit}
-            onDelete={handleDeleteClick}
-          />
-        </Grid>
       </Grid>
+
+      <DataTable
+        columns={columns}
+        data={sensors}
+        currentPage={page}
+        totalPages={totalPages}
+        loading={loading || deleting}
+        onPageChange={setPage}
+        onEdit={handleEdit}
+        onDelete={handleDeleteClick}
+      />
     </>
   )
 }

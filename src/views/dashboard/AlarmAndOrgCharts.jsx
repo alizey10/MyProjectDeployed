@@ -1,39 +1,22 @@
 'use client'
-import { useEffect, useState, useRef } from 'react'
 
-import { Box, Grid, Typography, Paper, Popover, Button } from '@mui/material'
+import { useEffect, useState } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import AppReactApexCharts from '@/libs/styles/AppReactApexCharts'
 
+import { Box, Grid, Typography, Paper } from '@mui/material'
 import {
   ResponsiveContainer,
   ComposedChart,
-  LineChart,
   Line,
   XAxis,
   YAxis,
   CartesianGrid,
-  BarChart,
-  Bar,
   Tooltip,
-  Scatter,
-  ScatterChart,
-  PieChart,
-  Pie,
-  Cell,
   Legend,
   ReferenceLine,
   ReferenceArea
 } from 'recharts'
-
-const COLORS = [
-  '#4CAF50', // Active Organizations - green
-  '#F44336', // Inactive Organizations - red
-  '#2196F3', // Active Branches - blue
-  '#FF9800', // Inactive Branches - orange
-  '#9C27B0', // Active Gateways - purple
-  '#795548', // Inactive Gateways - brown
-  '#00BCD4', // Active Sensors - teal
-  '#E91E63' // Inactive Sensors - pink
-]
 
 const EntityType = {
   0: 'Organizations',
@@ -44,72 +27,53 @@ const EntityType = {
 
 const AlarmAndOrgCharts = ({ onFiltersChange }) => {
   const { entityCounts, sensorData } = onFiltersChange
-  const [pieData, setPieData] = useState([])
-  const [legendPopover, setLegendPopover] = useState({ open: false, anchor: null, entity: null, status: null })
-  const [popover, setPopover] = useState({ open: false, anchor: null, entry: null })
-  const pieChartRef = useRef(null)
+
+  const [pieSeries, setPieSeries] = useState([])
+  const [pieLabels, setPieLabels] = useState([])
+
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  
+  const currentOrgName = searchParams.get('orgName') || ''
+  const currentBranchId = searchParams.get('branchId') || ''
+  const currentOrgId = searchParams.get('organizationId') || ''
 
   useEffect(() => {
-    if (!entityCounts || !Array.isArray(entityCounts)) return
+    if (!entityCounts || !Array.isArray(entityCounts)) {
+      setPieSeries([])
+      setPieLabels([])
+      return
+    }
 
-    const formatted = []
+    const series = []
+    const labels = []
+
     entityCounts.forEach(item => {
       const entityLabel = EntityType[item.entity]
       if (entityLabel) {
-        formatted.push({ name: `Active ${entityLabel}`, value: item.activeCount })
-        formatted.push({ name: `Inactive ${entityLabel}`, value: item.inActiveCount })
+        if (item.activeCount > 0) {
+          series.push(item.activeCount)
+          labels.push(`Active ${entityLabel}`)
+        }
+        if (item.inActiveCount > 0) {
+          series.push(item.inActiveCount)
+          labels.push(`Inactive ${entityLabel}`)
+        }
       }
     })
-    formatted.filter(entry => entry.value > 0)
-    setPieData(formatted)
+
+    setPieSeries(series)
+    setPieLabels(labels)
   }, [entityCounts])
 
-  const filteredPieData = pieData.filter(entry => entry.value > 0)
-  const renderLabel = ({ value }) => (value === 0 ? null : `${value}`)
-
-  // Handle legend color click
-  const handleLegendClick = (event, entity, status) => {
-    setLegendPopover({ open: true, anchor: { mouseX: event.clientX, mouseY: event.clientY }, entity, status })
-  }
-
-  const handleLegendPopoverClose = () => {
-    setLegendPopover({ open: false, anchor: null, entity: null, status: null })
-  }
-
-  // Helper to get filtered data for legend popover
-  const getLegendData = () => {
-    if (!legendPopover.entity || !legendPopover.status) return []
-    return pieData.filter(entry => {
-      const isActive = legendPopover.status === 'active'
-      return (
-        (isActive ? entry.name.startsWith('Active') : entry.name.startsWith('Inactive')) &&
-        entry.name.includes(legendPopover.entity)
-      )
-    })
-  }
-
-  const handleCellClick = (event, entry) => {
-    setPopover({
-      open: true,
-      anchor: { mouseX: event.clientX, mouseY: event.clientY },
-      entry
-    })
-  }
-
-  const handlePopoverClose = () => {
-    setPopover({ open: false, anchor: null, entry: null })
-  }
-
-  // Validate sensorData before computations
   const isSensorDataValid = Array.isArray(sensorData) && sensorData.length > 0
 
-  // Only compute chart data if sensorData is valid
   const grouped = {}
   let allTimes = []
   let chartData = []
   let minTemp, maxTemp
 
-  // Helper to format date and time
   const formatDateTime = isoString => {
     if (!isoString) return ''
     const d = new Date(isoString)
@@ -145,121 +109,42 @@ const AlarmAndOrgCharts = ({ onFiltersChange }) => {
     maxTemp = Math.max(...sensorData.map(d => d.maxTemperature))
   }
 
+ const handlePieClick = (_, index) => {
+  const status = pieLabels[index]
+  const urlParams = new URLSearchParams()
+  urlParams.append('status', status)
+  if (currentOrgId) urlParams.append('organizationId', currentOrgId)
+  if (currentBranchId) urlParams.append('branchId', currentBranchId)
+  if (currentOrgName) urlParams.append('orgName', currentOrgName)
+
+  router.push(`/branch?${urlParams.toString()}`)
+}
+
+
   return (
     <Grid container spacing={4}>
-      {/* Left Chart */}
       <Grid item xs={12} md={6}>
         <Paper elevation={3} sx={{ p: 2 }}>
           <Typography variant='h6' mb={2}>
             Overview
           </Typography>
-          <ResponsiveContainer width='100%' height={387}>
-            <PieChart ref={pieChartRef}>
-              <Pie
-                data={filteredPieData}
-                cx='50%'
-                cy='50%'
-                innerRadius={60}
-                outerRadius={100}
-                fill='#8884d8'
-                paddingAngle={5}
-                dataKey='value'
-                labelLine={false}
-                label={renderLabel}
-              >
-                {filteredPieData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                    onClick={e => handleCellClick(e, entry)}
-                    style={{ cursor: 'pointer' }}
-                  />
-                ))}
-              </Pie>
-              {/* Custom Legend with clickable colors */}
-              <Box display='flex' flexWrap='wrap' mt={2}>
-                {Object.values(EntityType).map((entity, i) => (
-                  <Box key={entity} display='flex' alignItems='center' mr={2} mb={1}>
-                    {/* Active color */}
-                    <Box
-                      sx={{ width: 20, height: 20, bgcolor: COLORS[i * 2], cursor: 'pointer', borderRadius: '50%' }}
-                      onClick={e => handleLegendClick(e, entity, 'active')}
-                      mr={1}
-                    />
-                    <Typography variant='body2' mr={1}>
-                      Active {entity}
-                    </Typography>
-                    {/* Inactive color */}
-                    <Box
-                      sx={{ width: 20, height: 20, bgcolor: COLORS[i * 2 + 1], cursor: 'pointer', borderRadius: '50%' }}
-                      onClick={e => handleLegendClick(e, entity, 'inactive')}
-                      mr={1}
-                    />
-                    <Typography variant='body2'>Inactive {entity}</Typography>
-                  </Box>
-                ))}
-              </Box>
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-          {/* Popover for legend color click */}
-          <Popover
-            open={legendPopover.open}
-            anchorReference='anchorPosition'
-            anchorPosition={
-              legendPopover.anchor ? { top: legendPopover.anchor.mouseY, left: legendPopover.anchor.mouseX } : undefined
-            }
-            onClose={handleLegendPopoverClose}
-            disableRestoreFocus
-          >
-            <Box p={2} minWidth={200}>
-              <Typography variant='subtitle1' mb={1}>
-                {legendPopover.status === 'active' ? 'Active' : 'Inactive'} {legendPopover.entity} Data
-              </Typography>
-              {getLegendData().length > 0 ? (
-                getLegendData().map((entry, idx) => (
-                  <Box key={idx} mb={1}>
-                    <Typography variant='body2'>
-                      {entry.name}: {entry.value}
-                    </Typography>
-                    {/* Show more details if needed */}
-                  </Box>
-                ))
-              ) : (
-                <Typography variant='body2'>No data available.</Typography>
-              )}
-              <Box mt={1} textAlign='right'>
-                <Button size='small' onClick={handleLegendPopoverClose}>
-                  Close
-                </Button>
-              </Box>
-            </Box>
-          </Popover>
-          {/* Popover for Pie section click */}
-          <Popover
-            open={popover.open}
-            anchorReference='anchorPosition'
-            anchorPosition={popover.anchor ? { top: popover.anchor.mouseY, left: popover.anchor.mouseX } : undefined}
-            onClose={handlePopoverClose}
-            disableRestoreFocus
-          >
-            {popover.entry && (
-              <Box p={2}>
-                <Typography variant='subtitle2'>{popover.entry.name}</Typography>
-                <Typography variant='h5' textAlign='center'>
-                  {popover.entry.value}
-                </Typography>
-                {popover.entry.serverTime && (
-                  <Typography variant='body2' textAlign='center' color='textSecondary'>
-                    {formatDateTime(popover.entry.serverTime)}
-                  </Typography>
-                )}
-              </Box>
-            )}
-          </Popover>
+          <AppReactApexCharts
+            type='donut'
+            series={pieSeries}
+            options={{
+              labels: pieLabels,
+              chart: {
+                events: {
+                  dataPointSelection: handlePieClick
+                }
+              }
+            }}
+            boxProps={{ sx: { maxWidth: 600, mx: 'auto' } }}
+            height={385}
+          />
         </Paper>
       </Grid>
-      {/* Right Chart */}
+
       <Grid item xs={12} md={6}>
         <Paper elevation={3} sx={{ p: 2 }}>
           <Typography variant='h6' mb={2}>
