@@ -1,38 +1,85 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
-import Swal from 'sweetalert2'
+
 import Box from '@mui/material/Box'
-import { styled, useTheme } from '@mui/material/styles'
-import dynamic from 'next/dynamic'
+import { styled } from '@mui/material/styles'
 
-const ReactApexcharts = dynamic(() => import('react-apexcharts'), { ssr: false })
+import { useRouter } from 'next/navigation'
 
-const ApexChartWrapper = styled(Box)(() => ({
-  '& .apexcharts-menu-item, & .apexcharts-toolbar': {
-    color: '#000 !important',
-  },
-  '& .apexcharts-menu-item:hover': {
-    color: '#333 !important',
-  },
-  '& .apexcharts-toolbar svg': {
-    fill: '#000 !important',
+import ReactApexcharts from '@/libs/ApexCharts'
+
+const ApexChartWrapper = styled(Box)(({ theme }) => ({
+  '& .apexcharts-canvas': {
+    "& line[stroke='transparent']": {
+      display: 'none'
+    },
+    '& .apexcharts-tooltip': {
+      boxShadow: 'var(--mui-shadows-3)',
+      borderColor: 'var(--mui-palette-divider)',
+      background: 'var(--mui-palette-background-paper)',
+      ...(theme.direction === 'rtl' && {
+        '.apexcharts-tooltip-marker': {
+          marginInlineEnd: 10,
+          marginInlineStart: 0
+        },
+        '.apexcharts-tooltip-text-y-value': {
+          marginInlineStart: 5,
+          marginInlineEnd: 0
+        }
+      }),
+      '& .apexcharts-tooltip-title': {
+        fontWeight: 600,
+        borderColor: 'var(--mui-palette-divider)',
+        background: 'var(--mui-palette-background-paper)'
+      },
+      '&.apexcharts-theme-light': {
+        color: 'var(--mui-palette-text-primary)'
+      },
+      '&.apexcharts-theme-dark': {
+        color: 'var(--mui-palette-common-white)'
+      },
+      '& .apexcharts-tooltip-series-group:first-of-type': {
+        paddingBottom: 0
+      },
+      '& .bar-chart': {
+        padding: theme.spacing(2, 2.5)
+      }
+    },
+    '& .apexcharts-xaxistooltip': {
+      borderColor: 'var(--mui-palette-divider)',
+      '&:before': {
+        borderBottomColor: 'var(--mui-palette-divider)'
+      }
+    },
+    '& .apexcharts-yaxistooltip': {
+      borderColor: 'var(--mui-palette-divider)',
+      '&:before': {
+        borderLeftColor: 'var(--mui-palette-divider)'
+      }
+    },
+    '& .apexcharts-xaxistooltip-text, & .apexcharts-yaxistooltip-text': {
+      color: 'var(--mui-palette-text-primary)'
+    },
+    '& .apexcharts-yaxis .apexcharts-yaxis-texts-g .apexcharts-yaxis-label': {
+      textAnchor: theme.direction === 'rtl' ? 'start' : undefined
+    },
+    '& .apexcharts-text, & .apexcharts-tooltip-text, & .apexcharts-datalabel-label, & .apexcharts-datalabel, & .apexcharts-xaxistooltip-text, & .apexcharts-yaxistooltip-text, & .apexcharts-legend-text': {
+      fontFamily: `${theme.typography.fontFamily} !important`
+    },
+    '& .apexcharts-pie-label': {
+      filter: 'none'
+    },
+    '& .apexcharts-marker': {
+      boxShadow: 'none'
+    }
   }
 }))
 
 const AppReactApexCharts = props => {
   const { boxProps, ...rest } = props
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const theme = useTheme()
 
-  const currentOrgId = searchParams.get('organizationId') || ''
-  const currentBranchId = searchParams.get('branchId') || ''
-  const currentOrgName = searchParams.get('orgName') || ''
-
-  const textColor = theme.palette.mode === 'dark' ? '#fff' : '#000'
-
-  const handleSliceClick = label => {
+  const handleSliceClick = (label) => {
     let status = ''
     let path = ''
     const urlParams = new URLSearchParams()
@@ -74,21 +121,8 @@ const AppReactApexCharts = props => {
         return
     }
 
-  
-    urlParams.append('status', status)
-    if (currentOrgId) urlParams.append('organizationId', currentOrgId)
-    if (currentBranchId) urlParams.append('branchId', currentBranchId)
-    if (currentOrgName) urlParams.append('orgName', currentOrgName)
-
-    Swal.fire({
-      title: `Redirecting to ${label}...`,
-      icon: 'info',
-      timer: 1000,
-      showConfirmButton: false,
-      didClose: () => {
-        router.push(`${path}?${urlParams.toString()}`)
-      }
-    })
+    urlParams.set('status', status)
+    router.push(`${path}?${urlParams.toString()}`)
   }
 
   const optionsWithClick = {
@@ -96,41 +130,12 @@ const AppReactApexCharts = props => {
     chart: {
       ...rest.options?.chart,
       toolbar: { show: true },
-      foreColor: textColor,
+      foreColor: rest.options?.chart?.foreColor || undefined,
       events: {
         ...rest.options?.chart?.events,
         dataPointSelection: (event, chartContext, config) => {
           const clickedLabel = config.w.config.labels[config.dataPointIndex]
           handleSliceClick(clickedLabel)
-        }
-      }
-    },
-    dataLabels: {
-      enabled: true,
-      style: {
-        colors: ['#fff']
-      }
-    },
-    legend: {
-      labels: {
-        colors: textColor
-      }
-    },
-    xaxis: {
-      ...rest.options?.xaxis,
-      labels: {
-        ...rest.options?.xaxis?.labels,
-        style: {
-          colors: textColor
-        }
-      }
-    },
-    yaxis: {
-      ...rest.options?.yaxis,
-      labels: {
-        ...rest.options?.yaxis?.labels,
-        style: {
-          colors: textColor
         }
       }
     }
@@ -144,3 +149,8 @@ const AppReactApexCharts = props => {
 }
 
 export default AppReactApexCharts
+
+
+
+
+
