@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+
 import {
   InputLabel,
   MenuItem,
@@ -13,6 +14,7 @@ import {
   Button,
   TextField
 } from '@mui/material'
+
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 
@@ -40,13 +42,11 @@ const TopNav = ({ onFiltersChange }) => {
   } = useForm({ mode: 'onChange' })
 
   const organizationId = watch('organizationId')
-  const branchId = watch('branch')
   const country = watch('country')
+  const branchId = watch('branch')
   const floorSectionId = watch('floorSectionId')
 
-  const [selectedOrgName, setSelectedOrgName] = useState('')
-
-
+  // Fetch Organizations and Floors
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
@@ -54,7 +54,6 @@ const TopNav = ({ onFiltersChange }) => {
         const orgRes = await OrganizationService.getOrganizations(0, 0)
         setOrganizations(orgRes?.data?.data || [])
         if (!orgRes?.data.success) toast.error(orgRes?.data.message)
-
         const floorRes = await FloorService.getFloor(0, 0)
         if (!floorRes?.data.success) toast.error(floorRes?.data.message)
         setFloorSections(floorRes?.data?.data || [])
@@ -68,11 +67,9 @@ const TopNav = ({ onFiltersChange }) => {
     fetchData()
   }, [])
 
+  // Load branches on organization change
   useEffect(() => {
     if (!organizationId) return
-
-    const selectedOrg = organizations.find(org => org.organizationId === organizationId)
-    setSelectedOrgName(selectedOrg?.organizationName || '')
 
     const loadBranches = async () => {
       setLoading(true)
@@ -89,7 +86,7 @@ const TopNav = ({ onFiltersChange }) => {
     loadBranches()
   }, [organizationId])
 
-
+  // Call EntityCounts API on any field change
   useEffect(() => {
     const fetchEntityCountsAndSensorSummary = async () => {
       setLoading(true)
@@ -112,7 +109,6 @@ const TopNav = ({ onFiltersChange }) => {
         if (onFiltersChange) {
           onFiltersChange({
             organizationId,
-            orgName: selectedOrgName,
             country,
             branchId,
             floorSectionId,
@@ -129,10 +125,10 @@ const TopNav = ({ onFiltersChange }) => {
     fetchEntityCountsAndSensorSummary()
   }, [organizationId, country, branchId, floorSectionId])
 
-
+  // Add effect for StartDate/EndDate changes (only for sensor summary)
   useEffect(() => {
-    if (!startDate || !endDate) return
-
+    let checkValidity = !!startDate && !!endDate
+    if (!checkValidity) return
     const fetchSensorSummary = async () => {
       setLoading(true)
       try {
@@ -141,14 +137,12 @@ const TopNav = ({ onFiltersChange }) => {
           OrgCountry: country,
           BranchId: branchId,
           FloorSectionId: floorSectionId,
-          StartDate: startDate,
-          EndDate: endDate
+          StartDate: startDate || undefined,
+          EndDate: endDate || undefined
         })
-
         if (onFiltersChange) {
           onFiltersChange({
             organizationId,
-            orgName: selectedOrgName,
             country,
             branchId,
             floorSectionId,
@@ -162,7 +156,6 @@ const TopNav = ({ onFiltersChange }) => {
       }
       setLoading(false)
     }
-
     fetchSensorSummary()
   }, [startDate, endDate])
 
@@ -193,7 +186,7 @@ const TopNav = ({ onFiltersChange }) => {
             <FormControl fullWidth error={!!errors.organizationId}>
               <InputLabel>Organization</InputLabel>
               <Select
-                value={organizationId || ''}
+                value={watch('organizationId') || ''}
                 {...register('organizationId')}
                 onChange={e => {
                   setValue('organizationId', e.target.value)
@@ -214,7 +207,7 @@ const TopNav = ({ onFiltersChange }) => {
             <FormControl fullWidth error={!!errors.country}>
               <InputLabel>Country</InputLabel>
               <Select
-                value={country || ''}
+                value={watch('country') || ''}
                 {...register('country')}
                 onChange={e => setValue('country', e.target.value)}
               >
@@ -232,12 +225,12 @@ const TopNav = ({ onFiltersChange }) => {
             <FormControl fullWidth error={!!errors.branch}>
               <InputLabel>Branch</InputLabel>
               <Select
-                value={branchId || ''}
+                value={watch('branch') || ''}
                 {...register('branch')}
                 onChange={e => setValue('branch', e.target.value)}
               >
-                {branches.map(branch => (
-                  <MenuItem key={branch.branchId} value={branch.branchId}>
+                {branches.map((branch, idx) => (
+                  <MenuItem key={idx} value={branch.branchId}>
                     {branch.branchName}
                   </MenuItem>
                 ))}
@@ -250,19 +243,31 @@ const TopNav = ({ onFiltersChange }) => {
             <FormControl fullWidth error={!!errors.floorSectionId}>
               <InputLabel>Floor Section</InputLabel>
               <Select
-                value={floorSectionId || ''}
+                value={watch('floorSectionId') || ''}
                 {...register('floorSectionId')}
                 onChange={e => setValue('floorSectionId', e.target.value)}
               >
-                {floorSections.map(section => (
-                  <MenuItem key={section.floorSectionId} value={section.floorSectionId}>
+                {floorSections.map((section, idx) => (
+                  <MenuItem key={idx} value={section.floorSectionId}>
                     {section.floorSectionName}
                   </MenuItem>
                 ))}
               </Select>
               <FormHelperText>{errors.floorSectionId?.message}</FormHelperText>
             </FormControl>
-          </Grid>          <Grid item xs={12} sm={6} md={3}>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              fullWidth
+              type='date'
+              label='Start Date'
+              value={startDate}
+              onChange={e => setStartDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
             <TextField
               fullWidth
               type='date'
@@ -273,7 +278,7 @@ const TopNav = ({ onFiltersChange }) => {
             />
           </Grid>
 
-        
+          {/* Clear Filter Button */}
           <Grid item xs={12}>
             <Button
               variant='outlined'
@@ -285,11 +290,6 @@ const TopNav = ({ onFiltersChange }) => {
                 setValue('branch', '')
                 setStartDate('')
                 setEndDate('')
-                setBranches([])
-                setSelectedOrgName('')
-                if (onFiltersChange) {
-                  onFiltersChange({})
-                }
               }}
             >
               Clear Filters
@@ -302,4 +302,3 @@ const TopNav = ({ onFiltersChange }) => {
 }
 
 export default TopNav
-
