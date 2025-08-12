@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -18,7 +17,6 @@ import {
   Cell,
   Legend
 } from 'recharts'
-
 import { Box, Grid, Typography, Paper } from '@mui/material'
 
 const barLineScatterData = Array.from({ length: 30 }, (_, i) => ({
@@ -28,16 +26,7 @@ const barLineScatterData = Array.from({ length: 30 }, (_, i) => ({
   tempSpike: 90 + Math.floor(Math.random() * 15)
 }))
 
-const COLORS = [
-  '#4CAF50',
-  '#F44336',
-  '#2196F3',
-  '#FF9800',
-  '#9C27B0',
-  '#795548',
-  '#00BCD4',
-  '#E91E63'
-]
+const COLORS = ['#4CAF50', '#F44336', '#2196F3', '#FF9800', '#9C27B0', '#795548', '#00BCD4', '#E91E63']
 
 const EntityType = {
   0: 'Organizations',
@@ -56,7 +45,7 @@ const AlarmAndOrgCharts = ({ entityCounts }) => {
   const [pieData, setPieData] = useState([])
   const router = useRouter()
 
-  const handleSliceClick = (label) => {
+  const handleSliceClick = label => {
     let status = ''
     let path = ''
     const urlParams = new URLSearchParams()
@@ -138,7 +127,7 @@ const AlarmAndOrgCharts = ({ entityCounts }) => {
                 dataKey='value'
                 labelLine={false}
                 label={renderLabel}
-                onClick={(data) => handleSliceClick(data.name)}
+                onClick={data => handleSliceClick(data.name)}
               >
                 {pieData.map((entry, index) => (
                   <Cell

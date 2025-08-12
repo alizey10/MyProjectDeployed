@@ -6,6 +6,7 @@ module.exports = {
     'react/no-children-prop': 'off',
     '@next/next/no-img-element': 'off',
     '@next/next/no-page-custom-font': 'off',
+    'import/no-anonymous-default-export': 'off',
     'lines-around-comment': [
       'error',
       {
@@ -23,35 +24,6 @@ module.exports = {
       'error',
       {
         count: 1
-      }
-    ],
-    'import/order': [
-      'error',
-      {
-        groups: ['builtin', 'external', ['internal', 'parent', 'sibling', 'index'], ['object', 'unknown']],
-        pathGroups: [
-          {
-            pattern: 'react',
-            group: 'external',
-            position: 'before'
-          },
-          {
-            pattern: 'next/**',
-            group: 'external',
-            position: 'before'
-          },
-          {
-            pattern: '~/**',
-            group: 'external',
-            position: 'before'
-          },
-          {
-            pattern: '@/**',
-            group: 'internal'
-          }
-        ],
-        pathGroupsExcludedImportTypes: ['react', 'type'],
-        'newlines-between': 'always-and-inside-groups'
       }
     ]
   },
