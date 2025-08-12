@@ -25,10 +25,10 @@ class GatewayService extends BaseService {
 
 async activateGateway(gatewayId) {
   try {
-    console.log(`PATCH request to: ${this.controllerName}/${gatewayId}`)
+   
     const response = await this.Patch(`${gatewayId}`, { status: 'active' })
 
-    console.log('Activation response:', response)
+
     const statusCode = response?.data?.statusCode
 
     if (
@@ -49,7 +49,7 @@ async activateGateway(gatewayId) {
       }
     }
   } catch (error) {
-    console.error('Activation error:', error)
+
 
    
     return {

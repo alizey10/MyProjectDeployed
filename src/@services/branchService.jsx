@@ -27,7 +27,7 @@ class BranchService extends BaseService {
     })
   }
 
-  async getBranchsByOrgId(page = 1, pageSize = 20, organizationId, branchId, InActive = false) {
+  async getBranchsByOrgId(page = 1, pageSize = 20, organizationId,  InActive = false) {
     return await this.Get('', {
       Page: page,
       PageSize: pageSize,
@@ -50,10 +50,10 @@ class BranchService extends BaseService {
 
   async activateBranch(branchId) {
     try {
-      console.log(`PATCH request to: ${this.controllerName}/${branchId}`)
+
       const response = await this.Patch(`${branchId}`, { status: 'active' })
 
-      console.log('Branch activation response:', response)
+    
 
       if (
         response.status === APIStatusCode.Created ||
@@ -68,7 +68,7 @@ class BranchService extends BaseService {
         }
       }
     } catch (error) {
-      console.error('Branch activation error:', error)
+    
       return {
         success: false,
         message: error?.response?.data?.message || error.message || 'Network or server error'

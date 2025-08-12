@@ -27,7 +27,7 @@ class OrganizationService extends BaseService {
     try {
       const response = await this.Patch(`${organizationId}`, { Status: 'active' })
 
-      console.log('Activation response:', response)
+
 
       if (
         response.status === APIStatusCode.Created ||
@@ -42,7 +42,7 @@ class OrganizationService extends BaseService {
         }
       }
     } catch (error) {
-      console.error('Activation error:', error)
+     
       return {
         success: false,
         message: error?.response?.data?.message || error.message || 'Network or server error'

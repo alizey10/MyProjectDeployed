@@ -24,10 +24,10 @@ class SensorService extends BaseService {
   }
 async activateSensor(sensorId) {
   try {
-    console.log(`PATCH request to: ${this.controllerName}/${sensorId}`)
+   
     const response = await this.Patch(`${sensorId}`, { status: 'active' })
 
-    console.log('Sensor activation response:', response)
+
 
    
     const statusCode = response?.data?.statusCode
@@ -48,7 +48,7 @@ async activateSensor(sensorId) {
       }
     }
   } catch (error) {
-    console.error('Sensor activation error:', error)
+  
     return {
       success: false,
       message: error?.response?.data?.message || ''
