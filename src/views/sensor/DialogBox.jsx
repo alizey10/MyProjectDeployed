@@ -48,7 +48,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
   const getBranches = useCallback(async orgId => {
     setIsLoading(true)
     try {
-      const response = await branchService.getBranchsByOrgId(1, 20, orgId)
+      const response = await branchService.getBranchsByOrgId(0, 0, orgId)
       const branchData = response?.data?.data || []
       setBranches(branchData)
 
@@ -69,7 +69,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
   const getGatewaysByBranch = useCallback(async branchId => {
     setIsLoading(true)
     try {
-      const response = await gatewayService.getGatewayByBranchId(1, 20, branchId) 
+      const response = await gatewayService.getGatewayByBranchId(0, 0, branchId) 
       const gatewayData = response?.data?.data || []
       setGateways(gatewayData)
 
@@ -89,7 +89,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
 
   const getFloors = useCallback(async () => {
     try {
-      const response = await floorService.getFloor(1, 20)
+      const response = await floorService.getFloor(0, 0)
       const floorData = response?.data?.data || []
       setFloors(floorData)
     } catch (error) {

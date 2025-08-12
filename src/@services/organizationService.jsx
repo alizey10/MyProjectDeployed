@@ -1,4 +1,5 @@
 import BaseService from './baseService'
+import { APIStatusCode } from '@/utils/statusCodes'
 
 class OrganizationService extends BaseService {
   constructor() {
@@ -6,10 +7,9 @@ class OrganizationService extends BaseService {
     this.controllerName = 'organization'
   }
 
- async getOrganizations(page = 1, pageSize = 20, InActive = false) {
-  return await this.Get('', { Page: page, PageSize: pageSize, InActive })
-}
-
+  async getOrganizations(page = 1, pageSize = 20, InActive = false) {
+    return await this.Get('', { Page: page, PageSize: pageSize, InActive })
+  }
 
   async deleteOrganization(organizationId) {
     return await this.Delete(`${organizationId}`)
@@ -21,6 +21,33 @@ class OrganizationService extends BaseService {
 
   async createOrganization(payload) {
     return await this.Post('', payload)
+  }
+
+  async activateOrganization(organizationId) {
+    try {
+      const response = await this.Patch(`${organizationId}`, { Status: 'active' })
+
+      console.log('Activation response:', response)
+
+      if (
+        response.status === APIStatusCode.Created ||
+        response.status === APIStatusCode.Ok ||
+        response.status === APIStatusCode.NoContent
+      ) {
+        return { success: true, message: 'Successfully Activated' }
+      } else {
+        return {
+          success: false,
+          message: response?.data?.message || 'Activation failed on server'
+        }
+      }
+    } catch (error) {
+      console.error('Activation error:', error)
+      return {
+        success: false,
+        message: error?.response?.data?.message || error.message || 'Network or server error'
+      }
+    }
   }
 }
 

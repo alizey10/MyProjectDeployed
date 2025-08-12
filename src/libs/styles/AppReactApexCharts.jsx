@@ -1,6 +1,5 @@
 'use client'
 
-
 import Box from '@mui/material/Box'
 import { styled } from '@mui/material/styles'
 
@@ -75,6 +74,12 @@ const ApexChartWrapper = styled(Box)(({ theme }) => ({
   }
 }))
 
+// ✅ Added StatusEnum for active/inactive
+const StatusEnum = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive'
+}
+
 const AppReactApexCharts = props => {
   const { boxProps, ...rest } = props
   const router = useRouter()
@@ -86,35 +91,35 @@ const AppReactApexCharts = props => {
 
     switch (label) {
       case 'Active Organizations':
-        status = 'active'
+        status = StatusEnum.ACTIVE
         path = '/organization'
         break
       case 'Inactive Organizations':
-        status = 'inactive'
+        status = StatusEnum.INACTIVE
         path = '/organization'
         break
       case 'Active Branches':
-        status = 'active'
+        status = StatusEnum.ACTIVE
         path = '/branch'
         break
       case 'Inactive Branches':
-        status = 'inactive'
+        status = StatusEnum.INACTIVE
         path = '/branch'
         break
       case 'Active Gateways':
-        status = 'active'
+        status = StatusEnum.ACTIVE
         path = '/gateway'
         break
       case 'Inactive Gateways':
-        status = 'inactive'
+        status = StatusEnum.INACTIVE
         path = '/gateway'
         break
       case 'Active Sensors':
-        status = 'active'
+        status = StatusEnum.ACTIVE
         path = '/sensor'
         break
       case 'Inactive Sensors':
-        status = 'inactive'
+        status = StatusEnum.INACTIVE
         path = '/sensor'
         break
       default:
@@ -149,8 +154,3 @@ const AppReactApexCharts = props => {
 }
 
 export default AppReactApexCharts
-
-
-
-
-

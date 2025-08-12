@@ -1,9 +1,10 @@
 import BaseService from './baseService'
+import { APIStatusCode } from '@/utils/statusCodes'
 
 class BranchService extends BaseService {
   constructor() {
     super()
-    this.controllerName = 'Branch'
+    this.controllerName = 'branch'
   }
 
   async getBranchsWithParams(params) {
@@ -18,7 +19,6 @@ class BranchService extends BaseService {
     return await this.Get(queryString ? `?${queryString}` : '')
   }
 
-
   async getBranchs(page = 1, pageSize = 20, InActive = false) {
     return await this.Get('', {
       Page: page,
@@ -32,21 +32,9 @@ class BranchService extends BaseService {
       Page: page,
       PageSize: pageSize,
       OrganizationId: organizationId,
-      BranchId: branchId,
       InActive
     })
   }
-
- 
-  async getBranchsByOrgName(page = 1, pageSize = 20, organizationName, InActive = false) {
-    return await this.Get('', {
-      Page: page,
-      PageSize: pageSize,
-      OrganizationName: organizationName,
-      InActive
-    })
-  }
-
 
   async deleteBranch(branchId) {
     return await this.Delete(`${branchId}`)
@@ -58,6 +46,34 @@ class BranchService extends BaseService {
 
   async createBranch(payload) {
     return await this.Post('', payload)
+  }
+
+  async activateBranch(branchId) {
+    try {
+      console.log(`PATCH request to: ${this.controllerName}/${branchId}`)
+      const response = await this.Patch(`${branchId}`, { status: 'active' })
+
+      console.log('Branch activation response:', response)
+
+      if (
+        response.status === APIStatusCode.Created ||
+        response.status === APIStatusCode.Ok ||
+        response.status === APIStatusCode.NoContent
+      ) {
+        return { success: true, message: 'Successfully Activated' }
+      } else {
+        return {
+          success: false,
+          message: response?.data?.message || 'Branch activation failed on server'
+        }
+      }
+    } catch (error) {
+      console.error('Branch activation error:', error)
+      return {
+        success: false,
+        message: error?.response?.data?.message || error.message || 'Network or server error'
+      }
+    }
   }
 }
 

@@ -1,3 +1,6 @@
+import { APIStatusCode } from '@/utils/statusCodes'
+
+
 export const getStatusCode = res => res?.response?.data?.statusCode || res?.data?.statusCode
 export const getMessage = res => res?.response?.data?.message || res?.data?.message || 'Something went wrong.'
 export const HttpStatus = Object.freeze({
@@ -11,3 +14,4 @@ export const HttpStatus = Object.freeze({
   Conflict: 409,
   InternalServerError: 500
 })
+

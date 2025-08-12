@@ -29,14 +29,14 @@ const barLineScatterData = Array.from({ length: 30 }, (_, i) => ({
 }))
 
 const COLORS = [
-  '#4CAF50', 
-  '#F44336', 
-  '#2196F3', 
-  '#FF9800', 
-  '#9C27B0', 
-  '#795548', 
-  '#00BCD4', 
-  '#E91E63'  
+  '#4CAF50',
+  '#F44336',
+  '#2196F3',
+  '#FF9800',
+  '#9C27B0',
+  '#795548',
+  '#00BCD4',
+  '#E91E63'
 ]
 
 const EntityType = {
@@ -46,10 +46,15 @@ const EntityType = {
   3: 'Sensors'
 }
 
+// ✅ Enum for status values
+const StatusEnum = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive'
+}
+
 const AlarmAndOrgCharts = ({ entityCounts }) => {
   const [pieData, setPieData] = useState([])
   const router = useRouter()
-
 
   const handleSliceClick = (label) => {
     let status = ''
@@ -57,64 +62,64 @@ const AlarmAndOrgCharts = ({ entityCounts }) => {
     const urlParams = new URLSearchParams()
 
     switch (label) {
-  case 'Active Organizations':
-    status = 'active'
-    path = '/organization'
-    break
-  case 'Inactive Organizations':
-    status = 'inactive'
-    path = '/organization'
-    break
-  case 'Active Branches':
-    status = 'active'
-    path = '/branch'
-    break
-  case 'Inactive Branches':
-    status = 'inactive'
-    path = '/branch'
-    break
-  case 'Active Gateways':
-    status = 'active'
-    path = '/gateway'
-    break
-  case 'Inactive Gateways':
-    status = 'inactive'
-    path = '/gateway'
-    break
-  case 'Active Sensors':
-    status = 'active'
-    path = '/sensor'
-    break
-  case 'Inactive Sensors':
-    status = 'inactive'
-    path = '/sensor'
-    break
-  default:
-    return
-}
+      case 'Active Organizations':
+        status = StatusEnum.ACTIVE
+        path = '/organization'
+        break
+      case 'Inactive Organizations':
+        status = StatusEnum.INACTIVE
+        path = '/organization'
+        break
+      case 'Active Branches':
+        status = StatusEnum.ACTIVE
+        path = '/branch'
+        break
+      case 'Inactive Branches':
+        status = StatusEnum.INACTIVE
+        path = '/branch'
+        break
+      case 'Active Gateways':
+        status = StatusEnum.ACTIVE
+        path = '/gateway'
+        break
+      case 'Inactive Gateways':
+        status = StatusEnum.INACTIVE
+        path = '/gateway'
+        break
+      case 'Active Sensors':
+        status = StatusEnum.ACTIVE
+        path = '/sensor'
+        break
+      case 'Inactive Sensors':
+        status = StatusEnum.INACTIVE
+        path = '/sensor'
+        break
+      default:
+        return
+    }
 
     urlParams.set('status', status)
     router.push(`${path}?${urlParams.toString()}`)
   }
-useEffect(() => {
-  if (!entityCounts || !Array.isArray(entityCounts)) return
 
-  const formatted = []
-  entityCounts.forEach(item => {
-    const entityLabel = EntityType[item.entity]
-    if (entityLabel) {
-      formatted.push({ name: `Active ${entityLabel}`, value: item.activeCount })
-      formatted.push({ name: `Inactive ${entityLabel}`, value: item.inActiveCount }) 
-    }
-  })
-  setPieData(formatted.filter(entry => entry.value > 0))
-}, [entityCounts])
+  useEffect(() => {
+    if (!entityCounts || !Array.isArray(entityCounts)) return
+
+    const formatted = []
+    entityCounts.forEach(item => {
+      const entityLabel = EntityType[item.entity]
+      if (entityLabel) {
+        formatted.push({ name: `Active ${entityLabel}`, value: item.activeCount })
+        formatted.push({ name: `Inactive ${entityLabel}`, value: item.inActiveCount })
+      }
+    })
+    setPieData(formatted.filter(entry => entry.value > 0))
+  }, [entityCounts])
 
   const renderLabel = ({ value }) => (value === 0 ? null : `${value}`)
 
   return (
     <Grid container spacing={4}>
-     
       <Grid item xs={12} md={6}>
         <Paper elevation={3} sx={{ p: 2 }}>
           <Typography variant='h6' mb={2}>
@@ -133,19 +138,33 @@ useEffect(() => {
                 dataKey='value'
                 labelLine={false}
                 label={renderLabel}
-                onClick={(data) => handleSliceClick(data.name)} 
+                onClick={(data) => handleSliceClick(data.name)}
               >
                 {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                    style={{ cursor: 'pointer' }} // ✅ pointer on hover
+                  />
                 ))}
               </Pie>
+
+              {/* ✅ Tooltip for hover */}
+              <Tooltip
+                formatter={(value, name) => [`${value}`, name]}
+                contentStyle={{
+                  backgroundColor: '#fff',
+                  borderRadius: '4px',
+                  border: '1px solid #ccc'
+                }}
+              />
+
               <Legend />
             </PieChart>
           </ResponsiveContainer>
         </Paper>
       </Grid>
 
-  
       <Grid item xs={12} md={6}>
         <Paper elevation={3} sx={{ p: 2 }}>
           <Typography variant='h6' mb={2}>
