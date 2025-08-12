@@ -2,9 +2,7 @@
 
 import Box from '@mui/material/Box'
 import { styled } from '@mui/material/styles'
-
 import { useRouter } from 'next/navigation'
-
 import ReactApexcharts from '@/libs/ApexCharts'
 
 const ApexChartWrapper = styled(Box)(({ theme }) => ({
@@ -62,9 +60,10 @@ const ApexChartWrapper = styled(Box)(({ theme }) => ({
     '& .apexcharts-yaxis .apexcharts-yaxis-texts-g .apexcharts-yaxis-label': {
       textAnchor: theme.direction === 'rtl' ? 'start' : undefined
     },
-    '& .apexcharts-text, & .apexcharts-tooltip-text, & .apexcharts-datalabel-label, & .apexcharts-datalabel, & .apexcharts-xaxistooltip-text, & .apexcharts-yaxistooltip-text, & .apexcharts-legend-text': {
-      fontFamily: `${theme.typography.fontFamily} !important`
-    },
+    '& .apexcharts-text, & .apexcharts-tooltip-text, & .apexcharts-datalabel-label, & .apexcharts-datalabel, & .apexcharts-xaxistooltip-text, & .apexcharts-yaxistooltip-text, & .apexcharts-legend-text':
+      {
+        fontFamily: `${theme.typography.fontFamily} !important`
+      },
     '& .apexcharts-pie-label': {
       filter: 'none'
     },
@@ -84,7 +83,7 @@ const AppReactApexCharts = props => {
   const { boxProps, ...rest } = props
   const router = useRouter()
 
-  const handleSliceClick = (label) => {
+  const handleSliceClick = label => {
     let status = ''
     let path = ''
     const urlParams = new URLSearchParams()
