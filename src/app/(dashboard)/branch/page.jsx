@@ -11,8 +11,8 @@ import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/common/DialogBox'
 import BranchService from '@services/branchService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
-import { StatusEnum } from '@/enum/enum'
-import { APIStatusCode } from '@/utils/statusCodes'
+import { StatusEnum } from '@/enum/status-enum'
+import { APIStatusCode } from '@/utils/apiStatusCode'
 
 import { useMemo } from 'react'
 const PAGE_SIZE = 10
@@ -49,8 +49,6 @@ const BranchPage = () => {
     fetchOrganization()
   }, [])
 
-
-  
   useEffect(() => {
     setStatus(urlStatus)
     setPage(1)
@@ -143,28 +141,27 @@ const BranchPage = () => {
   }
 
   const handleConfirmDelete = async () => {
-  setConfirmDialogOpen(false)
-  setDeleting(true)
+    setConfirmDialogOpen(false)
+    setDeleting(true)
 
-  if (selectedBranch) {
-    try {
-      const response = await BranchService.deleteBranch(selectedBranch.branchId)
+    if (selectedBranch) {
+      try {
+        const response = await BranchService.deleteBranch(selectedBranch.branchId)
 
-if (response.status === 200 || response.status === 204) {
-  toast.success('Record Deleted')
-  await loadBranches(page, status)
-} else {
-  toast.error(response?.data?.message || 'Cannot delete branch, it is in use.')
-}
-
-    } catch (error) {
-      toast.error(getMessage(error))
+        if (response.status === 200 || response.status === 204) {
+          toast.success('Record Deleted')
+          await loadBranches(page, status)
+        } else {
+          toast.error(response?.data?.message || 'Cannot delete branch, it is in use.')
+        }
+      } catch (error) {
+        toast.error(getMessage(error))
+      }
     }
-  }
 
-  setDeleting(false)
-  setSelectedBranch(null)
-}
+    setDeleting(false)
+    setSelectedBranch(null)
+  }
 
   const handleCancelDelete = () => {
     setConfirmDialogOpen(false)

@@ -12,7 +12,7 @@ import DialogBox from '@/views/gateway/DialogBox'
 import GatewayService from '@services/gatewayService'
 import OrganizationService from '@services/organizationService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
-import { StatusEnum } from '@enums/enum'
+import { StatusEnum } from '@/enum/status-enum'
 
 const PAGE_SIZE = 10
 const GatewayEnum = StatusEnum

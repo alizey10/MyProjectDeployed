@@ -11,8 +11,8 @@ import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/common/DialogBox'
 import OrganizationService from '@services/organizationService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
-import { StatusEnum } from '@/enum/enum'
-import { APIStatusCode } from '@/utils/statusCodes'
+import { StatusEnum } from '@/enum/status-enum'
+import { APIStatusCode } from '@/utils/apiStatusCode'
 
 const PAGE_SIZE = 10
 
@@ -47,7 +47,7 @@ const OrganizationManagerPage = () => {
   const router = useRouter()
 
   const urlStatus = searchParams.get('status') || OrganizationStatus.ACTIVE
-const [selectedOrganization, setSelectedOrganization] = useState(null)
+  const [selectedOrganization, setSelectedOrganization] = useState(null)
 
   const [status, setStatus] = useState(urlStatus)
   const [orgs, setOrgs] = useState([])
@@ -145,33 +145,33 @@ const [selectedOrganization, setSelectedOrganization] = useState(null)
       toast.error(getMessage(error))
     }
   }
-const handleDeleteClick = (organization) => {
-  setSelectedOrganization(organization)
-  setConfirmDialogOpen(true)
-}
-
-const handleConfirmDelete = async () => {
-  setConfirmDialogOpen(false)
-  setDeleting(true)
-
-  if (selectedOrganization) {
-    try {
-      const response = await OrganizationService.deleteOrganization(selectedOrganization.organizationId)
-
-      if (response.status === 200 || response.status === 204) {
-        toast.success('Record Deleted')
-        await loadOrganizations(page, status)
-      } else {
-        toast.error(response?.data?.message || 'Cannot delete organization, it is in use.')
-      }
-    } catch (error) {
-      toast.error(getMessage(error))
-    }
+  const handleDeleteClick = organization => {
+    setSelectedOrganization(organization)
+    setConfirmDialogOpen(true)
   }
 
-  setDeleting(false)
-  setSelectedOrganization(null)
-}
+  const handleConfirmDelete = async () => {
+    setConfirmDialogOpen(false)
+    setDeleting(true)
+
+    if (selectedOrganization) {
+      try {
+        const response = await OrganizationService.deleteOrganization(selectedOrganization.organizationId)
+
+        if (response.status === 200 || response.status === 204) {
+          toast.success('Record Deleted')
+          await loadOrganizations(page, status)
+        } else {
+          toast.error(response?.data?.message || 'Cannot delete organization, it is in use.')
+        }
+      } catch (error) {
+        toast.error(getMessage(error))
+      }
+    }
+
+    setDeleting(false)
+    setSelectedOrganization(null)
+  }
 
   const handleCancelDelete = () => {
     setConfirmDialogOpen(false)
