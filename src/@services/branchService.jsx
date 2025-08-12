@@ -1,29 +1,44 @@
 import BaseService from './baseService'
+import { APIStatusCode } from '@/utils/statusCodes'
 
 class BranchService extends BaseService {
   constructor() {
     super()
-    this.controllerName = 'Branch'
+    this.controllerName = 'branch'
   }
 
-  async getBranchs(page = 1, pageSize = 20) {
-    return await this.Get('', { Page: page, PageSize: pageSize })
+  getBranchs(page = 1, pageSize = 20, InActive = false) {
+    return this.Get('', { Page: page, PageSize: pageSize, InActive })
   }
 
-  async getBranchsByOrgId(page = 1, pageSize = 20, organizationId) {
-    return await this.Get('', { Page: page, PageSize: pageSize, organizationId: organizationId })
+  getBranchsWithParams(params) {
+ 
+    const queryString = Object.entries(params)
+      .filter(([_, v]) => v !== undefined && v !== '')
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .join('&')
+
+    return this.Get(queryString ? `?${queryString}` : '')
   }
 
-  async deleteBranch(branchId) {
-    return await this.Delete(`${branchId}`)
+  getBranchsByOrgId(page = 1, pageSize = 20, organizationId, InActive = false) {
+    return this.Get('', { Page: page, PageSize: pageSize, OrganizationId: organizationId, InActive })
   }
 
-  async updateBranch(branchId, payload) {
-    return await this.Put(`${branchId}`, payload)
+  deleteBranch(branchId) {
+    return this.Delete(`${branchId}`)
   }
 
-  async createBranch(payload) {
-    return await this.Post('', payload)
+  updateBranch(branchId, payload) {
+    return this.Put(`${branchId}`, payload)
+  }
+
+  createBranch(payload) {
+    return this.Post('', payload)
+  }
+
+  activateBranch(branchId) {
+    return this.Patch(`${branchId}`) 
   }
 }
 

@@ -1,4 +1,5 @@
 import BaseService from './baseService'
+import { APIStatusCode } from '@/utils/statusCodes'
 
 class OrganizationService extends BaseService {
   constructor() {
@@ -6,20 +7,24 @@ class OrganizationService extends BaseService {
     this.controllerName = 'organization'
   }
 
-  async getOrganizations(page = 1, pageSize = 20) {
-    return await this.Get('', { Page: page, PageSize: pageSize })
+  getOrganizations(page = 1, pageSize = 20, InActive = false) {
+    return this.Get('', { Page: page, PageSize: pageSize, InActive })
   }
 
-  async deleteOrganization(organizationId) {
-    return await this.Delete(`${organizationId}`)
+  deleteOrganization(id) {
+    return this.Delete(`${id}`)
   }
 
-  async updateOrganization(organizationId, payload) {
-    return await this.Put(`${organizationId}`, payload)
+  updateOrganization(id, payload) {
+    return this.Put(`${id}`, payload)
   }
 
-  async createOrganization(payload) {
-    return await this.Post('', payload)
+  createOrganization(payload) {
+    return this.Post('', payload)
+  }
+
+  activateOrganization(id) {
+    return this.Patch(`${id}`) 
   }
 }
 

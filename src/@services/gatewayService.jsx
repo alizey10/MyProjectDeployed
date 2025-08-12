@@ -3,27 +3,27 @@ import BaseService from './baseService'
 class GatewayService extends BaseService {
   constructor() {
     super()
-    this.controllerName = 'gateway'
+    this.controllerName = 'gateway'  
   }
 
-  async getGateways(page = 1, pageSize = 20) {
-    return await this.Get('', { Page: page, PageSize: pageSize })
+  getGateways(page = 1, pageSize = 20, InActive = false) {
+    return this.Get('', { Page: page, PageSize: pageSize, InActive })
   }
 
-  async getGatewayByBranchId(page = 0, pageSize = 0, branchId) {
-    return await this.Get('', { Page: page, PageSize: pageSize, branchId: branchId })
+  deleteGateway(id) {
+    return this.Delete(`${id}`)
   }
 
-  async deleteGateway(gatewayId) {
-    return await this.Delete(`${gatewayId}`)
+  updateGateway(id, payload) {
+    return this.Put(`${id}`, payload)
   }
 
-  async updateGateway(gatewayId, payload) {
-    return await this.Put(`${gatewayId}`, payload)
+  createGateway(payload) {
+    return this.Post('', payload)
   }
 
-  async createGateway(payload) {
-    return await this.Post('', payload)
+  activateGateway(id) {
+    return this.Patch(`${id}`)  
   }
 }
 

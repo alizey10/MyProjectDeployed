@@ -8,6 +8,8 @@ import Pagination from '@mui/material/Pagination'
 import CircularProgress from '@mui/material/CircularProgress'
 import Box from '@mui/material/Box'
 
+// import StatusActionButtons from 'src/components/StatusActionButtons';
+
 import tableStyles from '@core/styles/table.module.css'
 
 const DataTable = ({
@@ -18,8 +20,15 @@ const DataTable = ({
   loading = false,
   onPageChange = () => {},
   onEdit = () => {},
-  onDelete = () => {}
+  onDelete = () => {},
+  onActivate = () => {},
+  status = 'active',
+  activatingId = null  // <- default value yahan add karo
 }) => {
+
+
+  console.log('Current status:', status)
+
   return (
     <Card>
       <div className='overflow-x-auto relative'>
@@ -34,6 +43,7 @@ const DataTable = ({
                 {columns.map((column, index) => (
                   <th key={index}>{column.label}</th>
                 ))}
+                <th>Actions</th> {/* ✅ Add Actions column */}
               </tr>
             </thead>
             <tbody>
@@ -56,9 +66,66 @@ const DataTable = ({
                         <Typography>{item[column.field]}</Typography>
                       )}
                     </td>
+                    
                   ))}
+                  {/* <td>
+        <StatusActionButtons
+          status={status}
+          onEdit={() => onEdit(item)}
+          onDelete={() => onDelete(item)}
+          onActivate={() => onActivate(item)}
+        />
+      </td> */}
+
+                  {/* ✅ Action Buttons */}
+                 <td>
+  <Box sx={{ display: 'flex', gap: 1 }}>
+    {status === 'active' ? (
+      <>
+        <Button
+          variant='outlined'
+          color='primary'
+          size='small'
+          onClick={() => onEdit(item)}
+        >
+          Edit
+        </Button>
+        <Button
+          variant='contained'
+          color='error'
+          size='small'
+          onClick={() => onDelete(item)}
+        >
+          Delete
+        </Button>
+      </>
+    ) : (
+     <Button
+  variant='contained'
+  size='small'
+  sx={{
+    backgroundColor: 'orange',
+    color: '#fff',
+    '&:hover': {
+      backgroundColor: '#ff9800'
+    }
+  }}
+  onClick={() => onActivate(item)}
+  disabled={activatingId === item.organizationId}  // disable while activating
+>
+  {activatingId === item.organizationId ? (
+    <CircularProgress size={20} sx={{ color: '#fff' }} />
+  ) : (
+    'Activate'
+  )}
+</Button>
+    )}
+  </Box>
+</td>
+
                 </tr>
               ))}
+              
             </tbody>
           </table>
         )}
@@ -66,7 +133,12 @@ const DataTable = ({
 
       {/* Pagination */}
       <div className='flex justify-end px-6 py-4'>
-        <Pagination count={totalPages} page={currentPage} onChange={(e, page) => onPageChange(page)} color='primary' />
+        <Pagination
+          count={totalPages}
+          page={currentPage}
+          onChange={(e, page) => onPageChange(page)}
+          color='primary'
+        />
       </div>
     </Card>
   )

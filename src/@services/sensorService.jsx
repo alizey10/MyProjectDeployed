@@ -3,23 +3,27 @@ import BaseService from './baseService'
 class SensorService extends BaseService {
   constructor() {
     super()
-    this.controllerName = 'sensor'
+    this.controllerName = 'Sensor'
   }
 
-  async getSensors(page = 1, pageSize = 20) {
-    return await this.Get('', { Page: page, PageSize: pageSize })
+  getSensors(page = 1, pageSize = 20, InActive = false) {
+    return this.Get('', { Page: page, PageSize: pageSize, InActive })
   }
 
-  async deleteSensor(sensorId) {
-    return await this.Delete(`${sensorId}`)
+  deleteSensor(sensorId) {
+    return this.Delete(`${sensorId}`)
   }
 
-  async updateSensor(sensorId, payload) {
-    return await this.Put(`${sensorId}`, payload)
+  updateSensor(sensorId, payload) {
+    return this.Put(`${sensorId}`, payload)
   }
 
-  async createSensor(payload) {
-    return await this.Post('', payload)
+  createSensor(payload) {
+    return this.Post('', payload)
+  }
+
+  activateSensor(sensorId) {
+    return this.Patch(`${sensorId}`)  
   }
 }
 
