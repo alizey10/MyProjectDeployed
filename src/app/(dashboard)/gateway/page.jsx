@@ -33,8 +33,8 @@ const GatewayManagerPage = () => {
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
   const [activatingId, setActivatingId] = useState(null)
-    const [organization, setOrganization] = useState([])
-     useEffect(() => {
+  const [organization, setOrganization] = useState([])
+  useEffect(() => {
     const fetchOrganization = async () => {
       const organizations = await OrganizationService.getOrganizations(0, 0)
       const newData = organizations.data
@@ -44,7 +44,6 @@ const GatewayManagerPage = () => {
 
     fetchOrganization()
   }, [])
-
 
   useEffect(() => {
     setStatus(urlStatus)
@@ -57,7 +56,6 @@ const GatewayManagerPage = () => {
       const isInactive = currentStatus === GatewayEnum.INACTIVE
       const res = await GatewayService.getGateways(currentPage, PAGE_SIZE, isInactive)
 
-    
       if (!res?.data?.success) {
         toast.error(getMessage(res))
         setGateways([])
@@ -83,13 +81,13 @@ const GatewayManagerPage = () => {
     loadGateways(page, status)
   }, [page, status])
 
-  const handleStatusChange = (newStatus) => {
+  const handleStatusChange = newStatus => {
     setStatus(newStatus)
     setPage(1)
     router.push(`/gateway?status=${newStatus}`)
   }
 
-  const handleEdit = (gateway) => {
+  const handleEdit = gateway => {
     setEditData(gateway)
     setIsCreateMode(false)
     setEditDialogOpen(true)
@@ -101,7 +99,6 @@ const GatewayManagerPage = () => {
     setEditDialogOpen(true)
   }
 
-  
   const handleSaveEdit = async updatedData => {
     const payload = {
       gatewayName: updatedData.gatewayName,
@@ -132,53 +129,51 @@ const GatewayManagerPage = () => {
     }
   }
 
-  const handleDeleteClick = (gateway) => {
+  const handleDeleteClick = gateway => {
     setSelectedGateway(gateway)
     setConfirmDialogOpen(true)
   }
 
   const handleConfirmDelete = async () => {
-  setConfirmDialogOpen(false)
-  setDeleting(true)
+    setConfirmDialogOpen(false)
+    setDeleting(true)
 
-  if (selectedGateway) {
-    try {
-      const response = await GatewayService.deleteGateway(selectedGateway.gatewayId)
+    if (selectedGateway) {
+      try {
+        const response = await GatewayService.deleteGateway(selectedGateway.gatewayId)
 
-      if (response.status === 200 || response.status === 204) {
-        toast.success('Record Deleted')
-        await loadGateways(page, status)
-      } else {
-        toast.error(response?.data?.message || 'Cannot delete gateway, it is in use.')
+        if (response.status === HttpStatus.OK || response.status === HttpStatus.NoContent) {
+          toast.success('Record Deleted')
+          await loadGateways(page, status)
+        } else {
+          toast.error(getMessage(response))
+        }
+      } catch (error) {
+        toast.error(getMessage(error))
       }
-    } catch (error) {
-      toast.error(getMessage(error))
     }
-  }
 
-  setDeleting(false)
-  setSelectedGateway(null)
-}
+    setDeleting(false)
+    setSelectedGateway(null)
+  }
 
   const handleCancelDelete = () => {
     setConfirmDialogOpen(false)
     setSelectedGateway(null)
   }
 
-  const handleActivateClick = async (gateway) => {
+  const handleActivateClick = async gateway => {
     if (activatingId) return
     setActivatingId(gateway.gatewayId)
 
     try {
-    
       const response = await GatewayService.activateGateway(gateway.gatewayId)
 
-  
-      if (response.success) {
+      if (response?.status === HttpStatus.NoContent) {
         toast.success('Gateway Activated')
         await loadGateways(page, status)
       } else {
-        toast.error(response.message || 'Activation failed')
+        toast.error(getMessage(response))
       }
     } catch (error) {
       toast.error(getMessage(error))
@@ -187,17 +182,21 @@ const GatewayManagerPage = () => {
     }
   }
 
- const columns = [
+  const columns = [
     { label: 'Gateway Id', field: 'gatewayId' },
     { label: 'Gateway', field: 'gatewayName' },
     { label: 'Organization', field: 'organizationName' },
     { label: 'Branch', field: 'branchName' }
-
-  
   ]
 
   const fields = [
-        { label: 'Organization Id', name: 'organizationId', placeholder: 'Select Organization', icon: '🏢', required: true },
+    {
+      label: 'Organization Id',
+      name: 'organizationId',
+      placeholder: 'Select Organization',
+      icon: '🏢',
+      required: true
+    },
     { label: 'Branch Id', name: 'branchId', placeholder: 'Select Branch', icon: '🌿', required: true },
     { label: 'Gateway Id', name: 'gatewayId', placeholder: '123', icon: '', required: true },
     { label: 'Gateway Name', name: 'gatewayName', placeholder: 'Main Gateway', icon: '', required: true }
@@ -207,7 +206,7 @@ const GatewayManagerPage = () => {
     <>
       <ConfirmDialog
         open={confirmDialogOpen}
-        title="Confirm Deletion"
+        title='Confirm Deletion'
         message={`Are you sure you want to delete "${selectedGateway?.gatewayName}"?`}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
@@ -230,7 +229,7 @@ const GatewayManagerPage = () => {
         <Grid item>
           <Button
             variant={status === GatewayEnum.ACTIVE ? 'contained' : 'outlined'}
-            color="primary"
+            color='primary'
             sx={{ mr: 2 }}
             onClick={() => handleStatusChange(GatewayEnum.ACTIVE)}
           >
@@ -238,7 +237,7 @@ const GatewayManagerPage = () => {
           </Button>
           <Button
             variant={status === GatewayEnum.INACTIVE ? 'contained' : 'outlined'}
-            color="primary"
+            color='primary'
             onClick={() => handleStatusChange(GatewayEnum.INACTIVE)}
           >
             Inactive
@@ -246,13 +245,8 @@ const GatewayManagerPage = () => {
         </Grid>
 
         <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            variant="contained"
-            color="success"
-            startIcon={<i className="ri-add-line" />}
-            onClick={handleAdd}
-          >
-         Add Gateway
+          <Button variant='contained' color='success' startIcon={<i className='ri-add-line' />} onClick={handleAdd}>
+            Add Gateway
           </Button>
         </Grid>
       </Grid>

@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-     "baseUrl": ".",
+    "baseUrl": ".",
     "target": "ESNext",
     "downlevelIteration": true,
     "lib": [
@@ -20,47 +20,47 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "paths": {
-  "@/*": [
-    "./src/*"
-  ],
-  "@core/*": [
-    "./src/@core/*"
-  ],
-  "@layouts/*": [
-    "./src/@layouts/*"
-  ],
-  "@menu/*": [
-    "./src/@menu/*"
-  ],
-  "@assets/*": [
-    "./src/assets/*"
-  ],
-  "@components/*": [
-    "./src/components/*"
-  ],
-  "@configs/*": [
-    "./src/configs/*"
-  ],
-  "@views/*": [
-    "./src/views/*"
-  ],
-  "@services/*": [
-    "./src/@services/*"
-  ],
-  "@utils/*": [
-    "./src/utils"
-  ],
-  "@enums/*": [
-    "./src/enums/*"
-  ]
-}
-
+      "@/*": [
+        "./src/*"
+      ],
+      "@core/*": [
+        "./src/@core/*"
+      ],
+      "@layouts/*": [
+        "./src/@layouts/*"
+      ],
+      "@menu/*": [
+        "./src/@menu/*"
+      ],
+      "@assets/*": [
+        "./src/assets/*"
+      ],
+      "@components/*": [
+        "./src/components/*"
+      ],
+      "@configs/*": [
+        "./src/configs/*"
+      ],
+      "@views/*": [
+        "./src/views/*"
+      ],
+      "@services/*": [
+        "./src/@services/*"
+      ],
+      "@utils/*": [
+        "./src/utils"
+      ],
+      "@enums/*": [
+        "./src/enums/*"
+      ]
+    }
   },
   "include": [
     "next.config.mjs",
     "tailwind.config.js",
     "**/*.js",
-    "**/*.jsx"
+    "**/*.jsx",
+    "src/enum/api-status-code-enum.ts"
   ],
   "exclude": [
     "node_modules"

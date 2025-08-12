@@ -13,7 +13,6 @@ import SensorService from '@services/sensorService'
 import OrganizationService from '@services/organizationService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 import { StatusEnum } from '@/enum/status-enum'
-import { APIStatusCode } from '@/utils/apiStatusCode'
 
 const PAGE_SIZE = 10
 const SensorStatus = StatusEnum
@@ -182,18 +181,14 @@ const SensorManagerPage = () => {
     try {
       const response = await SensorService.activateSensor(sensor.sensorId)
 
-      if (
-        response.status === APIStatusCode.Created ||
-        response.status === APIStatusCode.Ok ||
-        response.status === APIStatusCode.NoContent
-      ) {
+      if (response.status === HttpStatus.NoContent) {
         toast.success('Sensor Activated')
         await loadSensors(page, status)
       } else {
-        toast.error(response?.data?.message || 'Activation failed on server')
+        toast.error(getMessage(response))
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || error.message || 'Unexpected error occurred')
+      toast.error(getMessage(error))
     } finally {
       setActivatingId(null)
     }

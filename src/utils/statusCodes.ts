@@ -1,6 +1,3 @@
-import { APIStatusCode } from './apiStatusCode';
-
-
 export const getStatusCode = (res: any): number | undefined => {
   return res?.response?.data?.statusCode || res?.data?.statusCode;
 };
