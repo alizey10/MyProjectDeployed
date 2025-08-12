@@ -11,44 +11,43 @@ import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/common/DialogBox'
 import OrganizationService from '@services/organizationService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
-import { StatusEnum } from '@enums/enum'
+import { StatusEnum } from '@/enum/enum'
 import { APIStatusCode } from '@/utils/statusCodes'
-
 
 const PAGE_SIZE = 10
 
-const OrganizationStatus = StatusEnum;
+const OrganizationStatus = StatusEnum
 
 const OrganizationManagerPage = () => {
-const handleActivateClick = async (org) => {
-  if (activatingId) return
-  setActivatingId(org.organizationId)
+  const handleActivateClick = async org => {
+    if (activatingId) return
+    setActivatingId(org.organizationId)
 
-  try {
-    const response = await OrganizationService.activateOrganization(org.organizationId)
+    try {
+      const response = await OrganizationService.activateOrganization(org.organizationId)
 
-    if (
-      response.status === APIStatusCode.Created ||
-      response.status === APIStatusCode.Ok ||
-      response.status === APIStatusCode.NoContent
-    ) {
-      toast.success('Organization Activated')
-      await loadOrganizations(page, status)
-    } else {
-      toast.error(response?.data?.message || 'Activation failed on server')
+      if (
+        response.status === APIStatusCode.Created ||
+        response.status === APIStatusCode.Ok ||
+        response.status === APIStatusCode.NoContent
+      ) {
+        toast.success('Organization Activated')
+        await loadOrganizations(page, status)
+      } else {
+        toast.error(response?.data?.message || 'Activation failed on server')
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message || 'Unexpected error occurred')
+    } finally {
+      setActivatingId(null)
     }
-  } catch (error) {
-    toast.error(error?.response?.data?.message || error.message || 'Unexpected error occurred')
-  } finally {
-    setActivatingId(null)
   }
-}
 
   const searchParams = useSearchParams()
   const router = useRouter()
 
- 
   const urlStatus = searchParams.get('status') || OrganizationStatus.ACTIVE
+const [selectedOrganization, setSelectedOrganization] = useState(null)
 
   const [status, setStatus] = useState(urlStatus)
   const [orgs, setOrgs] = useState([])
@@ -62,7 +61,6 @@ const handleActivateClick = async (org) => {
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
   const [activatingId, setActivatingId] = useState(null)
-  
 
   useEffect(() => {
     setStatus(urlStatus)
@@ -108,13 +106,11 @@ const handleActivateClick = async (org) => {
     setEditDialogOpen(true)
   }
 
-  
   const handleAdd = () => {
     setEditData(null)
     setIsCreateMode(true)
     setEditDialogOpen(true)
   }
-
 
   const handleSaveEdit = async updatedData => {
     const payload = {
@@ -149,30 +145,33 @@ const handleActivateClick = async (org) => {
       toast.error(getMessage(error))
     }
   }
+const handleDeleteClick = (organization) => {
+  setSelectedOrganization(organization)
+  setConfirmDialogOpen(true)
+}
 
+const handleConfirmDelete = async () => {
+  setConfirmDialogOpen(false)
+  setDeleting(true)
 
-  const handleDeleteClick = org => {
-    setSelectedOrg(org)
-    setConfirmDialogOpen(true)
-  }
+  if (selectedOrganization) {
+    try {
+      const response = await OrganizationService.deleteOrganization(selectedOrganization.organizationId)
 
-
-  const handleConfirmDelete = async () => {
-    setConfirmDialogOpen(false)
-    setDeleting(true)
-
-    if (selectedOrg) {
-      const success = await OrganizationService.deleteOrganization(selectedOrg.organizationId)
-      if (success) {
+      if (response.status === 200 || response.status === 204) {
         toast.success('Record Deleted')
         await loadOrganizations(page, status)
+      } else {
+        toast.error(response?.data?.message || 'Cannot delete organization, it is in use.')
       }
+    } catch (error) {
+      toast.error(getMessage(error))
     }
-
-    setDeleting(false)
-    setSelectedOrg(null)
   }
 
+  setDeleting(false)
+  setSelectedOrganization(null)
+}
 
   const handleCancelDelete = () => {
     setConfirmDialogOpen(false)
@@ -191,7 +190,6 @@ const handleActivateClick = async (org) => {
     { label: 'Created', field: 'dateCreated' }
   ]
 
-
   const fields = [
     { label: 'Organization Id', name: 'organizationId', placeholder: '2000FXCV', icon: '🏢', required: true },
     { label: 'Organization Name', name: 'organizationName', placeholder: 'TopNotch Ltd.', icon: '🏢', required: true },
@@ -205,7 +203,6 @@ const handleActivateClick = async (org) => {
 
   return (
     <>
-
       <ConfirmDialog
         open={confirmDialogOpen}
         title='Confirm Deletion'
@@ -213,7 +210,6 @@ const handleActivateClick = async (org) => {
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
       />
-
 
       <DialogBox
         title={isCreateMode ? 'Add Organization' : 'Edit Organization'}
@@ -226,7 +222,6 @@ const handleActivateClick = async (org) => {
         onSave={handleSaveEdit}
         fields={fields}
       />
-
 
       <Grid
         item
@@ -254,31 +249,24 @@ const handleActivateClick = async (org) => {
           </Button>
         </div>
 
-        <Button
-          variant="contained"
-          color="success"
-          startIcon={<i className="ri-add-line" />}
-          onClick={handleAdd}
-        >
+        <Button variant='contained' color='success' startIcon={<i className='ri-add-line' />} onClick={handleAdd}>
           Add Organization
         </Button>
       </Grid>
 
-
-     <DataTable
-  data={orgs}
-  columns={columns}
-  loading={loading}
-  currentPage={page}
-  totalPages={totalPages}
-  onPageChange={setPage}
-  onEdit={handleEdit}
-  onDelete={handleDeleteClick}
-  onActivate={handleActivateClick}
-  status={status}
-  activatingId={activatingId} 
-/>
-
+      <DataTable
+        data={orgs}
+        columns={columns}
+        loading={loading}
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        onEdit={handleEdit}
+        onDelete={handleDeleteClick}
+        onActivate={handleActivateClick}
+        status={status}
+        activatingId={activatingId}
+      />
     </>
   )
 }

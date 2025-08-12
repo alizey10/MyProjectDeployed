@@ -23,7 +23,7 @@ class GatewayService extends BaseService {
   }
 
   activateGateway(id) {
-    return this.Patch(`${id}`, { status: 'active' })  
+    return this.Patch(`${id}`)  
   }
 }
 

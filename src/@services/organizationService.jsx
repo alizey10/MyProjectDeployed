@@ -24,7 +24,7 @@ class OrganizationService extends BaseService {
   }
 
   activateOrganization(id) {
-    return this.Patch(`${id}`, { Status: 'active' }) 
+    return this.Patch(`${id}`) 
   }
 }
 

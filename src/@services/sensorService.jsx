@@ -23,7 +23,7 @@ class SensorService extends BaseService {
   }
 
   activateSensor(sensorId) {
-    return this.Patch(`${sensorId}`, { Status: 'active' })  
+    return this.Patch(`${sensorId}`)  
   }
 }
 

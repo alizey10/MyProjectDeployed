@@ -10,9 +10,9 @@ import DataTable from '@/views/floor/DataTable'
 import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/common/DialogBox'
 import SensorService from '@services/sensorService'
-
+import OrganizationService from '@services/organizationService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
-import { StatusEnum } from '@enums/enum'
+import { StatusEnum } from '@/enum/enum'
 import { APIStatusCode } from '@/utils/statusCodes'
 
 const PAGE_SIZE = 10
@@ -35,6 +35,18 @@ const SensorManagerPage = () => {
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
   const [activatingId, setActivatingId] = useState(null)
+    const [organization, setOrganization] = useState([])
+
+     useEffect(() => {
+    const fetchOrganization = async () => {
+      const organizations = await OrganizationService.getOrganizations(0, 0)
+      const newData = organizations.data
+
+      setOrganization(newData)
+    }
+
+    fetchOrganization()
+  }, [])
 
   useEffect(() => {
     setStatus(urlStatus)
@@ -96,17 +108,24 @@ const SensorManagerPage = () => {
   }
 
   const handleSaveEdit = async (updatedData) => {
-    const payload = {
+    
+   const payload = {
       sensorName: updatedData.sensorName,
       organizationId: updatedData.organizationId,
+      organizationName: updatedData.organizationName,
       branchId: updatedData.branchId,
+      branchName: updatedData.branchName,
+      gatewayName: updatedData.gatewayName,
       gatewayId: updatedData.gatewayId,
       floorSectionId: updatedData.floorSectionId,
+      floorSectionName: updatedData.floorSectionName,
+      sensorId: updatedData.sensorId,
       linkedDevice: updatedData.linkedDevice,
       minTemperature: updatedData.minTemperature,
       maxTemperature: updatedData.maxTemperature,
       alertType: updatedData.alertType
     }
+
 
     try {
       const result = isCreateMode
@@ -199,6 +218,7 @@ const SensorManagerPage = () => {
 
   const fields = [
     { label: 'Sensor Name', name: 'sensorName', placeholder: 'Temperature Sensor', icon: '📡', required: true },
+    { label: 'Sensor Id', name: 'sensorId', placeholder: 'Unique Sensor ID', icon: '🆔', required: true },
     { label: 'Organization Id', name: 'organizationId', placeholder: 'Organization Id', icon: '🏢', required: true },
     { label: 'Branch Id', name: 'branchId', placeholder: 'Branch Id', icon: '🏬', required: true },
     { label: 'Gateway Id', name: 'gatewayId', placeholder: 'Gateway Id', icon: '🔌', required: true },
@@ -226,6 +246,7 @@ const SensorManagerPage = () => {
           setEditDialogOpen(false)
           setIsCreateMode(false)
         }}
+        organization={organization}
         data={isCreateMode ? null : editData}
         onSave={handleSaveEdit}
         fields={fields}

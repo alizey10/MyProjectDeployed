@@ -38,7 +38,7 @@ class BranchService extends BaseService {
   }
 
   activateBranch(branchId) {
-    return this.Patch(`${branchId}`, { status: 'active' }) 
+    return this.Patch(`${branchId}`) 
   }
 }
 

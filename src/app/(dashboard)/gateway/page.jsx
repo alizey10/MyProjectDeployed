@@ -10,7 +10,7 @@ import DataTable from '@/views/floor/DataTable'
 import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/gateway/DialogBox'
 import GatewayService from '@services/gatewayService'
-
+import OrganizationService from '@services/organizationService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 import { StatusEnum } from '@enums/enum'
 
@@ -21,7 +21,6 @@ const GatewayManagerPage = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const urlStatus = searchParams.get('status') || GatewayEnum.ACTIVE
-
   const [status, setStatus] = useState(urlStatus)
   const [gateways, setGateways] = useState([])
   const [page, setPage] = useState(1)
@@ -34,6 +33,18 @@ const GatewayManagerPage = () => {
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
   const [activatingId, setActivatingId] = useState(null)
+    const [organization, setOrganization] = useState([])
+     useEffect(() => {
+    const fetchOrganization = async () => {
+      const organizations = await OrganizationService.getOrganizations(0, 0)
+      const newData = organizations.data
+
+      setOrganization(newData)
+    }
+
+    fetchOrganization()
+  }, [])
+
 
   useEffect(() => {
     setStatus(urlStatus)
@@ -90,9 +101,11 @@ const GatewayManagerPage = () => {
     setEditDialogOpen(true)
   }
 
-  const handleSaveEdit = async (updatedData) => {
+  
+  const handleSaveEdit = async updatedData => {
     const payload = {
       gatewayName: updatedData.gatewayName,
+      gatewayId: updatedData.gatewayId,
       organizationId: updatedData.organizationId,
       branchId: updatedData.branchId
     }
@@ -125,23 +138,27 @@ const GatewayManagerPage = () => {
   }
 
   const handleConfirmDelete = async () => {
-    setConfirmDialogOpen(false)
-    setDeleting(true)
-    if (!selectedGateway) return
+  setConfirmDialogOpen(false)
+  setDeleting(true)
 
+  if (selectedGateway) {
     try {
-      const success = await GatewayService.deleteGateway(selectedGateway.gatewayId)
-      if (success) {
+      const response = await GatewayService.deleteGateway(selectedGateway.gatewayId)
+
+      if (response.status === 200 || response.status === 204) {
         toast.success('Record Deleted')
         await loadGateways(page, status)
+      } else {
+        toast.error(response?.data?.message || 'Cannot delete gateway, it is in use.')
       }
     } catch (error) {
       toast.error(getMessage(error))
-    } finally {
-      setDeleting(false)
-      setSelectedGateway(null)
     }
   }
+
+  setDeleting(false)
+  setSelectedGateway(null)
+}
 
   const handleCancelDelete = () => {
     setConfirmDialogOpen(false)
@@ -170,19 +187,20 @@ const GatewayManagerPage = () => {
     }
   }
 
-  const columns = [
+ const columns = [
     { label: 'Gateway Id', field: 'gatewayId' },
-    { label: 'Gateway Name', field: 'gatewayName' },
-    { label: 'Organization Id', field: 'organizationId' },
+    { label: 'Gateway', field: 'gatewayName' },
     { label: 'Organization', field: 'organizationName' },
-    { label: 'Branch Id', field: 'branchId' },
     { label: 'Branch', field: 'branchName' }
+
+  
   ]
 
   const fields = [
-    { label: 'Gateway Name', name: 'gatewayName', placeholder: 'Main Gateway', icon: '🔌', required: true },
-    { label: 'Organization Id', name: 'organizationId', placeholder: 'Select Organization', icon: '🏢', required: true },
-    { label: 'Branch Id', name: 'branchId', placeholder: 'Select Branch', icon: '🌿', required: true }
+        { label: 'Organization Id', name: 'organizationId', placeholder: 'Select Organization', icon: '🏢', required: true },
+    { label: 'Branch Id', name: 'branchId', placeholder: 'Select Branch', icon: '🌿', required: true },
+    { label: 'Gateway Id', name: 'gatewayId', placeholder: '123', icon: '', required: true },
+    { label: 'Gateway Name', name: 'gatewayName', placeholder: 'Main Gateway', icon: '', required: true }
   ]
 
   return (
@@ -202,8 +220,9 @@ const GatewayManagerPage = () => {
           setEditDialogOpen(false)
           setIsCreateMode(false)
         }}
-        data={isCreateMode ? null : editData}
+        data={isCreateMode ? '' : editData}
         onSave={handleSaveEdit}
+        organization={organization}
         fields={fields}
       />
 
@@ -233,7 +252,7 @@ const GatewayManagerPage = () => {
             startIcon={<i className="ri-add-line" />}
             onClick={handleAdd}
           >
-            Add Gateway
+         Add Gateway
           </Button>
         </Grid>
       </Grid>

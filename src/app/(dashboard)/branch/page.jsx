@@ -5,15 +5,16 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
-
+import OrganizationService from '@services/organizationService'
 import DataTable from '@/views/floor/DataTable'
 import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/common/DialogBox'
 import BranchService from '@services/branchService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
-import { StatusEnum } from '@enums/enum'
+import { StatusEnum } from '@/enum/enum'
 import { APIStatusCode } from '@/utils/statusCodes'
 
+import { useMemo } from 'react'
 const PAGE_SIZE = 10
 const BranchStatus = StatusEnum
 
@@ -36,9 +37,20 @@ const BranchPage = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
-
   const [activatingId, setActivatingId] = useState(null)
+  const [organization, setOrganization] = useState([])
+  useEffect(() => {
+    const fetchOrganization = async () => {
+      const organizations = await OrganizationService.getOrganizations(0, 0)
+      const newData = organizations.data
+      setOrganization(newData)
+    }
 
+    fetchOrganization()
+  }, [])
+
+
+  
   useEffect(() => {
     setStatus(urlStatus)
     setPage(1)
@@ -131,20 +143,28 @@ const BranchPage = () => {
   }
 
   const handleConfirmDelete = async () => {
-    setConfirmDialogOpen(false)
-    setDeleting(true)
+  setConfirmDialogOpen(false)
+  setDeleting(true)
 
-    if (selectedBranch) {
-      const success = await BranchService.deleteBranch(selectedBranch.branchId)
-      if (success) {
-        toast.success('Record Deleted')
-        await loadBranches(page, status)
-      }
+  if (selectedBranch) {
+    try {
+      const response = await BranchService.deleteBranch(selectedBranch.branchId)
+
+if (response.status === 200 || response.status === 204) {
+  toast.success('Record Deleted')
+  await loadBranches(page, status)
+} else {
+  toast.error(response?.data?.message || 'Cannot delete branch, it is in use.')
+}
+
+    } catch (error) {
+      toast.error(getMessage(error))
     }
-
-    setDeleting(false)
-    setSelectedBranch(null)
   }
+
+  setDeleting(false)
+  setSelectedBranch(null)
+}
 
   const handleCancelDelete = () => {
     setConfirmDialogOpen(false)
@@ -189,22 +209,35 @@ const BranchPage = () => {
     { label: 'Created', field: 'dateCreated' }
   ]
 
-  const fields = [
-    { label: 'Branch Id', name: 'branchId', placeholder: 'IDXCV205', icon: '🏢', required: true },
-    { label: 'Branch Name', name: 'branchName', placeholder: 'Branch ABC', icon: '🏢', required: true },
-    { label: 'Country', name: 'country', placeholder: 'Pakistan', icon: '🌏' },
-    { label: 'City', name: 'city', placeholder: 'Karachi', icon: '🏙️' },
-    { label: 'Address', name: 'address', placeholder: 'Street 1, Sector 4', icon: '🏠' },
-    { label: 'Email', name: 'email', placeholder: 'test@gmail.com', icon: '📬' },
-    { label: 'Phone', name: 'phone', placeholder: '0311-0000000', icon: '📞' },
-    { label: 'POC', name: 'poc', placeholder: 'John Doe', icon: '👤' }
-  ]
-
+  const fields = useMemo(
+    () => [
+      {
+        label: 'Organization Id',
+        name: 'organizationId',
+        placeholder: 'Select Organization',
+        icon: '🏢',
+        required: true,
+        type: 'select',
+        options: Array.isArray(organization)
+          ? organization.map(org => ({ value: org.organizationId, label: org.organizationName }))
+          : []
+      },
+      { label: 'Branch Id', name: 'branchId', placeholder: 'IDXCV205', icon: '🏢', required: true },
+      { label: 'Branch Name', name: 'branchName', placeholder: 'Branch ABC', icon: '🏢', required: true },
+      { label: 'Country', name: 'country', placeholder: 'Pakistan', icon: '🌏' },
+      { label: 'City', name: 'city', placeholder: 'Karachi', icon: '🏙️' },
+      { label: 'Address', name: 'address', placeholder: 'Street 1, Sector 4', icon: '🏠' },
+      { label: 'Email', name: 'email', placeholder: 'test@gmail.com', icon: '📬' },
+      { label: 'Phone', name: 'phone', placeholder: '0311-0000000', icon: '📞' },
+      { label: 'POC', name: 'poc', placeholder: 'John Doe', icon: '👤' }
+    ],
+    [organization]
+  )
   return (
     <>
       <ConfirmDialog
         open={confirmDialogOpen}
-        title="Confirm Deletion"
+        title='Confirm Deletion'
         message={`Are you sure you want to delete "${selectedBranch?.branchName}"?`}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
@@ -217,6 +250,7 @@ const BranchPage = () => {
           setEditDialogOpen(false)
           setIsCreateMode(false)
         }}
+        organization={organization}
         data={isCreateMode ? '' : editData}
         onSave={handleSaveEdit}
         fields={fields}
@@ -240,7 +274,7 @@ const BranchPage = () => {
         </Grid>
 
         <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant="contained" color="success" onClick={handleAdd}>
+          <Button variant='contained' color='success' onClick={handleAdd} startIcon={<i className='ri-add-line' />}>
             Add Branch
           </Button>
         </Grid>
