@@ -7,47 +7,24 @@ class OrganizationService extends BaseService {
     this.controllerName = 'organization'
   }
 
-  async getOrganizations(page = 1, pageSize = 20, InActive = false) {
-    return await this.Get('', { Page: page, PageSize: pageSize, InActive })
+  getOrganizations(page = 1, pageSize = 20, InActive = false) {
+    return this.Get('', { Page: page, PageSize: pageSize, InActive })
   }
 
-  async deleteOrganization(organizationId) {
-    return await this.Delete(`${organizationId}`)
+  deleteOrganization(id) {
+    return this.Delete(`${id}`)
   }
 
-  async updateOrganization(organizationId, payload) {
-    return await this.Put(`${organizationId}`, payload)
+  updateOrganization(id, payload) {
+    return this.Put(`${id}`, payload)
   }
 
-  async createOrganization(payload) {
-    return await this.Post('', payload)
+  createOrganization(payload) {
+    return this.Post('', payload)
   }
 
-  async activateOrganization(organizationId) {
-    try {
-      const response = await this.Patch(`${organizationId}`, { Status: 'active' })
-
-
-
-      if (
-        response.status === APIStatusCode.Created ||
-        response.status === APIStatusCode.Ok ||
-        response.status === APIStatusCode.NoContent
-      ) {
-        return { success: true, message: 'Successfully Activated' }
-      } else {
-        return {
-          success: false,
-          message: response?.data?.message || 'Activation failed on server'
-        }
-      }
-    } catch (error) {
-     
-      return {
-        success: false,
-        message: error?.response?.data?.message || error.message || 'Network or server error'
-      }
-    }
+  activateOrganization(id) {
+    return this.Patch(`${id}`, { Status: 'active' }) 
   }
 }
 

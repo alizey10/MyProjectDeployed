@@ -8,17 +8,15 @@ import Button from '@mui/material/Button'
 
 import DataTable from '@/views/floor/DataTable'
 import ConfirmDialog from '@components/Dialog'
-import DialogBox from '@/views/sensor/DialogBox'
+import DialogBox from '@/views/common/DialogBox'
 import SensorService from '@services/sensorService'
 
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
+import { StatusEnum } from '@enums/enum'
+import { APIStatusCode } from '@/utils/statusCodes'
 
 const PAGE_SIZE = 10
-
-const SensorStatus = {
-  ACTIVE: 'active',
-  INACTIVE: 'inactive'
-}
+const SensorStatus = StatusEnum
 
 const SensorManagerPage = () => {
   const router = useRouter()
@@ -47,22 +45,27 @@ const SensorManagerPage = () => {
     setLoading(true)
     try {
       const isInactive = currentStatus === SensorStatus.INACTIVE
-      const res = await SensorService.getSensors(currentPage, PAGE_SIZE, isInactive)
+      const response = await SensorService.getSensors(currentPage, PAGE_SIZE, isInactive)
 
-      if (!res?.data?.success) {
-        toast.error(getMessage(res))
+      if (!response.data?.success) {
+        toast.error(getMessage(response))
         setSensors([])
         setTotalPages(1)
         return
       }
 
-      const data = res.data?.data || []
+      const data = response.data?.data || []
       setSensors(data)
 
       const totalRecords = data[0]?.totalRecord || 0
       setTotalPages(Math.ceil(totalRecords / PAGE_SIZE))
     } catch (error) {
-      toast.error(getMessage(error))
+     
+      if (error?.response?.status === 404) {
+        toast.error('Data not found (404)')
+      } else {
+        toast.error(getMessage(error))
+      }
       setSensors([])
       setTotalPages(1)
     } finally {
@@ -161,18 +164,20 @@ const SensorManagerPage = () => {
     setActivatingId(sensor.sensorId)
 
     try {
-      const result = await SensorService.activateSensor(sensor.sensorId)
+      const response = await SensorService.activateSensor(sensor.sensorId)
 
-      if (!result.success) {
-        toast.error(result.message || 'Activation failed')
-        setActivatingId(null)
-        return
+      if (
+        response.status === APIStatusCode.Created ||
+        response.status === APIStatusCode.Ok ||
+        response.status === APIStatusCode.NoContent
+      ) {
+        toast.success('Sensor Activated')
+        await loadSensors(page, status)
+      } else {
+        toast.error(response?.data?.message || 'Activation failed on server')
       }
-
-      toast.success('Sensor Activated')
-      await loadSensors(page, status)
     } catch (error) {
-      toast.error(getMessage(error))
+      toast.error(error?.response?.data?.message || error.message || 'Unexpected error occurred')
     } finally {
       setActivatingId(null)
     }

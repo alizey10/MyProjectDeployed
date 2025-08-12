@@ -1,5 +1,4 @@
 import BaseService from './baseService'
-import { APIStatusCode } from '@/utils/statusCodes'
 
 class SensorService extends BaseService {
   constructor() {
@@ -7,55 +6,25 @@ class SensorService extends BaseService {
     this.controllerName = 'Sensor'
   }
 
-  async getSensors(page = 1, pageSize = 20, InActive = false) {
-    return await this.Get('', { Page: page, PageSize: pageSize, InActive })
+  getSensors(page = 1, pageSize = 20, InActive = false) {
+    return this.Get('', { Page: page, PageSize: pageSize, InActive })
   }
 
-  async deleteSensor(sensorId) {
-    return await this.Delete(`${sensorId}`)
+  deleteSensor(sensorId) {
+    return this.Delete(`${sensorId}`)
   }
 
-  async updateSensor(sensorId, payload) {
-    return await this.Put(`${sensorId}`, payload)
+  updateSensor(sensorId, payload) {
+    return this.Put(`${sensorId}`, payload)
   }
 
-  async createSensor(payload) {
-    return await this.Post('', payload)
+  createSensor(payload) {
+    return this.Post('', payload)
   }
-async activateSensor(sensorId) {
-  try {
-   
-    const response = await this.Patch(`${sensorId}`, { status: 'active' })
 
-
-
-   
-    const statusCode = response?.data?.statusCode
-
-    if (
-      statusCode === APIStatusCode.Created ||
-      statusCode === APIStatusCode.Ok ||
-      statusCode === APIStatusCode.NoContent
-    ) {
-      return {
-        success: true,
-        message: response?.data?.message || 'Successfully Activated'
-      }
-    } else {
-      return {
-        success: false,
-        message: response?.data?.message || ''
-      }
-    }
-  } catch (error) {
-  
-    return {
-      success: false,
-      message: error?.response?.data?.message || ''
-    }
+  activateSensor(sensorId) {
+    return this.Patch(`${sensorId}`, { Status: 'active' })  
   }
-}
-
 }
 
 export default new SensorService()

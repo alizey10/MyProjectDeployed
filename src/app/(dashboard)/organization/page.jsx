@@ -11,13 +11,13 @@ import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/common/DialogBox'
 import OrganizationService from '@services/organizationService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
+import { StatusEnum } from '@enums/enum'
+import { APIStatusCode } from '@/utils/statusCodes'
+
 
 const PAGE_SIZE = 10
 
-const OrganizationStatus = {
-  ACTIVE: 'active',
-  INACTIVE: 'inactive'
-}
+const OrganizationStatus = StatusEnum;
 
 const OrganizationManagerPage = () => {
 const handleActivateClick = async (org) => {
@@ -25,22 +25,20 @@ const handleActivateClick = async (org) => {
   setActivatingId(org.organizationId)
 
   try {
-    const result = await OrganizationService.activateOrganization(org.organizationId)
-    console.log('Activate result:', result)
+    const response = await OrganizationService.activateOrganization(org.organizationId)
 
-    if (!result.success) {
-      if (result.message.toLowerCase().includes('already')) {
-        toast.info(result.message)
-      } else {
-        toast.error(result.message)
-      }
-      return
+    if (
+      response.status === APIStatusCode.Created ||
+      response.status === APIStatusCode.Ok ||
+      response.status === APIStatusCode.NoContent
+    ) {
+      toast.success('Organization Activated')
+      await loadOrganizations(page, status)
+    } else {
+      toast.error(response?.data?.message || 'Activation failed on server')
     }
-
-    toast.success('Organization Activated')
-    await loadOrganizations(page, status)
   } catch (error) {
-    toast.error('Unexpected error occurred')
+    toast.error(error?.response?.data?.message || error.message || 'Unexpected error occurred')
   } finally {
     setActivatingId(null)
   }

@@ -12,18 +12,15 @@ import DialogBox from '@/views/gateway/DialogBox'
 import GatewayService from '@services/gatewayService'
 
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
+import { StatusEnum } from '@enums/enum'
 
 const PAGE_SIZE = 10
-
-const StatusEnum = {
-  ACTIVE: 'active',
-  INACTIVE: 'inactive'
-}
+const GatewayEnum = StatusEnum
 
 const GatewayManagerPage = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const urlStatus = searchParams.get('status') || StatusEnum.ACTIVE
+  const urlStatus = searchParams.get('status') || GatewayEnum.ACTIVE
 
   const [status, setStatus] = useState(urlStatus)
   const [gateways, setGateways] = useState([])
@@ -46,9 +43,10 @@ const GatewayManagerPage = () => {
   const loadGateways = async (currentPage, currentStatus) => {
     setLoading(true)
     try {
-      const isInactive = currentStatus === StatusEnum.INACTIVE
+      const isInactive = currentStatus === GatewayEnum.INACTIVE
       const res = await GatewayService.getGateways(currentPage, PAGE_SIZE, isInactive)
 
+    
       if (!res?.data?.success) {
         toast.error(getMessage(res))
         setGateways([])
@@ -151,27 +149,26 @@ const GatewayManagerPage = () => {
   }
 
   const handleActivateClick = async (gateway) => {
-  if (activatingId) return;
-  setActivatingId(gateway.gatewayId);
+    if (activatingId) return
+    setActivatingId(gateway.gatewayId)
 
-  try {
-   
-    const result = await GatewayService.activateGateway(gateway.gatewayId);
+    try {
+    
+      const response = await GatewayService.activateGateway(gateway.gatewayId)
 
-    if (!result.success) {
-      toast.error(result.message || 'Activation failed');
-      setActivatingId(null);
-      return;
+  
+      if (response.success) {
+        toast.success('Gateway Activated')
+        await loadGateways(page, status)
+      } else {
+        toast.error(response.message || 'Activation failed')
+      }
+    } catch (error) {
+      toast.error(getMessage(error))
+    } finally {
+      setActivatingId(null)
     }
-
-    toast.success('Gateway Activated');
-    await loadGateways(page, status);
-  } catch (error) {
-    toast.error(getMessage(error));
-  } finally {
-    setActivatingId(null);
   }
-};
 
   const columns = [
     { label: 'Gateway Id', field: 'gatewayId' },
@@ -213,17 +210,17 @@ const GatewayManagerPage = () => {
       <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
         <Grid item>
           <Button
-            variant={status === StatusEnum.ACTIVE ? 'contained' : 'outlined'}
+            variant={status === GatewayEnum.ACTIVE ? 'contained' : 'outlined'}
             color="primary"
             sx={{ mr: 2 }}
-            onClick={() => handleStatusChange(StatusEnum.ACTIVE)}
+            onClick={() => handleStatusChange(GatewayEnum.ACTIVE)}
           >
             Active
           </Button>
           <Button
-            variant={status === StatusEnum.INACTIVE ? 'contained' : 'outlined'}
+            variant={status === GatewayEnum.INACTIVE ? 'contained' : 'outlined'}
             color="primary"
-            onClick={() => handleStatusChange(StatusEnum.INACTIVE)}
+            onClick={() => handleStatusChange(GatewayEnum.INACTIVE)}
           >
             Inactive
           </Button>

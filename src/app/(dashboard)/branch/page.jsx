@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
-
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
 
@@ -12,13 +11,11 @@ import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/common/DialogBox'
 import BranchService from '@services/branchService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
+import { StatusEnum } from '@enums/enum'
+import { APIStatusCode } from '@/utils/statusCodes'
 
 const PAGE_SIZE = 10
-
-const BranchStatus = {
-  ACTIVE: 'active',
-  INACTIVE: 'inactive'
-}
+const BranchStatus = StatusEnum
 
 const BranchPage = () => {
   const router = useRouter()
@@ -51,11 +48,7 @@ const BranchPage = () => {
     setLoading(true)
     try {
       const isInactive = currentStatus === BranchStatus.INACTIVE
-      const res = await BranchService.getBranchsWithParams({
-        Page: currentPage,
-        PageSize: PAGE_SIZE,
-        InActive: isInactive
-      })
+      const res = await BranchService.getBranchs(currentPage, PAGE_SIZE, isInactive)
 
       if (!res?.data?.success) {
         toast.error(getMessage(res))
@@ -79,13 +72,13 @@ const BranchPage = () => {
     loadBranches(page, status)
   }, [page, status])
 
-  const handleStatusChange = (newStatus) => {
+  const handleStatusChange = newStatus => {
     setStatus(newStatus)
     setPage(1)
     router.push(`/branch?status=${newStatus}`)
   }
 
-  const handleEdit = (branch) => {
+  const handleEdit = branch => {
     setEditData(branch)
     setIsCreateMode(false)
     setEditDialogOpen(true)
@@ -97,57 +90,7 @@ const BranchPage = () => {
     setEditDialogOpen(true)
   }
 
-  const handleDeleteClick = (branch) => {
-    setSelectedBranch(branch)
-    setConfirmDialogOpen(true)
-  }
-
-  const handleConfirmDelete = async () => {
-    setConfirmDialogOpen(false)
-    setDeleting(true)
-    if (!selectedBranch) return
-
-    try {
-      const success = await BranchService.deleteBranch(selectedBranch.branchId)
-      if (success) {
-        toast.success('Record Deleted')
-        await loadBranches(page, status)
-      }
-    } catch (error) {
-      toast.error(getMessage(error))
-    } finally {
-      setDeleting(false)
-      setSelectedBranch(null)
-    }
-  }
-
-  const handleCancelDelete = () => {
-    setConfirmDialogOpen(false)
-    setSelectedBranch(null)
-  }
-
-  const handleActivateClick = async (branch) => {
-    if (activatingId) return
-    setActivatingId(branch.branchId)
-
-    try {
-      const result = await BranchService.activateBranch(branch.branchId)
-      if (!result.success) {
-        toast.error(result.message || 'Activation failed')
-        setActivatingId(null)
-        return
-      }
-
-      toast.success('Branch Activated')
-      await loadBranches(page, status)
-    } catch (error) {
-      toast.error(getMessage(error))
-    } finally {
-      setActivatingId(null)
-    }
-  }
-
-  const handleSaveEdit = async (updatedData) => {
+  const handleSaveEdit = async updatedData => {
     const payload = {
       BranchId: updatedData.branchId,
       branchName: updatedData.branchName,
@@ -179,6 +122,56 @@ const BranchPage = () => {
       await loadBranches(page, status)
     } catch (error) {
       toast.error(getMessage(error))
+    }
+  }
+
+  const handleDeleteClick = branch => {
+    setSelectedBranch(branch)
+    setConfirmDialogOpen(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    setConfirmDialogOpen(false)
+    setDeleting(true)
+
+    if (selectedBranch) {
+      const success = await BranchService.deleteBranch(selectedBranch.branchId)
+      if (success) {
+        toast.success('Record Deleted')
+        await loadBranches(page, status)
+      }
+    }
+
+    setDeleting(false)
+    setSelectedBranch(null)
+  }
+
+  const handleCancelDelete = () => {
+    setConfirmDialogOpen(false)
+    setSelectedBranch(null)
+  }
+
+  const handleActivateClick = async branch => {
+    if (activatingId) return
+    setActivatingId(branch.branchId)
+
+    try {
+      const response = await BranchService.activateBranch(branch.branchId)
+
+      if (
+        response.status === APIStatusCode.Created ||
+        response.status === APIStatusCode.Ok ||
+        response.status === APIStatusCode.NoContent
+      ) {
+        toast.success('Branch Activated')
+        await loadBranches(page, status)
+      } else {
+        toast.error(response?.data?.message || 'Activation failed on server')
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message || 'Unexpected error occurred')
+    } finally {
+      setActivatingId(null)
     }
   }
 

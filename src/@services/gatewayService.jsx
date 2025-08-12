@@ -1,64 +1,30 @@
 import BaseService from './baseService'
-import { APIStatusCode } from '@/utils/statusCodes'
 
 class GatewayService extends BaseService {
   constructor() {
     super()
-    this.controllerName = 'Gateway'  
+    this.controllerName = 'gateway'  
   }
 
-  async getGateways(page = 1, pageSize = 20, InActive = false) {
-    return await this.Get('', { Page: page, PageSize: pageSize, InActive })
+  getGateways(page = 1, pageSize = 20, InActive = false) {
+    return this.Get('', { Page: page, PageSize: pageSize, InActive })
   }
 
-  async deleteGateway(gatewayId) {
-    return await this.Delete(`${gatewayId}`)
+  deleteGateway(id) {
+    return this.Delete(`${id}`)
   }
 
-  async updateGateway(gatewayId, payload) {
-    return await this.Put(`${gatewayId}`, payload)
+  updateGateway(id, payload) {
+    return this.Put(`${id}`, payload)
   }
 
-  async createGateway(payload) {
-    return await this.Post('', payload)
+  createGateway(payload) {
+    return this.Post('', payload)
   }
 
-async activateGateway(gatewayId) {
-  try {
-   
-    const response = await this.Patch(`${gatewayId}`, { status: 'active' })
-
-
-    const statusCode = response?.data?.statusCode
-
-    if (
-     statusCode === APIStatusCode.Created ||
-      statusCode === APIStatusCode.Ok ||
-      statusCode === APIStatusCode.NoContent
-    ) {
-    
-      return {
-        success: true,
-        message: response?.data?.message || 'Successfully Activated'
-      }
-    } else {
-
-      return {
-        success: false,
-        message: response?.data?.message || ''
-      }
-    }
-  } catch (error) {
-
-
-   
-    return {
-      success: false,
-      message: error?.response?.data?.message || ''
-    }
+  activateGateway(id) {
+    return this.Patch(`${id}`, { status: 'active' })  
   }
-}
-
 }
 
 export default new GatewayService()
