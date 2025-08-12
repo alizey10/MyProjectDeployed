@@ -1,5 +1,4 @@
 import BaseService from './baseService'
-import { APIStatusCode } from '@/utils/statusCodes'
 
 class BranchService extends BaseService {
   constructor() {
@@ -12,7 +11,6 @@ class BranchService extends BaseService {
   }
 
   getBranchsWithParams(params) {
- 
     const queryString = Object.entries(params)
       .filter(([_, v]) => v !== undefined && v !== '')
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
@@ -38,7 +36,7 @@ class BranchService extends BaseService {
   }
 
   activateBranch(branchId) {
-    return this.Patch(`${branchId}`) 
+    return this.Patch(`${branchId}`)
   }
 }
 

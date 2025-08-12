@@ -1,5 +1,4 @@
 import BaseService from './baseService'
-import { APIStatusCode } from '@/utils/statusCodes'
 
 class OrganizationService extends BaseService {
   constructor() {
@@ -24,7 +23,7 @@ class OrganizationService extends BaseService {
   }
 
   activateOrganization(id) {
-    return this.Patch(`${id}`) 
+    return this.Patch(`${id}`)
   }
 }
 

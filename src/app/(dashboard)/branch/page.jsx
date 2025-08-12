@@ -11,8 +11,7 @@ import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/common/DialogBox'
 import BranchService from '@services/branchService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
-import { StatusEnum } from '@/enum/enum'
-import { APIStatusCode } from '@/utils/statusCodes'
+import { StatusEnum } from '@/enum/status-enum'
 
 import { useMemo } from 'react'
 const PAGE_SIZE = 10
@@ -49,8 +48,6 @@ const BranchPage = () => {
     fetchOrganization()
   }, [])
 
-
-  
   useEffect(() => {
     setStatus(urlStatus)
     setPage(1)
@@ -143,28 +140,27 @@ const BranchPage = () => {
   }
 
   const handleConfirmDelete = async () => {
-  setConfirmDialogOpen(false)
-  setDeleting(true)
+    setConfirmDialogOpen(false)
+    setDeleting(true)
 
-  if (selectedBranch) {
-    try {
-      const response = await BranchService.deleteBranch(selectedBranch.branchId)
+    if (selectedBranch) {
+      try {
+        const response = await BranchService.deleteBranch(selectedBranch.branchId)
 
-if (response.status === 200 || response.status === 204) {
-  toast.success('Record Deleted')
-  await loadBranches(page, status)
-} else {
-  toast.error(response?.data?.message || 'Cannot delete branch, it is in use.')
-}
-
-    } catch (error) {
-      toast.error(getMessage(error))
+        if (response.status === HttpStatus.OK || response.status === HttpStatus.NoContent) {
+          toast.success('Record Deleted')
+          await loadBranches(page, status)
+        } else {
+          toast.error(getMessage(response))
+        }
+      } catch (error) {
+        toast.error(getMessage(error))
+      }
     }
-  }
 
-  setDeleting(false)
-  setSelectedBranch(null)
-}
+    setDeleting(false)
+    setSelectedBranch(null)
+  }
 
   const handleCancelDelete = () => {
     setConfirmDialogOpen(false)
@@ -178,18 +174,14 @@ if (response.status === 200 || response.status === 204) {
     try {
       const response = await BranchService.activateBranch(branch.branchId)
 
-      if (
-        response.status === APIStatusCode.Created ||
-        response.status === APIStatusCode.Ok ||
-        response.status === APIStatusCode.NoContent
-      ) {
+      if (response?.status === HttpStatus.NoContent) {
         toast.success('Branch Activated')
         await loadBranches(page, status)
       } else {
-        toast.error(response?.data?.message || 'Activation failed on server')
+        toast.error(getMessage(response))
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || error.message || 'Unexpected error occurred')
+      toast.error(getMessage(error))
     } finally {
       setActivatingId(null)
     }

@@ -12,8 +12,7 @@ import DialogBox from '@/views/common/DialogBox'
 import SensorService from '@services/sensorService'
 import OrganizationService from '@services/organizationService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
-import { StatusEnum } from '@/enum/enum'
-import { APIStatusCode } from '@/utils/statusCodes'
+import { StatusEnum } from '@/enum/status-enum'
 
 const PAGE_SIZE = 10
 const SensorStatus = StatusEnum
@@ -35,9 +34,9 @@ const SensorManagerPage = () => {
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
   const [activatingId, setActivatingId] = useState(null)
-    const [organization, setOrganization] = useState([])
+  const [organization, setOrganization] = useState([])
 
-     useEffect(() => {
+  useEffect(() => {
     const fetchOrganization = async () => {
       const organizations = await OrganizationService.getOrganizations(0, 0)
       const newData = organizations.data
@@ -72,7 +71,6 @@ const SensorManagerPage = () => {
       const totalRecords = data[0]?.totalRecord || 0
       setTotalPages(Math.ceil(totalRecords / PAGE_SIZE))
     } catch (error) {
-     
       if (error?.response?.status === 404) {
         toast.error('Data not found (404)')
       } else {
@@ -89,13 +87,13 @@ const SensorManagerPage = () => {
     loadSensors(page, status)
   }, [page, status])
 
-  const handleStatusChange = (newStatus) => {
+  const handleStatusChange = newStatus => {
     setStatus(newStatus)
     setPage(1)
     router.push(`/sensor?status=${newStatus}`)
   }
 
-  const handleEdit = (sensor) => {
+  const handleEdit = sensor => {
     setEditData(sensor)
     setIsCreateMode(false)
     setEditDialogOpen(true)
@@ -107,9 +105,8 @@ const SensorManagerPage = () => {
     setEditDialogOpen(true)
   }
 
-  const handleSaveEdit = async (updatedData) => {
-    
-   const payload = {
+  const handleSaveEdit = async updatedData => {
+    const payload = {
       sensorName: updatedData.sensorName,
       organizationId: updatedData.organizationId,
       organizationName: updatedData.organizationName,
@@ -125,7 +122,6 @@ const SensorManagerPage = () => {
       maxTemperature: updatedData.maxTemperature,
       alertType: updatedData.alertType
     }
-
 
     try {
       const result = isCreateMode
@@ -149,7 +145,7 @@ const SensorManagerPage = () => {
     }
   }
 
-  const handleDeleteClick = (sensor) => {
+  const handleDeleteClick = sensor => {
     setSelectedSensor(sensor)
     setConfirmDialogOpen(true)
   }
@@ -178,25 +174,21 @@ const SensorManagerPage = () => {
     setSelectedSensor(null)
   }
 
-  const handleActivateClick = async (sensor) => {
+  const handleActivateClick = async sensor => {
     if (activatingId) return
     setActivatingId(sensor.sensorId)
 
     try {
       const response = await SensorService.activateSensor(sensor.sensorId)
 
-      if (
-        response.status === APIStatusCode.Created ||
-        response.status === APIStatusCode.Ok ||
-        response.status === APIStatusCode.NoContent
-      ) {
+      if (response.status === HttpStatus.NoContent) {
         toast.success('Sensor Activated')
         await loadSensors(page, status)
       } else {
-        toast.error(response?.data?.message || 'Activation failed on server')
+        toast.error(getMessage(response))
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || error.message || 'Unexpected error occurred')
+      toast.error(getMessage(error))
     } finally {
       setActivatingId(null)
     }
@@ -233,7 +225,7 @@ const SensorManagerPage = () => {
     <>
       <ConfirmDialog
         open={confirmDialogOpen}
-        title="Confirm Deletion"
+        title='Confirm Deletion'
         message={`Are you sure you want to delete "${selectedSensor?.sensorName}"?`}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
@@ -256,7 +248,7 @@ const SensorManagerPage = () => {
         <Grid item>
           <Button
             variant={status === SensorStatus.ACTIVE ? 'contained' : 'outlined'}
-            color="primary"
+            color='primary'
             sx={{ mr: 2 }}
             onClick={() => handleStatusChange(SensorStatus.ACTIVE)}
           >
@@ -264,7 +256,7 @@ const SensorManagerPage = () => {
           </Button>
           <Button
             variant={status === SensorStatus.INACTIVE ? 'contained' : 'outlined'}
-            color="primary"
+            color='primary'
             onClick={() => handleStatusChange(SensorStatus.INACTIVE)}
           >
             Inactive
@@ -272,12 +264,7 @@ const SensorManagerPage = () => {
         </Grid>
 
         <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            variant="contained"
-            color="success"
-            startIcon={<i className="ri-add-line" />}
-            onClick={handleAdd}
-          >
+          <Button variant='contained' color='success' startIcon={<i className='ri-add-line' />} onClick={handleAdd}>
             Add Sensor
           </Button>
         </Grid>
