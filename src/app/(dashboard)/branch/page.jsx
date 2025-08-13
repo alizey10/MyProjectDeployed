@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
+
 import OrganizationService from '@services/organizationService'
 import DataTable from '@/views/floor/DataTable'
 import ConfirmDialog from '@components/Dialog'
@@ -36,22 +37,30 @@ const BranchPage = () => {
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
   const [activatingId, setActivatingId] = useState(null)
+
   const [organization, setOrganization] = useState([])
+
+  // 🟢 Fetch Organizations
   useEffect(() => {
     const fetchOrganization = async () => {
-      const organizations = await OrganizationService.getOrganizations(0, 0)
-      const newData = organizations.data
-      setOrganization(newData)
+      try {
+        const organizations = await OrganizationService.getOrganizations(0, 0)
+        const newData = organizations?.data?.data || organizations?.data || []
+        setOrganization(newData)
+      } catch (error) {
+        toast.error(getMessage(error))
+      }
     }
-
     fetchOrganization()
   }, [])
 
+  // URL status update
   useEffect(() => {
     setStatus(urlStatus)
     setPage(1)
   }, [urlStatus])
 
+  // 🟢 Fetch Branches
   const loadBranches = async (currentPage, currentStatus) => {
     setLoading(true)
     try {
@@ -80,24 +89,28 @@ const BranchPage = () => {
     loadBranches(page, status)
   }, [page, status])
 
+  // Status change handler
   const handleStatusChange = newStatus => {
     setStatus(newStatus)
     setPage(1)
     router.push(`/branch?status=${newStatus}`)
   }
 
+  // Edit branch
   const handleEdit = branch => {
     setEditData(branch)
     setIsCreateMode(false)
     setEditDialogOpen(true)
   }
 
+  // Add branch
   const handleAdd = () => {
     setEditData(null)
     setIsCreateMode(true)
     setEditDialogOpen(true)
   }
 
+  // Save branch (Create or Update)
   const handleSaveEdit = async updatedData => {
     const payload = {
       BranchId: updatedData.branchId,
@@ -133,6 +146,7 @@ const BranchPage = () => {
     }
   }
 
+  // Delete branch
   const handleDeleteClick = branch => {
     setSelectedBranch(branch)
     setConfirmDialogOpen(true)
@@ -166,6 +180,7 @@ const BranchPage = () => {
     setSelectedBranch(null)
   }
 
+  // Activate branch
   const handleActivateClick = async branch => {
     if (activatingId) return
     setActivatingId(branch.branchId)
@@ -186,6 +201,7 @@ const BranchPage = () => {
     }
   }
 
+  // Table columns
   const columns = [
     { label: 'Branch Id', field: 'branchId' },
     { label: 'Branch Name', field: 'branchName' },
@@ -200,6 +216,7 @@ const BranchPage = () => {
     { label: 'Created', field: 'dateCreated' }
   ]
 
+  // Form fields
   const fields = useMemo(
     () => [
       {
@@ -209,9 +226,10 @@ const BranchPage = () => {
         icon: '🏢',
         required: true,
         type: 'select',
-        options: Array.isArray(organization)
-          ? organization.map(org => ({ value: org.organizationId, label: org.organizationName }))
-          : []
+        options: organization.map(org => ({
+          value: org.organizationId,
+          label: org.organizationName
+        }))
       },
       { label: 'Branch Id', name: 'branchId', placeholder: 'IDXCV205', icon: '🏢', required: true },
       { label: 'Branch Name', name: 'branchName', placeholder: 'Branch ABC', icon: '🏢', required: true },
@@ -224,6 +242,7 @@ const BranchPage = () => {
     ],
     [organization]
   )
+
   return (
     <>
       <ConfirmDialog

@@ -208,11 +208,11 @@ const SensorManagerPage = () => {
   ]
 
   const fields = [
-    { label: 'Sensor Name', name: 'sensorName', placeholder: 'Temperature Sensor', icon: '📡', required: true },
-    { label: 'Sensor Id', name: 'sensorId', placeholder: 'Unique Sensor ID', icon: '🆔', required: true },
-    { label: 'Organization Id', name: 'organizationId', placeholder: 'Organization Id', icon: '🏢', required: true },
+     { label: 'Organization Id', name: 'organizationId', placeholder: 'Organization Id', icon: '🏢', required: true },
     { label: 'Branch Id', name: 'branchId', placeholder: 'Branch Id', icon: '🏬', required: true },
     { label: 'Gateway Id', name: 'gatewayId', placeholder: 'Gateway Id', icon: '🔌', required: true },
+    { label: 'Sensor Name', name: 'sensorName', placeholder: 'Temperature Sensor', icon: '📡', required: true },
+    { label: 'Sensor Id', name: 'sensorId', placeholder: 'Unique Sensor ID', icon: '🆔', required: true },
     { label: 'Floor Section Id', name: 'floorSectionId', placeholder: 'Floor Section Id', icon: '🏢' },
     { label: 'Linked Device', name: 'linkedDevice', placeholder: 'Device Name', icon: '🔗', required: true },
     { label: 'Min Temperature', name: 'minTemperature', placeholder: '0', icon: '🌡️' },

@@ -5,11 +5,20 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
+import CircularProgress from '@mui/material/CircularProgress'
+
 import DataTable from '@/views/floor/DataTable'
 import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/gateway/DialogBox'
+
 import GatewayService from '@services/gatewayService'
 import OrganizationService from '@services/organizationService'
+import BranchService from '@services/branchService'
+
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 import { StatusEnum } from '@/enum/status-enum'
 
@@ -20,14 +29,17 @@ const GatewayManagerPage = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const urlStatus = searchParams.get('status') || GatewayEnum.ACTIVE
+
   const [status, setStatus] = useState(urlStatus)
   const [gateways, setGateways] = useState([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
   const [deleting, setDeleting] = useState(false)
+
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [selectedGateway, setSelectedGateway] = useState(null)
+
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
@@ -45,10 +57,27 @@ const GatewayManagerPage = () => {
   }, [])
 
   useEffect(() => {
-    setStatus(urlStatus)
-    setPage(1)
-  }, [urlStatus])
+    if (!selectedOrgId) {
+      setBranches([])
+      setSelectedBranchId(null)
+      return
+    }
+    const fetchBranches = async () => {
+      try {
+        const res = await BranchService.getBranchs(0, 0, false, selectedOrgId)
+        const brs = res?.data?.data || []
+        setBranches(brs)
+        setSelectedBranchId(null)
+      } catch (error) {
+        toast.error('Failed to load branches')
+        setBranches([])
+        setSelectedBranchId(null)
+      }
+    }
+    fetchBranches()
+  }, [selectedOrgId])
 
+  // Load gateways list with paging and status
   const loadGateways = async (currentPage, currentStatus) => {
     setLoading(true)
     try {
@@ -88,12 +117,18 @@ const GatewayManagerPage = () => {
 
   const handleEdit = gateway => {
     setEditData(gateway)
+    setSelectedOrgId(gateway.organizationId)
+    setSelectedBranchId(gateway.branchId)
     setIsCreateMode(false)
     setEditDialogOpen(true)
   }
 
+  // Open add dialog, reset selections
   const handleAdd = () => {
     setEditData(null)
+    setSelectedOrgId(null)
+    setSelectedBranchId(null)
+    setBranches([])
     setIsCreateMode(true)
     setEditDialogOpen(true)
   }
@@ -102,8 +137,8 @@ const GatewayManagerPage = () => {
     const payload = {
       gatewayName: updatedData.gatewayName,
       gatewayId: updatedData.gatewayId,
-      organizationId: updatedData.organizationId,
-      branchId: updatedData.branchId
+      organizationId: selectedOrgId,
+      branchId: selectedBranchId
     }
 
     try {
@@ -184,10 +219,13 @@ const GatewayManagerPage = () => {
   const columns = [
     { label: 'Gateway Id', field: 'gatewayId' },
     { label: 'Gateway', field: 'gatewayName' },
+    { label: 'Organization Id', field: 'organizationId' },
     { label: 'Organization', field: 'organizationName' },
+    { label: 'Branch Id', field: 'branchId' },
     { label: 'Branch', field: 'branchName' }
   ]
 
+  // DialogBox expects fields with proper onChange handlers and options for selects
   const fields = [
     {
       label: 'Organization Id',
@@ -212,15 +250,13 @@ const GatewayManagerPage = () => {
       />
 
       <DialogBox
-        title={isCreateMode ? 'Add Gateway' : 'Edit Gateway'}
         open={editDialogOpen}
-        onClose={() => {
-          setEditDialogOpen(false)
-          setIsCreateMode(false)
-        }}
-        data={isCreateMode ? '' : editData}
-        onSave={handleSaveEdit}
+        title={isCreateMode ? 'Add Gateway' : 'Edit Gateway'}
+        onClose={() => setEditDialogOpen(false)}
         organization={organization}
+        branches={branches}
+        data={editData}
+        onSave={handleSaveEdit}
         fields={fields}
       />
 

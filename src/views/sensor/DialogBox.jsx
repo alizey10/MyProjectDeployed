@@ -23,6 +23,7 @@ import { useForm } from 'react-hook-form'
 import branchService from '@/@services/branchService'
 import gatewayService from '@/@services/gatewayService'
 import floorService from '@/@services/floorService'
+import OrganizationService from '@services/organizationService'
 
 const DialogBox = ({ open, title, onClose, data, onSave, fields, organization }) => {
   const [branches, setBranches] = useState([])
@@ -40,7 +41,8 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
     watch,
     formState: { errors, isSubmitting, isValid }
   } = useForm({
-    defaultValues: data || {}
+    defaultValues: data || {},
+    mode : 'onChange'
   })
 
   const formValues = watch()
