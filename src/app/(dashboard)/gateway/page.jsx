@@ -165,23 +165,23 @@ const GatewayManagerPage = () => {
     setConfirmDialogOpen(false)
     setDeleting(true)
 
-    if (selectedGateway) {
-      try {
-        const response = await GatewayService.deleteGateway(selectedGateway.gatewayId)
+if (selectedGateway) {
+  try {
+    const response = await GatewayService.deleteGateway(selectedGateway.gatewayId)
 
-        if (response.status === 200 || response.status === 204) {
-          toast.success('Record Deleted')
-          await loadGateways(page, status)
-        } else {
-          toast.error(response?.data?.message || 'Cannot delete gateway, it is in use.')
-        }
-      } catch (error) {
-        toast.error(getMessage(error))
-      }
+    if ([200, 201, 204].includes(response.status) || response === true) {
+      toast.success('Record Deleted')
+      await loadGateways(page, status)
+    } else {
+      toast.error(getMessage(response) || 'Cannot delete gateway, it is in use.')
     }
+  } catch (error) {
+    toast.error(getMessage(error))
+  }
+}
 
-    setDeleting(false)
-    setSelectedGateway(null)
+setDeleting(false)
+setSelectedGateway(null)
   }
 
   const handleCancelDelete = () => {
@@ -190,23 +190,23 @@ const GatewayManagerPage = () => {
   }
 
   const handleActivateClick = async gateway => {
-    if (activatingId) return
-    setActivatingId(gateway.gatewayId)
+   if (activatingId) return
+setActivatingId(gateway.gatewayId)
 
-    try {
-      const response = await GatewayService.activateGateway(gateway.gatewayId)
+try {
+  const response = await GatewayService.activateGateway(gateway.gatewayId)
 
-      if (response.success) {
-        toast.success('Gateway Activated')
-        await loadGateways(page, status)
-      } else {
-        toast.error(response.message || 'Activation failed')
-      }
-    } catch (error) {
-      toast.error(getMessage(error))
-    } finally {
-      setActivatingId(null)
-    }
+  if ([200, 201, 204].includes(response.status) || response.success) {
+    toast.success('Gateway Activated')
+    await loadGateways(page, status)
+  } else {
+    toast.error(getMessage(response) || response.message || 'Activation failed')
+  }
+} catch (error) {
+  toast.error(getMessage(error))
+} finally {
+  setActivatingId(null)
+}
   }
 
   const columns = [

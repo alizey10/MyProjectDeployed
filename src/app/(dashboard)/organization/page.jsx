@@ -20,27 +20,23 @@ const OrganizationStatus = StatusEnum
 
 const OrganizationManagerPage = () => {
   const handleActivateClick = async org => {
-    if (activatingId) return
-    setActivatingId(org.organizationId)
+   if (activatingId) return
+setActivatingId(org.organizationId)
 
-    try {
-      const response = await OrganizationService.activateOrganization(org.organizationId)
+try {
+  const response = await OrganizationService.activateOrganization(org.organizationId)
 
-      if (
-        response.status === APIStatusCode.Created ||
-        response.status === APIStatusCode.Ok ||
-        response.status === APIStatusCode.NoContent
-      ) {
-        toast.success('Organization Activated')
-        await loadOrganizations(page, status)
-      } else {
-        toast.error(response?.data?.message || 'Activation failed on server')
-      }
-    } catch (error) {
-      toast.error(error?.response?.data?.message || error.message || 'Unexpected error occurred')
-    } finally {
-      setActivatingId(null)
-    }
+  if ([200, 201, 204].includes(response.status)) {
+    toast.success('Organization Activated')
+    await loadOrganizations(page, status)
+  } else {
+    toast.error(getMessage(response) || response?.data?.message || 'Activation failed on server')
+  }
+} catch (error) {
+  toast.error(getMessage(error) || error.message || 'Unexpected error occurred')
+} finally {
+  setActivatingId(null)
+}
   }
 
   const searchParams = useSearchParams()
@@ -154,20 +150,21 @@ const OrganizationManagerPage = () => {
     setConfirmDialogOpen(false)
     setDeleting(true)
 
-    if (selectedOrganization) {
-      try {
-        const response = await OrganizationService.deleteOrganization(selectedOrganization.organizationId)
+   if (selectedOrganization) {
+  try {
+    const response = await OrganizationService.deleteOrganization(selectedOrganization.organizationId)
 
-        if (response.status === 200 || response.status === 204) {
-          toast.success('Record Deleted')
-          await loadOrganizations(page, status)
-        } else {
-          toast.error(response?.data?.message || 'Cannot delete organization, it is in use.')
-        }
-      } catch (error) {
-        toast.error(getMessage(error))
-      }
+    if ([200, 204].includes(response.status)) {
+      toast.success('Record Deleted')
+      await loadOrganizations(page, status)
+    } else {
+      toast.error(getMessage(response) || 'Cannot delete organization, it is in use.')
     }
+  } catch (error) {
+    toast.error(getMessage(error))
+  }
+}
+
 
     setDeleting(false)
     setSelectedOrganization(null)

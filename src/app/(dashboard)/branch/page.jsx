@@ -147,21 +147,20 @@ const BranchPage = () => {
   const handleConfirmDelete = async () => {
     setConfirmDialogOpen(false)
     setDeleting(true)
+if (selectedBranch) {
+  try {
+    const response = await BranchService.deleteBranch(selectedBranch.branchId)
 
-    if (selectedBranch) {
-      try {
-        const response = await BranchService.deleteBranch(selectedBranch.branchId)
-
-        if (response.status === HttpStatus.OK || response.status === HttpStatus.NoContent) {
-          toast.success('Record Deleted')
-          await loadBranches(page, status)
-        } else {
-          toast.error(getMessage(response))
-        }
-      } catch (error) {
-        toast.error(getMessage(error))
-      }
+    if ([200, 201, 204].includes(response.status) || response === true) {
+      toast.success('Record Deleted')
+      await loadBranches(page, status)
+    } else {
+      toast.error(getMessage(response) || 'Cannot delete branch, it is in use.')
     }
+  } catch (error) {
+    toast.error(getMessage(error))
+  }
+}
 
     setDeleting(false)
     setSelectedBranch(null)

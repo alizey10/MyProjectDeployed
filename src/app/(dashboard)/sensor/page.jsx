@@ -198,18 +198,22 @@ useEffect(() => {
   const handleConfirmDelete = async () => {
     setConfirmDialogOpen(false)
     setDeleting(true)
+if (selectedSensor) {
+  try {
+    const response = await SensorService.deleteSensor(selectedSensor.sensorId)
 
-    if (selectedSensor) {
-      try {
-        const success = await SensorService.deleteSensor(selectedSensor.sensorId)
-        if (success) {
-          toast.success('Record Deleted')
-          await loadSensors(page, status)
-        }
-      } catch (error) {
-        toast.error(getMessage(error))
-      }
+ 
+    if ([200,201, 204].includes(response.status) || response === true) {
+      toast.success('Record Deleted')
+      await loadSensors(page, status)
+    } else {
+      toast.error(getMessage(response))
     }
+  } catch (error) {
+    toast.error(getMessage(error))
+  }
+}
+
 
     setDeleting(false)
     setSelectedSensor(null)
