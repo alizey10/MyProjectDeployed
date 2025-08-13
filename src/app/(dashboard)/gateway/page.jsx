@@ -137,29 +137,29 @@ const GatewayManagerPage = () => {
   try {
     if (isCreateMode) {
       const result = await GatewayService.createGateway(payload)
-      if (result?.status === 201) {
+      if (result?.status === HttpStatus.Created) {
         toast.success('Record Saved')
         setIsCreateMode(false)
         setEditDialogOpen(false)
         await loadGateways(page)
         return
       } else {
-        toast.error(result?.response?.data?.message || 'Failed to save')
+        toast.error(getMessage(result))
       }
     } else {
       const result = await GatewayService.updateGateway(editData.gatewayId, payload)
-      if (result?.status === 200) {
+      if (result?.status === HttpStatus.OK) {
         toast.success('Record Updated')
         setEditDialogOpen(false)
         await loadGateways(page)
         return
       } else {
-        toast.error(result?.response?.data?.message || 'Failed to update')
+    toast.error(getMessage(result))
       }
     }
   } catch (error) {
     console.error("Full API error:", error)
-    toast.error(error?.response?.data?.message || 'Something went wrong')
+toast.error(getMessage(error))
   }
   }
 
