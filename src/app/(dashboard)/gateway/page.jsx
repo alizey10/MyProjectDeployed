@@ -278,7 +278,7 @@ const GatewayManagerPage = () => {
         </Grid>
 
         <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant='contained' color='success' startIcon={<i className='ri-add-line' />} onClick={handleAdd}>
+          <Button variant='contained' color='success' startIcon={<i className='ri-add-line' /> }onClick={handleAdd}>
             Add Gateway
           </Button>
         </Grid>
