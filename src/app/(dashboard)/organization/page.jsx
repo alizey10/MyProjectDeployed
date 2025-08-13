@@ -12,7 +12,7 @@ import DialogBox from '@/views/common/DialogBox'
 import OrganizationService from '@services/organizationService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 import { StatusEnum } from '@/enum/status-enum'
-import { APIStatusCode } from '@/utils/apiStatusCode'
+
 
 const PAGE_SIZE = 10
 
@@ -192,7 +192,6 @@ const OrganizationManagerPage = () => {
 
   const fields = [
     { label: 'Organization Id', name: 'organizationId', placeholder: '2000FXCV', icon: '🏢', required: true },
-    { label: 'Organization Name', name: 'organizationName', placeholder: 'TopNotch Ltd.', icon: '🏢', required: true },
     { label: 'Country', name: 'country', placeholder: 'Pakistan', icon: '🌏', required: true },
     { label: 'City', name: 'city', placeholder: 'Lahore', icon: '🏙️' },
     { label: 'Address', name: 'address', placeholder: 'Street 1, Sector 4', icon: '🏠' },
@@ -211,17 +210,22 @@ const OrganizationManagerPage = () => {
         onCancel={handleCancelDelete}
       />
 
-      <DialogBox
-        title={isCreateMode ? 'Add Organization' : 'Edit Organization'}
-        open={editDialogOpen}
-        onClose={() => {
-          setEditDialogOpen(false)
-          setIsCreateMode(false)
-        }}
-        data={isCreateMode ? '' : editData}
-        onSave={handleSaveEdit}
-        fields={fields}
-      />
+   <DialogBox
+  title={isCreateMode ? 'Add Organization' : 'Edit Organization'}
+  open={editDialogOpen}
+  onClose={() => {
+    setEditDialogOpen(false)
+    setIsCreateMode(false)
+  }}
+  data={isCreateMode ? null : editData} 
+  onSave={handleSaveEdit}
+  fields={fields}
+  organization={orgs} 
+  isCreateMode={isCreateMode} 
+/>
+
+
+
 
       <Grid
         item

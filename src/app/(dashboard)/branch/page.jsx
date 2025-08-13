@@ -242,18 +242,21 @@ const BranchPage = () => {
         onCancel={handleCancelDelete}
       />
 
-      <DialogBox
-        title={isCreateMode ? 'Add Branch' : 'Edit Branch'}
-        open={editDialogOpen}
-        onClose={() => {
-          setEditDialogOpen(false)
-          setIsCreateMode(false)
-        }}
-        organization={organization}
-        data={isCreateMode ? null : editData}
-        onSave={handleSaveEdit}
-        fields={fields.filter(f => f.name !== 'organizationId')}
-      />
+     <DialogBox
+  key={isCreateMode ? 'add-branch' : editData?.branchId || 'edit-branch'} 
+  title={isCreateMode ? 'Add Branch' : 'Edit Branch'}
+  open={editDialogOpen}
+  onClose={() => {
+    setEditDialogOpen(false);
+    setEditData(null);
+    setIsCreateMode(false);
+  }}
+  organization={organization}
+  data={isCreateMode ? null : editData}
+  onSave={handleSaveEdit}
+  fields={fields}
+/>
+
 
       <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
         <Grid item>

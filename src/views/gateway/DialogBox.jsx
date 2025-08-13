@@ -144,118 +144,109 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
 
         <form id='edit-form' onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={4} mt={0.5}>
-            {/* Organization Dropdown */}
-            {organization?.length > 0 && (
-              <>
-                <Grid item xs={12} md={6}>
-                  <InputLabel>Organization</InputLabel>
-                  <Controller
-                    name='organizationId'
-                    control={control}
-                    rules={{ required: 'Organization is required' }}
-                    render={({ field }) => (
-                      <Select
-                        {...field}
-                        fullWidth
-                        value={field.value || ''}
-                        error={!!errors.organizationId}
-                        onChange={async e => {
-                          const orgId = e.target.value
-                          field.onChange(orgId)
+          {/* Organization Dropdown */}
+<Grid item xs={12} md={6}>
+  <InputLabel>Organization</InputLabel>
+  <Controller
+    name='organizationId'
+    control={control}
+    rules={{ required: 'Organization is required' }}
+    render={({ field }) => (
+      <Select
+        {...field}
+        fullWidth
+        value={field.value || ''}
+        error={!!errors.organizationId}
+        onChange={async e => {
+          const orgId = e.target.value
+          field.onChange(orgId)
 
-                          const selectedOrg = organization.find(org => org.organizationId === orgId)
-                          if (selectedOrg) {
-                            setValue('organizationName', selectedOrg.organizationName)
-                            setValue('organizationId', selectedOrg.organizationId)
-                          }
+          const selectedOrg = organization.find(org => org.organizationId === orgId)
+          if (selectedOrg) {
+            setValue('organizationName', selectedOrg.organizationName)
+            setValue('organizationId', selectedOrg.organizationId)
+          }
 
-                          await getBranches(orgId)
-                          setValue('branchId', '')
-                        }}
-                      >
-                        <MenuItem value=''>Select Organization</MenuItem>
-                        {organization.map(org => (
-                          <MenuItem key={org.organizationId} value={org.organizationId}>
-                            {org.organizationName}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    )}
-                  />
-                  {errors.organizationId && <FormHelperText error>{errors.organizationId.message}</FormHelperText>}
-                </Grid>
+          await getBranches(orgId)
+          setValue('branchId', '')
+        }}
+        startAdornment={<InputAdornment position="start">🏢</InputAdornment>}
+      >
+        <MenuItem value=''>Select Organization</MenuItem>
+        {organization.map(org => (
+          <MenuItem key={org.organizationId} value={org.organizationId}>
+            {org.organizationName}
+          </MenuItem>
+        ))}
+      </Select>
+    )}
+  />
+  {errors.organizationId && <FormHelperText error>{errors.organizationId.message}</FormHelperText>}
+</Grid>
 
-                {/* Organization ID */}
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    label='Organization ID'
-                    value={watch('organizationId') || ''}
-                    fullWidth
-                    sx={{ mt: 5.5 }}
-                    onClick={() => setWarning({ field: 'organizationId', message: 'Organization ID is auto-filled' })}
-                    InputProps={{
-                      readOnly: true
-                    }}
-                  />
-                  {warning.field === 'organizationId' && <FormHelperText error>{warning.message}</FormHelperText>}
-                </Grid>
-              </>
-            )}
+{/* Organization ID */}
+<Grid item xs={12} md={6}>
+  <TextField
+    label='Organization ID'
+    value={watch('organizationId') || ''}
+    fullWidth
+    sx={{ mt: 5.5 }}
+    InputProps={{
+      readOnly: true,
+      startAdornment: <InputAdornment position="start">🏢</InputAdornment>
+    }}
+  />
+</Grid>
 
-            {/* Branch Dropdown */}
-            <Grid item xs={12} md={6}>
-              <InputLabel>Branches</InputLabel>
-              <Controller
-                name='branchId'
-                control={control}
-                rules={{ required: 'Branch is required' }}
-                render={({ field }) => (
-                  <Select
-                    {...field}
-                    fullWidth
-                    value={field.value || ''}
-                    error={!!errors.branchId}
-                    onChange={e => {
-                      field.onChange(e.target.value)
-                      setValue('branchId', e.target.value)
-                    }}
-                  >
-                    {branches?.length > 0 ? (
-                      branches.map(branch => (
-                        <MenuItem key={branch.branchId} value={branch.branchId}>
-                          {branch.branchName}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem disabled value=''>
-                        No branches available
-                      </MenuItem>
-                    )}
-                  </Select>
-                )}
-              />
-              {branchError && !isLoading && (
-                <FormHelperText error sx={{ marginLeft: '1rem', marginTop: '0.5rem' }}>
-                  {branchError}
-                </FormHelperText>
-              )}
-              {errors.branchId && <FormHelperText error>{errors.branchId.message}</FormHelperText>}
-            </Grid>
+{/* Branch Dropdown */}
+<Grid item xs={12} md={6}>
+  <InputLabel>Branches</InputLabel>
+  <Controller
+    name='branchId'
+    control={control}
+    rules={{ required: 'Branch is required' }}
+    render={({ field }) => (
+      <Select
+        {...field}
+        fullWidth
+        value={field.value || ''}
+        error={!!errors.branchId}
+        onChange={e => {
+          field.onChange(e.target.value)
+          setValue('branchId', e.target.value)
+        }}
+        startAdornment={<InputAdornment position="start">🌿</InputAdornment>}
+      >
+        {branches?.length > 0 ? (
+          branches.map(branch => (
+            <MenuItem key={branch.branchId} value={branch.branchId}>
+              {branch.branchName}
+            </MenuItem>
+          ))
+        ) : (
+          <MenuItem disabled value=''>
+            No branches available
+          </MenuItem>
+        )}
+      </Select>
+    )}
+  />
+</Grid>
 
-            {/* Branch ID */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                label='Branch ID'
-                value={watch('branchId') || ''}
-                fullWidth
-                sx={{ mt: 5.3 }}
-                onClick={() => setWarning({ field: 'branchId', message: 'Branch ID is auto-filled' })}
-                InputProps={{
-                  readOnly: true
-                }}
-              />
-              {warning.field === 'branchId' && <FormHelperText error>{warning.message}</FormHelperText>}
-            </Grid>
+{/* Branch ID */}
+<Grid item xs={12} md={6}>
+  <TextField
+    label='Branch ID'
+    value={watch('branchId') || ''}
+    fullWidth
+    sx={{ mt: 5.3 }}
+    InputProps={{
+      readOnly: true,
+      startAdornment: <InputAdornment position="start">🌿</InputAdornment>
+    }}
+  />
+</Grid>
+
 
             {/* Dynamic Fields */}
             {fields.map((field, index) => (

@@ -179,155 +179,157 @@ const SensorDialog = ({ open, title, onClose, data, onSave, fields, organization
         )}
         <form id='sensor-form' onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={4} mt={0.5}>
-            {/* Organization */}
-            {organization?.length > 0 && (
-              <>
-                <Grid item xs={12} md={6}>
-                  <InputLabel>Organization</InputLabel>
-                  <Controller
-                    name='organizationId'
-                    control={control}
-                    rules={{ required: 'Organization is required' }}
-                    render={({ field }) => (
-                      <Select
-                        {...field}
-                        fullWidth
-                        value={field.value || ''}
-                        onChange={async e => {
-                          const orgId = e.target.value
-                          field.onChange(orgId)
-                          const selectedOrg = organization.find(org => org.organizationId === orgId)
-                          if (selectedOrg) setValue('organizationName', selectedOrg.organizationName)
-                          const branchList = await getBranches(orgId)
-                          setValue('branchId', '')
-                          setValue('gatewayId', '')
-                          setSelectedGatewayName('')
-                        }}
-                      >
-                        <MenuItem value=''>Select Organization</MenuItem>
-                        {organization.map(org => (
-                          <MenuItem key={org.organizationId} value={org.organizationId}>
-                            {org.organizationName}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    )}
-                  />
-                  {errors.organizationId && <FormHelperText error>{errors.organizationId.message}</FormHelperText>}
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    label='Organization ID'
-                    value={watch('organizationId') || ''}
-                    fullWidth
-                    sx={{ mt: 5.5 }}
-                    onClick={() => setWarning({ field: 'organizationId', message: 'Organization ID is auto-filled' })}
-                    InputProps={{ readOnly: true }}
-                  />
-                  {errors.organizationId && <FormHelperText error>{errors.organizationId.message}</FormHelperText>}
-                  {warning.field === 'organizationId' && <FormHelperText error>{warning.message}</FormHelperText>}
-                </Grid>
-              </>
-            )}
+           {/* Organization */}
+<Grid item xs={12} md={6}>
+  <InputLabel>Organization</InputLabel>
+  <Controller
+    name='organizationId'
+    control={control}
+    rules={{ required: 'Organization is required' }}
+    render={({ field }) => (
+      <Select
+        {...field}
+        fullWidth
+        value={field.value || ''}
+        onChange={async e => {
+          const orgId = e.target.value
+          field.onChange(orgId)
+          const selectedOrg = organization.find(org => org.organizationId === orgId)
+          if (selectedOrg) setValue('organizationName', selectedOrg.organizationName)
+          const branchList = await getBranches(orgId)
+          setValue('branchId', '')
+          setValue('gatewayId', '')
+          setSelectedGatewayName('')
+        }}
+        startAdornment={<InputAdornment position="start">🏢</InputAdornment>}
+      >
+        <MenuItem value=''>Select Organization</MenuItem>
+        {organization.map(org => (
+          <MenuItem key={org.organizationId} value={org.organizationId}>
+            {org.organizationName}
+          </MenuItem>
+        ))}
+      </Select>
+    )}
+  />
+</Grid>
 
-            {/* Branch */}
-            <Grid item xs={12} md={6}>
-              <InputLabel>Branch</InputLabel>
-              <Controller
-                name='branchId'
-                control={control}
-                rules={{ required: 'Branch is required' }}
-                render={({ field }) => (
-                  <Select
-                    {...field}
-                    fullWidth
-                    value={field.value || ''}
-                    onChange={async e => {
-                      const branchId = e.target.value
-                      field.onChange(branchId)
-                      setValue('gatewayId', '')
-                      setSelectedGatewayName('')
-                      const branch = branches.find(b => b.branchId === branchId)
-                      if (branch) setValue('branchName', branch.branchName)
-                      await getGateways(branchId)
-                    }}
-                  >
-                    {branches.length > 0 ? (
-                      branches.map(b => (
-                        <MenuItem key={b.branchId} value={b.branchId}>
-                          {b.branchName}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem disabled value=''>
-                        No branches available
-                      </MenuItem>
-                    )}
-                  </Select>
-                )}
-              />
-              {branchError && <FormHelperText error>{branchError}</FormHelperText>}
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label='Branch ID'
-                value={watch('branchId') || ''}
-                fullWidth
-                sx={{ mt: 5.3 }}
-                onClick={() => setWarning({ field: 'branchId', message: 'Branch ID is auto-filled' })}
-                InputProps={{ readOnly: true }}
-              />
+<Grid item xs={12} md={6}>
+  <TextField
+    label='Organization ID'
+    value={watch('organizationId') || ''}
+    fullWidth
+    sx={{ mt: 5.5 }}
+    InputProps={{
+      readOnly: true,
+      startAdornment: <InputAdornment position="start">🏢</InputAdornment>
+    }}
+  />
+</Grid>
 
-              {warning.field === 'branchId' && <FormHelperText error>{warning.message}</FormHelperText>}
-            </Grid>
+{/* Branch */}
+<Grid item xs={12} md={6}>
+  <InputLabel>Branch</InputLabel>
+  <Controller
+    name='branchId'
+    control={control}
+    rules={{ required: 'Branch is required' }}
+    render={({ field }) => (
+      <Select
+        {...field}
+        fullWidth
+        value={field.value || ''}
+        onChange={async e => {
+          const branchId = e.target.value
+          field.onChange(branchId)
+          setValue('gatewayId', '')
+          setSelectedGatewayName('')
+          const branch = branches.find(b => b.branchId === branchId)
+          if (branch) setValue('branchName', branch.branchName)
+          await getGateways(branchId)
+        }}
+        startAdornment={<InputAdornment position="start">🌿</InputAdornment>}
+      >
+        {branches.length > 0 ? (
+          branches.map(b => (
+            <MenuItem key={b.branchId} value={b.branchId}>
+              {b.branchName}
+            </MenuItem>
+          ))
+        ) : (
+          <MenuItem disabled value=''>
+            No branches available
+          </MenuItem>
+        )}
+      </Select>
+    )}
+  />
+</Grid>
 
-            {/* Gateway */}
-            <Grid item xs={12} md={6}>
-              <InputLabel>Gateway</InputLabel>
-              <Controller
-                name='gatewayId'
-                control={control}
-                rules={{ required: 'Gateway is required' }}
-                render={({ field }) => (
-                  <Select
-                    {...field}
-                    fullWidth
-                    value={field.value || ''}
-                    onChange={async e => {
-                      const gatewayId = e.target.value
-                      field.onChange(gatewayId)
-                      setValue('gatewayId', gatewayId)
-                      await fetchGatewayById(gatewayId)
-                    }}
-                  >
-                    <MenuItem value=''>Select Gateway</MenuItem>
-                    {gateways.length > 0 ? (
-                      gateways.map(g => (
-                        <MenuItem key={g.gatewayId} value={g.gatewayId}>
-                          {g.gatewayName}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem disabled value=''>
-                        No gateways available
-                      </MenuItem>
-                    )}
-                  </Select>
-                )}
-              />
-              {gatewayError && <FormHelperText error>{gatewayError}</FormHelperText>}
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label='Gateway Name'
-                value={selectedGatewayName || ''}
-                fullWidth
-                sx={{ mt: 5.3 }}
-                onClick={() => setWarning({ field: 'gatewayId', message: 'Gateway ID is auto-filled' })}
-                InputProps={{ readOnly: true }}
-              />
-              {warning.field === 'gatewayId' && <FormHelperText error>{warning.message}</FormHelperText>}
-            </Grid>
+<Grid item xs={12} md={6}>
+  <TextField
+    label='Branch ID'
+    value={watch('branchId') || ''}
+    fullWidth
+    sx={{ mt: 5.3 }}
+    InputProps={{
+      readOnly: true,
+      startAdornment: <InputAdornment position="start">🌿</InputAdornment>
+    }}
+  />
+</Grid>
+{/* Gateway */}
+<Grid item xs={12} md={6}>
+  <InputLabel>Gateway</InputLabel>
+  <Controller
+    name='gatewayId'
+    control={control}
+    rules={{ required: 'Gateway is required' }}
+    render={({ field }) => (
+      <Select
+        {...field}
+        fullWidth
+        value={field.value || ''} 
+        onChange={async e => {
+          const gatewayId = e.target.value
+          field.onChange(gatewayId) 
+          setValue('gatewayId', gatewayId)
+          await fetchGatewayById(gatewayId) 
+        }}
+        startAdornment={<InputAdornment position="start">🌐</InputAdornment>}
+      >
+        <MenuItem value=''>Select Gateway</MenuItem>
+        {gateways.length > 0 ? (
+          gateways.map(g => (
+            <MenuItem key={g.gatewayId} value={g.gatewayId}> 
+              {g.gatewayName}
+            </MenuItem>
+          ))
+        ) : (
+          <MenuItem disabled value=''>
+            No gateways available
+          </MenuItem>
+        )}
+      </Select>
+    )}
+  />
+</Grid>
+
+<Grid item xs={12} md={6}>
+  <TextField
+    label='Gateway ID'
+    value={watch('gatewayId') || ''}
+    fullWidth
+    sx={{ mt: 5.3 }}
+    InputProps={{
+      readOnly: true,
+      startAdornment: <InputAdornment position="start">🌐</InputAdornment>
+    }}
+  />
+</Grid>
+
+
+
 
             {/* Dynamic fields */}
             {fields?.map((field, i) => (

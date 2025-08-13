@@ -223,6 +223,7 @@ const GatewayManagerPage = () => {
       label: 'Gateway Id',
       name: 'gatewayId',
       placeholder: 'Gateway Id',
+       icon: '🌏',
       required: true,
       value: editData?.gatewayId || ''
     },
@@ -231,6 +232,7 @@ const GatewayManagerPage = () => {
       name: 'gatewayName',
       placeholder: 'Gateway Name',
       required: true,
+       icon: '🌏',
       value: editData?.gatewayName || ''
     }
   ]
