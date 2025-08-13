@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-
 import {
   TextField,
   InputAdornment,
@@ -18,59 +17,63 @@ import {
   FormHelperText,
   Box
 } from '@mui/material'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 
 import branchService from '@/@services/branchService'
 
 const DialogBox = ({ open, title, onClose, data, onSave, fields, organization }) => {
-  const [branches, SetBranches] = useState([])
+  const [branches, setBranches] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [branchError, setBranchError] = useState('')
+  const [warning, setWarning] = useState({ field: '', message: '' })
 
   const {
+    control,
     register,
     handleSubmit,
     reset,
-    formState: { errors, isValid },
-    watch
+    setValue,
+    watch,
+    formState: { errors, isValid }
   } = useForm({
     defaultValues: data || {},
     mode: 'onChange'
   })
 
   const formValues = watch()
-
   useEffect(() => {
     const fetchInitialData = async () => {
-      if (open) {
-        let orgId = data?.organizationId || organization?.[0]?.organizationId
+      if (!open) return
 
-        if (data) {
-          reset(data || {})
-        } else {
-          reset({ organizationId: orgId })
-        }
+      let orgId = data?.organizationId || organization?.[0]?.organizationId
 
-        if (orgId) {
-          await getBranches(orgId)
-        }
+      if (data) {
+        reset(data)
+        setValue('organizationId', data.organizationId)
+        setValue('branchId', data.branchId)
+      } else {
+        reset({ organizationId: orgId })
+        setValue('organizationId', orgId)
+      }
+
+      if (orgId) {
+        await getBranches(orgId)
       }
     }
 
     fetchInitialData()
-  }, [open])
+  }, [open, data, organization])
 
   const onSubmit = async updatedData => {
-    setIsSubmitting(true) // Show loader on form submission
-
+    setIsSubmitting(true)
     try {
       await onSave(updatedData)
       reset('')
     } catch (error) {
       console.error('Error saving data', error)
     } finally {
-      setIsSubmitting(false) // Hide loader after save
+      setIsSubmitting(false)
     }
   }
 
@@ -82,39 +85,37 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
 
     try {
       const _branches = await branchService.getBranchsByOrgId(0, 0, orgId)
-
-      SetBranches(_branches.data.data)
+      setBranches(_branches.data.data)
 
       if (_branches.data.data.length === 0) {
         setBranchError('No branches found for this organization.')
+      } else {
+        setBranchError('')
       }
     } catch (error) {
       setBranchError('Error fetching branches. Please try again.')
       console.error(error)
     } finally {
-      setIsLoading(false) // Hide loader after branches are fetched
+      setIsLoading(false)
     }
   }
 
-  // Validation rules for fields
   const getValidationRules = field => {
     if (field.required) {
       return {
         required: `${field.label} is required`
       }
     }
-
     return {}
   }
 
-  // Check if any field is empty
   const isAnyFieldEmpty = () => {
     return Object.values(formValues).some(value => value === '' || value === undefined || value === null)
   }
 
   const formKey = data ? 'edit-mode' : 'add-mode'
 
-  const handleClose = (event, reason) => {
+  const handleClose = () => {
     reset({})
     onClose()
   }
@@ -123,8 +124,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
     <Dialog onClose={handleClose} open={open} fullWidth maxWidth='md' key={formKey}>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent sx={{ position: 'relative' }}>
-        {/* Loader for the entire dialog */}
-        {isLoading || isSubmitting ? (
+        {(isLoading || isSubmitting) && (
           <Box
             sx={{
               position: 'absolute',
@@ -140,59 +140,115 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
           >
             <CircularProgress />
           </Box>
-        ) : null}
+        )}
 
         <form id='edit-form' onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={4} mt={0.5}>
-            {organization?.length > 0 && (
-              <Grid item xs={12}>
-                <InputLabel>Organization</InputLabel>
-                <Select
-                  label='Organization'
-                  defaultValue={data?.organizationId || organization[0]?.organizationId}
-                  fullWidth
-                  {...register('organizationId', { required: 'Organization is required' })}
-                  onChange={async event => {
-                    const orgId = event.target.value
-                    await getBranches(orgId)
-                  }}
-                >
-                  {organization.map(org => (
-                    <MenuItem key={org.organizationId} value={org.organizationId}>
-                      {org.organizationName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </Grid>
-            )}
+          {/* Organization Dropdown */}
+<Grid item xs={12} md={6}>
+  <InputLabel>Organization</InputLabel>
+  <Controller
+    name='organizationId'
+    control={control}
+    rules={{ required: 'Organization is required' }}
+    render={({ field }) => (
+      <Select
+        {...field}
+        fullWidth
+        value={field.value || ''}
+        error={!!errors.organizationId}
+        onChange={async e => {
+          const orgId = e.target.value
+          field.onChange(orgId)
 
-            <Grid item xs={12}>
-              <InputLabel>Branches</InputLabel>
-              <Select
-                label='Branches'
-                defaultValue={data?.branchId}
-                fullWidth
-                {...register('branchId', { required: 'Branch is required' })}
-              >
-                {branches?.length > 0 ? (
-                  branches.map(branch => (
-                    <MenuItem key={branch.branchId} value={branch.branchId}>
-                      {branch.branchName}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled value=''>
-                    No branches available
-                  </MenuItem>
-                )}
-              </Select>
-              {branchError && !isLoading && (
-                <FormHelperText error sx={{ marginLeft: '1rem', marginTop: '0.5rem' }}>
-                  {branchError}
-                </FormHelperText>
-              )}
-            </Grid>
+          const selectedOrg = organization.find(org => org.organizationId === orgId)
+          if (selectedOrg) {
+            setValue('organizationName', selectedOrg.organizationName)
+            setValue('organizationId', selectedOrg.organizationId)
+          }
 
+          await getBranches(orgId)
+          setValue('branchId', '')
+        }}
+        startAdornment={<InputAdornment position="start">🏢</InputAdornment>}
+      >
+        <MenuItem value=''>Select Organization</MenuItem>
+        {organization.map(org => (
+          <MenuItem key={org.organizationId} value={org.organizationId}>
+            {org.organizationName}
+          </MenuItem>
+        ))}
+      </Select>
+    )}
+  />
+  {errors.organizationId && <FormHelperText error>{errors.organizationId.message}</FormHelperText>}
+</Grid>
+
+{/* Organization ID */}
+<Grid item xs={12} md={6}>
+  <TextField
+    label='Organization ID'
+    value={watch('organizationId') || ''}
+    fullWidth
+    sx={{ mt: 5.5 }}
+    InputProps={{
+      readOnly: true,
+      startAdornment: <InputAdornment position="start">🏢</InputAdornment>
+    }}
+  />
+</Grid>
+
+{/* Branch Dropdown */}
+<Grid item xs={12} md={6}>
+  <InputLabel>Branches</InputLabel>
+  <Controller
+    name='branchId'
+    control={control}
+    rules={{ required: 'Branch is required' }}
+    render={({ field }) => (
+      <Select
+        {...field}
+        fullWidth
+        value={field.value || ''}
+        error={!!errors.branchId}
+        onChange={e => {
+          field.onChange(e.target.value)
+          setValue('branchId', e.target.value)
+        }}
+        startAdornment={<InputAdornment position="start">🌿</InputAdornment>}
+      >
+        {branches?.length > 0 ? (
+          branches.map(branch => (
+            <MenuItem key={branch.branchId} value={branch.branchId}>
+              {branch.branchName}
+            </MenuItem>
+          ))
+        ) : (
+          <MenuItem disabled value=''>
+            No branches available
+          </MenuItem>
+        )}
+      </Select>
+    )}
+  />
+</Grid>
+
+{/* Branch ID */}
+<Grid item xs={12} md={6}>
+  <TextField
+    label='Branch ID'
+    value={watch('branchId') || ''}
+    fullWidth
+    sx={{ mt: 5.3 }}
+    InputProps={{
+      readOnly: true,
+      startAdornment: <InputAdornment position="start">🌿</InputAdornment>
+    }}
+  />
+</Grid>
+
+
+            {/* Dynamic Fields */}
             {fields.map((field, index) => (
               <Grid item xs={12} md={6} key={index}>
                 <TextField
@@ -212,23 +268,16 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
         </form>
       </DialogContent>
       <DialogActions>
-        <Button
-          onClick={() => {
-            reset({})
-            onClose()
-          }}
-          color='secondary'
-          variant='outlined'
-        >
+        <Button onClick={handleClose} color='secondary' variant='outlined'>
           Cancel
         </Button>
         <Button
           type='submit'
           form='edit-form'
           variant='contained'
-          disabled={isAnyFieldEmpty() || isSubmitting || !isValid || branchError} // Disable if any field is empty or form is submitting
+          disabled={isAnyFieldEmpty() || isSubmitting || !isValid || branchError}
         >
-          {isSubmitting ? <CircularProgress size={24} color='inherit' /> : 'Save'}{' '}
+          {isSubmitting ? <CircularProgress size={24} color='inherit' /> : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>

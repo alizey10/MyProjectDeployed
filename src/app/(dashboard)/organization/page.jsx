@@ -12,11 +12,36 @@ import OrganizationService from '@services/organizationService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 import { StatusEnum } from '@/enum/status-enum'
 
+
 const PAGE_SIZE = 10
 
 const OrganizationStatus = StatusEnum
 
 const OrganizationManagerPage = () => {
+  const handleActivateClick = async org => {
+    if (activatingId) return
+    setActivatingId(org.organizationId)
+
+    try {
+      const response = await OrganizationService.activateOrganization(org.organizationId)
+
+      if (
+        response.status === APIStatusCode.Created ||
+        response.status === APIStatusCode.Ok ||
+        response.status === APIStatusCode.NoContent
+      ) {
+        toast.success('Organization Activated')
+        await loadOrganizations(page, status)
+      } else {
+        toast.error(response?.data?.message || 'Activation failed on server')
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message || 'Unexpected error occurred')
+    } finally {
+      setActivatingId(null)
+    }
+  }
+
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -30,6 +55,7 @@ const OrganizationManagerPage = () => {
   const [loading, setLoading] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  const [selectedOrg, setSelectedOrg] = useState(null)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
@@ -131,11 +157,11 @@ const OrganizationManagerPage = () => {
       try {
         const response = await OrganizationService.deleteOrganization(selectedOrganization.organizationId)
 
-        if (response.status === HttpStatus.OK || response.status === HttpStatus.NoContent) {
+        if (response.status === 200 || response.status === 204) {
           toast.success('Record Deleted')
           await loadOrganizations(page, status)
         } else {
-          toast.error(getMessage(response))
+          toast.error(response?.data?.message || 'Cannot delete organization, it is in use.')
         }
       } catch (error) {
         toast.error(getMessage(error))
@@ -148,25 +174,7 @@ const OrganizationManagerPage = () => {
 
   const handleCancelDelete = () => {
     setConfirmDialogOpen(false)
-    setSelectedOrganization(null)
-  }
-
-  const handleActivateClick = async org => {
-    if (activatingId) return
-    setActivatingId(org.organizationId)
-    try {
-      const response = await OrganizationService.activateOrganization(org.organizationId)
-      if (response.status === HttpStatus.NoContent) {
-        toast.success('Organization Activated')
-        await loadOrganizations(page, status)
-      } else {
-        toast.error(getMessage(response))
-      }
-    } catch (error) {
-      toast.error(getMessage(error))
-    } finally {
-      setActivatingId(null)
-    }
+    setSelectedOrg(null)
   }
 
   const columns = [
@@ -183,7 +191,6 @@ const OrganizationManagerPage = () => {
 
   const fields = [
     { label: 'Organization Id', name: 'organizationId', placeholder: '2000FXCV', icon: '🏢', required: true },
-    { label: 'Organization Name', name: 'organizationName', placeholder: 'TopNotch Ltd.', icon: '🏢', required: true },
     { label: 'Country', name: 'country', placeholder: 'Pakistan', icon: '🌏', required: true },
     { label: 'City', name: 'city', placeholder: 'Lahore', icon: '🏙️' },
     { label: 'Address', name: 'address', placeholder: 'Street 1, Sector 4', icon: '🏠' },
@@ -197,22 +204,27 @@ const OrganizationManagerPage = () => {
       <ConfirmDialog
         open={confirmDialogOpen}
         title='Confirm Deletion'
-        message={`Are you sure you want to delete "${selectedOrganization?.organizationName}"?`}
+        message={`Are you sure you want to delete "${selectedOrg?.organizationName}"?`}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
       />
 
-      <DialogBox
-        title={isCreateMode ? 'Add Organization' : 'Edit Organization'}
-        open={editDialogOpen}
-        onClose={() => {
-          setEditDialogOpen(false)
-          setIsCreateMode(false)
-        }}
-        data={isCreateMode ? '' : editData}
-        onSave={handleSaveEdit}
-        fields={fields}
-      />
+   <DialogBox
+  title={isCreateMode ? 'Add Organization' : 'Edit Organization'}
+  open={editDialogOpen}
+  onClose={() => {
+    setEditDialogOpen(false)
+    setIsCreateMode(false)
+  }}
+  data={isCreateMode ? null : editData} 
+  onSave={handleSaveEdit}
+  fields={fields}
+  organization={orgs} 
+  isCreateMode={isCreateMode} 
+/>
+
+
+
 
       <Grid
         item

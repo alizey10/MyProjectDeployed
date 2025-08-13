@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
+
 import OrganizationService from '@services/organizationService'
 import DataTable from '@/views/floor/DataTable'
 import ConfirmDialog from '@components/Dialog'
@@ -36,14 +37,19 @@ const BranchPage = () => {
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
   const [activatingId, setActivatingId] = useState(null)
+
   const [organization, setOrganization] = useState([])
+
   useEffect(() => {
     const fetchOrganization = async () => {
-      const organizations = await OrganizationService.getOrganizations(0, 0)
-      const newData = organizations.data
-      setOrganization(newData)
+      try {
+        const organizations = await OrganizationService.getOrganizations(0, 0)
+        const newData = organizations?.data?.data || organizations?.data || []
+        setOrganization(newData)
+      } catch (error) {
+        toast.error(getMessage(error))
+      }
     }
-
     fetchOrganization()
   }, [])
 
@@ -209,9 +215,10 @@ const BranchPage = () => {
         icon: '🏢',
         required: true,
         type: 'select',
-        options: Array.isArray(organization)
-          ? organization.map(org => ({ value: org.organizationId, label: org.organizationName }))
-          : []
+        options: organization.map(org => ({
+          value: org.organizationId,
+          label: org.organizationName
+        }))
       },
       { label: 'Branch Id', name: 'branchId', placeholder: 'IDXCV205', icon: '🏢', required: true },
       { label: 'Branch Name', name: 'branchName', placeholder: 'Branch ABC', icon: '🏢', required: true },
@@ -224,6 +231,7 @@ const BranchPage = () => {
     ],
     [organization]
   )
+
   return (
     <>
       <ConfirmDialog
@@ -234,18 +242,21 @@ const BranchPage = () => {
         onCancel={handleCancelDelete}
       />
 
-      <DialogBox
-        title={isCreateMode ? 'Add Branch' : 'Edit Branch'}
-        open={editDialogOpen}
-        onClose={() => {
-          setEditDialogOpen(false)
-          setIsCreateMode(false)
-        }}
-        organization={organization}
-        data={isCreateMode ? '' : editData}
-        onSave={handleSaveEdit}
-        fields={fields}
-      />
+     <DialogBox
+  key={isCreateMode ? 'add-branch' : editData?.branchId || 'edit-branch'} 
+  title={isCreateMode ? 'Add Branch' : 'Edit Branch'}
+  open={editDialogOpen}
+  onClose={() => {
+    setEditDialogOpen(false);
+    setEditData(null);
+    setIsCreateMode(false);
+  }}
+  organization={organization}
+  data={isCreateMode ? null : editData}
+  onSave={handleSaveEdit}
+  fields={fields}
+/>
+
 
       <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
         <Grid item>

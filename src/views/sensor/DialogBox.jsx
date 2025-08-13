@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-
+import { useEffect, useState } from 'react'
 import {
   TextField,
   InputAdornment,
@@ -14,192 +13,154 @@ import {
   Dialog,
   Select,
   MenuItem,
-  FormHelperText,
   CircularProgress,
+  FormHelperText,
   Box
 } from '@mui/material'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 
-import branchService from '@/@services/branchService'
-import gatewayService from '@/@services/gatewayService'
-import floorService from '@/@services/floorService'
+import BranchService from '@/@services/branchService'
+import GatewayService from '@/@services/gatewayService'
+import { toast } from 'react-toastify'
 
-const DialogBox = ({ open, title, onClose, data, onSave, fields, organization }) => {
+const SensorDialog = ({ open, title, onClose, data, onSave, fields, organization }) => {
   const [branches, setBranches] = useState([])
   const [gateways, setGateways] = useState([])
-  const [floors, setFloors] = useState([])
+  const [selectedGatewayName, setSelectedGatewayName] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [branchError, setBranchError] = useState('')
   const [gatewayError, setGatewayError] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const [warning, setWarning] = useState({ field: '', message: '' })
 
   const {
+    control,
     register,
     handleSubmit,
     reset,
     setValue,
     watch,
-    formState: { errors, isSubmitting, isValid }
+    formState: { errors, isValid }
   } = useForm({
-    defaultValues: data || {}
+    defaultValues: {},
+    mode: 'onChange'
   })
 
   const formValues = watch()
 
-  const getBranches = useCallback(async orgId => {
-    setIsLoading(true)
-    try {
-      const response = await branchService.getBranchsByOrgId(0, 0, orgId)
-      const branchData = response?.data?.data || []
-      setBranches(branchData)
-
-      if (branchData.length === 0) {
-        setBranchError('No branches found for this organization.')
-      } else {
-        setBranchError('')
-      }
-    } catch (error) {
-      setBranches([])
-      setBranchError('Failed to load branches.')
-      console.error('Error fetching branches:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  const getGatewaysByBranch = useCallback(async branchId => {
-    setIsLoading(true)
-    try {
-      const response = await gatewayService.getGatewayByBranchId(0, 0, branchId) 
-      const gatewayData = response?.data?.data || []
-      setGateways(gatewayData)
-
-      if (gatewayData.length === 0) {
-        setGatewayError('No gateways found for this branch.')
-      } else {
-        setGatewayError('')
-      }
-    } catch (error) {
-      setGateways([])
-      setGatewayError('Failed to load gateways.')
-      console.error('Error fetching gateways:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  const getFloors = useCallback(async () => {
-    try {
-      const response = await floorService.getFloor(0, 0)
-      const floorData = response?.data?.data || []
-      setFloors(floorData)
-    } catch (error) {
-      setFloors([])
-      console.error('Error fetching floors:', error)
-    }
-  }, [])
-
   useEffect(() => {
-    if (!open) return
+    const fetchInitialData = async () => {
+      if (!open) return
 
-    const initialize = async () => {
-      setIsLoading(true)
-      await getFloors()
+      reset(data || { organizationId: organization?.[0]?.organizationId })
 
-      if (data) {
-        reset(data)
-        if (data.organizationId) await getBranches(data.organizationId)
-        if (data.branchId) await getGatewaysByBranch(data.branchId)
-      } else {
-        reset({})
-        setBranches([])
-        setGateways([])
+      const orgId = data?.organizationId || organization?.[0]?.organizationId
+      if (!orgId) return
+      setValue('organizationId', orgId)
+
+      const branchList = await getBranches(orgId)
+
+      const branchId = data?.branchId
+      if (branchId) {
+        setValue('branchId', branchId)
+
+        const gatewayList = await getGateways(branchId)
+
+        const gatewayId = data?.gatewayId
+        if (gatewayId) {
+          setValue('gatewayId', gatewayId)
+          await fetchGatewayById(gatewayId)
+        }
       }
+    }
+
+    fetchInitialData()
+  }, [open])
+
+  const getBranches = async orgId => {
+    if (!orgId) return []
+    setIsLoading(true)
+    setBranchError('')
+    try {
+      const res = await BranchService.getBranchsByOrgId(0, 0, orgId)
+      const brs = res.data.data || []
+      setBranches(brs)
+      if (!brs.length) setBranchError('No branches found for this organization.')
+      return brs
+    } catch (err) {
+      console.error(err)
+      setBranchError('Error fetching branches. Please try again.')
+      return []
+    } finally {
       setIsLoading(false)
     }
+  }
 
-    initialize()
-  }, [open, data, reset, getBranches, getGatewaysByBranch, getFloors])
-
-  const handleOrgChange = async event => {
-    const orgId = event.target.value
-    const selectedOrg = organization.find(org => org.organizationId === orgId)
-
-    setValue('organizationId', orgId)
-    setValue('organizationName', selectedOrg?.organizationName || '')
-
-    if (orgId) {
-      await getBranches(orgId)
-    } else {
-      setBranches([])
+  const getGateways = async branchId => {
+    if (!branchId) return []
+    setIsLoading(true)
+    setGatewayError('')
+    try {
+      const res = await GatewayService.getGatewaysByBranch(branchId)
+      const gws = res?.data?.data || []
+      setGateways(gws)
+      if (!gws.length) setGatewayError('No gateways found for this branch.')
+      return gws
+    } catch (err) {
+      console.error(err)
+      setGatewayError('Error fetching gateways. Please try again.')
+      return []
+    } finally {
+      setIsLoading(false)
     }
-
-    setValue('branchId', '')
-    setValue('branchName', '')
-    setGateways([])
-    setValue('gatewayId', '')
-    setValue('gatewayName', '')
   }
 
-  const handleBranchChange = async event => {
-    const branchId = event.target.value
-    const selectedBranch = branches.find(branch => branch.branchId === branchId)
-
-    setValue('branchId', branchId)
-    setValue('branchName', selectedBranch?.branchName || '')
-
-    if (branchId) {
-      await getGatewaysByBranch(branchId)
-    } else {
-      setGateways([])
-    }
-
-    setValue('gatewayId', '')
-    setValue('gatewayName', '')
-  }
-
-  const handleGatewayChange = event => {
-    const gatewayId = event.target.value
-    const selectedGateway = gateways.find(gw => gw.gatewayId === gatewayId)
-
-    setValue('gatewayId', gatewayId)
-    setValue('gatewayName', selectedGateway?.gatewayName || '')
-  }
-
-  const handleFloorChange = event => {
-    const floorId = event.target.value
-    const selectedFloor = floors.find(floor => floor.floorSectionId === floorId)
-
-    setValue('floorSectionId', floorId)
-    setValue('floorSectionName', selectedFloor?.floorSectionName || '')
-  }
-
-  const isAnyFieldEmpty = () => {
-    return fields.some(field => {
-      if (field.required) {
-        const value = formValues[field.name]
-        return value === '' || value === undefined || value === null
+  const fetchGatewayById = async gatewayId => {
+    if (!gatewayId) return
+    setGatewayError('')
+    setIsLoading(true)
+    try {
+      const res = await GatewayService.getGatewayById(gatewayId)
+      if (res?.data?.data?.gatewayName) {
+        setSelectedGatewayName(res.data.data.gatewayName)
+      } else {
+        setGatewayError('Gateway not found')
       }
-      return false
-    })
+    } catch (err) {
+      console.error(err)
+      setGatewayError('Error fetching gateway')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
+  const onSubmit = async updatedData => {
+    setIsSubmitting(true)
+    try {
+      await onSave(updatedData)
+      reset({})
+      setSelectedGatewayName('')
+    } catch (err) {
+      console.error('Error saving sensor data', err)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const getValidationRules = field => (field.required ? { required: `${field.label} is required` } : {})
+  const isAnyFieldEmpty = () => Object.values(formValues).some(v => v === '' || v === undefined || v === null)
   const handleClose = () => {
     reset({})
+    setSelectedGatewayName('')
     onClose()
   }
-
-  const getValidationRules = field => {
-    if (field.required) {
-      return { required: `${field.label} is required` }
-    }
-    return {}
-  }
+  const formKey = data ? 'edit-mode' : 'add-mode'
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth='md'>
+    <Dialog onClose={handleClose} open={open} fullWidth maxWidth='md' key={formKey}>
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent>
-        {isLoading && (
+      <DialogContent sx={{ position: 'relative' }}>
+        {(isLoading || isSubmitting) && (
           <Box
             sx={{
               position: 'absolute',
@@ -207,114 +168,172 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
               left: 0,
               width: '100%',
               height: '100%',
-              backgroundColor: 'rgba(255, 255, 255, 0.7)',
+              backgroundColor: 'rgba(255,255,255,0.7)',
               display: 'flex',
               justifyContent: 'center',
-              alignItems: 'center',
-              zIndex: 10
+              alignItems: 'center'
             }}
           >
             <CircularProgress />
           </Box>
         )}
-        <form id='edit-form' onSubmit={handleSubmit(onSave)}>
+        <form id='sensor-form' onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={4} mt={0.5}>
-         
-            {organization?.length > 0 && (
-              <Grid item xs={12}>
-                <InputLabel>Organization</InputLabel>
-                <Select
-                  label='Organization'
-                  value={formValues.organizationId || ''}
-                  fullWidth
-                  {...register('organizationId', { required: 'Organization is required' })}
-                  onChange={handleOrgChange}
-                >
-                  <MenuItem value=''>Select Organization</MenuItem>
-                  {organization.map(org => (
-                    <MenuItem key={org.organizationId} value={org.organizationId}>
-                      {org.organizationName}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {errors.organizationId && <FormHelperText error>{errors.organizationId.message}</FormHelperText>}
-              </Grid>
-            )}
+           {/* Organization */}
+<Grid item xs={12} md={6}>
+  <InputLabel>Organization</InputLabel>
+  <Controller
+    name='organizationId'
+    control={control}
+    rules={{ required: 'Organization is required' }}
+    render={({ field }) => (
+      <Select
+        {...field}
+        fullWidth
+        value={field.value || ''}
+        onChange={async e => {
+          const orgId = e.target.value
+          field.onChange(orgId)
+          const selectedOrg = organization.find(org => org.organizationId === orgId)
+          if (selectedOrg) setValue('organizationName', selectedOrg.organizationName)
+          const branchList = await getBranches(orgId)
+          setValue('branchId', '')
+          setValue('gatewayId', '')
+          setSelectedGatewayName('')
+        }}
+        startAdornment={<InputAdornment position="start">🏢</InputAdornment>}
+      >
+        <MenuItem value=''>Select Organization</MenuItem>
+        {organization.map(org => (
+          <MenuItem key={org.organizationId} value={org.organizationId}>
+            {org.organizationName}
+          </MenuItem>
+        ))}
+      </Select>
+    )}
+  />
+</Grid>
 
-          
-            <Grid item xs={12}>
-              <InputLabel>Branch</InputLabel>
-              <Select
-                label='Branch'
-                value={formValues.branchId || ''}
-                fullWidth
-                {...register('branchId', { required: 'Branch is required' })}
-                onChange={handleBranchChange}
-                disabled={!formValues.organizationId}
-              >
-                <MenuItem value=''>Select Branch</MenuItem>
-                {branches.length > 0 ? (
-                  branches.map(branch => (
-                    <MenuItem key={branch.branchId} value={branch.branchId}>
-                      {branch.branchName}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>No branches available</MenuItem>
-                )}
-              </Select>
-              {branchError && <FormHelperText error>{branchError}</FormHelperText>}
-            </Grid>
+<Grid item xs={12} md={6}>
+  <TextField
+    label='Organization ID'
+    value={watch('organizationId') || ''}
+    fullWidth
+    sx={{ mt: 5.5 }}
+    InputProps={{
+      readOnly: true,
+      startAdornment: <InputAdornment position="start">🏢</InputAdornment>
+    }}
+  />
+</Grid>
 
-           
-            <Grid item xs={12}>
-              <InputLabel>Gateway</InputLabel>
-              <Select
-                label='Gateway'
-                value={formValues.gatewayId || ''}
-                fullWidth
-                {...register('gatewayId', { required: 'Gateway is required' })}
-                onChange={handleGatewayChange}
-                disabled={!formValues.branchId}
-              >
-                <MenuItem value=''>Select Gateway</MenuItem>
-                {gateways.length > 0 ? (
-                  gateways.map(gateway => (
-                    <MenuItem key={gateway.gatewayId} value={gateway.gatewayId}>
-                      {gateway.gatewayName}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>No gateways available</MenuItem>
-                )}
-              </Select>
-              {gatewayError && <FormHelperText error>{gatewayError}</FormHelperText>}
-            </Grid>
+{/* Branch */}
+<Grid item xs={12} md={6}>
+  <InputLabel>Branch</InputLabel>
+  <Controller
+    name='branchId'
+    control={control}
+    rules={{ required: 'Branch is required' }}
+    render={({ field }) => (
+      <Select
+        {...field}
+        fullWidth
+        value={field.value || ''}
+        onChange={async e => {
+          const branchId = e.target.value
+          field.onChange(branchId)
+          setValue('gatewayId', '')
+          setSelectedGatewayName('')
+          const branch = branches.find(b => b.branchId === branchId)
+          if (branch) setValue('branchName', branch.branchName)
+          await getGateways(branchId)
+        }}
+        startAdornment={<InputAdornment position="start">🌿</InputAdornment>}
+      >
+        {branches.length > 0 ? (
+          branches.map(b => (
+            <MenuItem key={b.branchId} value={b.branchId}>
+              {b.branchName}
+            </MenuItem>
+          ))
+        ) : (
+          <MenuItem disabled value=''>
+            No branches available
+          </MenuItem>
+        )}
+      </Select>
+    )}
+  />
+</Grid>
 
-          
-            {floors.length > 0 && (
-              <Grid item xs={12}>
-                <InputLabel>Floor</InputLabel>
-                <Select
-                  label='Floor'
-                  value={formValues.floorSectionId || ''}
-                  fullWidth
-                  {...register('floorSectionId')}
-                  onChange={handleFloorChange}
-                >
-                  <MenuItem value=''>Select Floor</MenuItem>
-                  {floors.map(floor => (
-                    <MenuItem key={floor.floorSectionId} value={floor.floorSectionId}>
-                      {floor.floorSectionName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </Grid>
-            )}
+<Grid item xs={12} md={6}>
+  <TextField
+    label='Branch ID'
+    value={watch('branchId') || ''}
+    fullWidth
+    sx={{ mt: 5.3 }}
+    InputProps={{
+      readOnly: true,
+      startAdornment: <InputAdornment position="start">🌿</InputAdornment>
+    }}
+  />
+</Grid>
+{/* Gateway */}
+<Grid item xs={12} md={6}>
+  <InputLabel>Gateway</InputLabel>
+  <Controller
+    name='gatewayId'
+    control={control}
+    rules={{ required: 'Gateway is required' }}
+    render={({ field }) => (
+      <Select
+        {...field}
+        fullWidth
+        value={field.value || ''} 
+        onChange={async e => {
+          const gatewayId = e.target.value
+          field.onChange(gatewayId) 
+          setValue('gatewayId', gatewayId)
+          await fetchGatewayById(gatewayId) 
+        }}
+        startAdornment={<InputAdornment position="start">🌐</InputAdornment>}
+      >
+        <MenuItem value=''>Select Gateway</MenuItem>
+        {gateways.length > 0 ? (
+          gateways.map(g => (
+            <MenuItem key={g.gatewayId} value={g.gatewayId}> 
+              {g.gatewayName}
+            </MenuItem>
+          ))
+        ) : (
+          <MenuItem disabled value=''>
+            No gateways available
+          </MenuItem>
+        )}
+      </Select>
+    )}
+  />
+</Grid>
 
-           
-            {fields.map((field, index) => (
-              <Grid item xs={12} md={6} key={index}>
+<Grid item xs={12} md={6}>
+  <TextField
+    label='Gateway ID'
+    value={watch('gatewayId') || ''}
+    fullWidth
+    sx={{ mt: 5.3 }}
+    InputProps={{
+      readOnly: true,
+      startAdornment: <InputAdornment position="start">🌐</InputAdornment>
+    }}
+  />
+</Grid>
+
+
+
+
+            {/* Dynamic fields */}
+            {fields?.map((field, i) => (
+              <Grid item xs={12} md={6} key={i}>
                 <TextField
                   fullWidth
                   label={field.label}
@@ -337,9 +356,9 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
         </Button>
         <Button
           type='submit'
-          form='edit-form'
+          form='sensor-form'
           variant='contained'
-          disabled={isAnyFieldEmpty() || isSubmitting || !isValid}
+          disabled={isAnyFieldEmpty() || isSubmitting || !isValid || branchError || gatewayError}
         >
           {isSubmitting ? <CircularProgress size={24} color='inherit' /> : 'Save'}
         </Button>
@@ -348,4 +367,4 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
   )
 }
 
-export default DialogBox
+export default SensorDialog
