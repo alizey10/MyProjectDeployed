@@ -28,54 +28,35 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
   const [branchError, setBranchError] = useState('')
   const [warning, setWarning] = useState({ field: '', message: '' })
 
-  const {
-    control,
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    watch,
-    formState: { errors, isValid }
-  } = useForm({
-    defaultValues: data || {},
-    mode: 'onChange'
-  })
+  const { control, register, handleSubmit, reset, setValue, watch, formState: { errors, isValid } } = useForm({
+  defaultValues: data || {},
+  mode: 'onChange'
+})
 
   const formValues = watch()
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      if (!open) return
-
-      let orgId = data?.organizationId || organization?.[0]?.organizationId
-
-      if (data) {
-        reset(data)
-        setValue('organizationId', data.organizationId)
-        setValue('branchId', data.branchId)
-      } else {
-        reset({ organizationId: orgId })
-        setValue('organizationId', orgId)
-      }
-
-      if (orgId) {
-        await getBranches(orgId)
-      }
-    }
-
-    fetchInitialData()
-  }, [open, data, organization])
-
-  const onSubmit = async updatedData => {
-    setIsSubmitting(true)
-    try {
-      await onSave(updatedData)
-      reset('')
-    } catch (error) {
-      console.error('Error saving data', error)
-    } finally {
-      setIsSubmitting(false)
-    }
+ useEffect(() => {
+  const fetchInitialData = async () => {
+    if (!open) return
+    let orgId = data?.organizationId || organization?.[0]?.organizationId
+    reset({ organizationId: orgId, branchId: data?.branchId || '' })
+    if (orgId) await getBranches(orgId)
   }
+  fetchInitialData()
+}, [open, data, organization])
+
+
+const onSubmit = async updatedData => {
+  setIsSubmitting(true)
+  try {
+    await onSave(updatedData)
+    reset()
+  } catch (error) {
+    console.error('Error saving data', error)
+  } finally {
+    setIsSubmitting(false)
+  }
+}
+
 
   const getBranches = async orgId => {
     if (!orgId) return
@@ -195,6 +176,14 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
       readOnly: true,
       startAdornment: <InputAdornment position="start">🏢</InputAdornment>
     }}
+     onFocus={() => {
+      setWarning({
+        field: 'organizationId',
+        message: 'Organization ID cannot be changed.'
+      });
+    }}
+    error={warning.field === 'organizationId'}
+    helperText={warning.field === 'organizationId' ? warning.message : ''}
   />
 </Grid>
 
@@ -244,6 +233,14 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
       readOnly: true,
       startAdornment: <InputAdornment position="start">🌿</InputAdornment>
     }}
+    onFocus={() => {
+      setWarning({
+        field: 'branchId',
+        message: 'Branch ID cannot be changed.'
+      });
+    }}
+    error={warning.field === 'branchId'}
+    helperText={warning.field === 'branchId' ? warning.message : ''}
   />
 </Grid>
 

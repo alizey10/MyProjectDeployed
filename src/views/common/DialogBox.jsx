@@ -20,7 +20,16 @@ import {
 
 import { useForm } from 'react-hook-form'
 
-const DialogBox = ({ open, title, onClose, data, onSave, fields, organization , isCreateMode}) => {
+const DialogBox = ({ 
+  open, 
+  title, 
+  onClose, 
+  data, 
+  onSave, 
+  fields, 
+  organization = [], 
+  isCreateMode
+}) => {
   const {
     register,
     handleSubmit,
@@ -37,31 +46,28 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization , 
   const [warning, setWarning] = useState({ field: '', message: '' })
   const formValues = watch();
 
-useEffect(() => {
-  if (!open) {
-    reset();
-    return;
-  }
+  useEffect(() => {
+    if (!open) {
+      reset();
+      return;
+    }
 
-  if (isCreateMode) {
-   
-    reset({
-      organizationName: '',
-       organizationId: '' ,
-      country: '',
-      city: '',
-      address: '',
-      phone: '',
-      postCode: '',
-      poc: ''
-    });
-  } else if (data) {
-    
-    reset(data);
-    setValue('organizationId', data.organizationId);
-  }
-}, [open, isCreateMode, data, organization, reset, setValue]);
-
+    if (isCreateMode) {
+      reset({
+        organizationName: '',
+        organizationId: '',
+        country: '',
+        city: '',
+        address: '',
+        phone: '',
+        postCode: '',
+        poc: ''
+      });
+    } else if (data) {
+      reset(data);
+      setValue('organizationId', data.organizationId);
+    }
+  }, [open, isCreateMode, data, organization, reset, setValue]);
 
   const onSubmit = async updatedData => {
     setIsLoading(true)
@@ -82,7 +88,6 @@ useEffect(() => {
         required: `${field.label} is required`
       }
     }
-
     return {}
   }
 
@@ -101,115 +106,115 @@ useEffect(() => {
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <form id='edit-form' onSubmit={handleSubmit(onSubmit)}>
-        <Grid container spacing={4} mt={0.5}>
-  {isCreateMode ? (
-  <>
-  
-    <Grid item xs={12} md={6}>
-      <TextField
-        label="Organization Name"
-        fullWidth
-        placeholder="TopNotch Ltd."
-        {...register('organizationName', getValidationRules({ label: 'Organization Name', required: true }))}
-        InputProps={{
-          startAdornment: <InputAdornment position="start">🏢</InputAdornment>
-        }}
-      />
-    </Grid>
-    <Grid item xs={12} md={6}>
-      <TextField
-        label="Organization Id"
-        fullWidth
-        placeholder="20000XCV"
-        value={watch('organizationId') || ''} 
-        InputProps={{
-          readOnly: true,
-          startAdornment: <InputAdornment position="start">🏢</InputAdornment>
-        }}
-      />
-    </Grid>
-  </>
-) : (
-  <>
- 
-<Grid item xs={12} md={6}>
-  <InputLabel>Organization</InputLabel>
-  <TextField
-    select
-    fullWidth
-    value={watch('organizationId') || ''}
-    {...register('organizationId', { required: 'Organization is required' })}
-    onChange={e => setValue('organizationId', e.target.value)}
-    InputProps={{
-      startAdornment: <InputAdornment position="start">🏢</InputAdornment>
+          <Grid container spacing={4} mt={0.5}>
+            {isCreateMode ? (
+              <>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    label="Organization Name"
+                    fullWidth
+                    placeholder="TopNotch Ltd."
+                    {...register('organizationName', getValidationRules({ label: 'Organization Name', required: true }))}
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">🏢</InputAdornment>
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    label="Organization Id"
+                    fullWidth
+                    placeholder="20000XCV"
+                    value={watch('organizationId') || ''} 
+                    InputProps={{
+                      readOnly: true,
+                      startAdornment: <InputAdornment position="start">🏢</InputAdornment>
+                    }}
+                  />
+                </Grid>
+              </>
+            ) : (
+              <>
+                <Grid item xs={12} md={6}>
+                  <InputLabel>Organization</InputLabel>
+                  <TextField
+                    select
+                    fullWidth
+                    value={watch('organizationId') || ''}
+                    {...register('organizationId', { required: 'Organization is required' })}
+                    onChange={e => setValue('organizationId', e.target.value)}
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">🏢</InputAdornment>
+                    }}
+                  >
+                    {(organization || []).map(org => (
+                      <MenuItem key={org.organizationId} value={org.organizationId}>
+                        {org.organizationName}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  {errors.organizationId && <FormHelperText error>{errors.organizationId.message}</FormHelperText>}
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    label="Organization Id"
+                    fullWidth
+                    sx={{ mt: 5.5 }}
+                    value={watch('organizationId') || ''}
+                    InputProps={{
+                      readOnly: true,
+                      startAdornment: <InputAdornment position="start">🏢</InputAdornment>
+                    }}
+                   onFocus={() => {
+      setWarning({
+        field: 'organizationId',
+        message: 'Organization ID cannot be changed.'
+      });
     }}
-  >
-    {organization.map(org => (
-      <MenuItem key={org.organizationId} value={org.organizationId}>
-        {org.organizationName}
-      </MenuItem>
-    ))}
-  </TextField>
-  {errors.organizationId && <FormHelperText error>{errors.organizationId.message}</FormHelperText>}
-</Grid>
+    error={warning.field === 'organizationId'}
+    helperText={warning.field === 'organizationId' ? warning.message : ''}
+                  />
+                </Grid>
+              </>
+            )}
 
-
-    <Grid item xs={12} md={6}>
-      <TextField
-        label="Organization Id"
-        fullWidth
-        sx={{ mt: 5.5 }}
-        value={watch('organizationId') || ''}
-        InputProps={{
-          readOnly: true,
-          startAdornment: <InputAdornment position="start">🏢</InputAdornment>
-        }}
-      />
-    </Grid>
-  </>
-)}
-
-
-  
-  {fields
-    .filter(field => field.name !== 'organizationId')
-    .map((field, index) => (
-      <Grid item xs={12} md={6} key={index}>
-        <TextField
-          fullWidth
-          label={field.label}
-          placeholder={field.placeholder}
-          {...register(field.name, getValidationRules(field))}
-          InputProps={{
-            startAdornment: field.icon ? <InputAdornment position="start">{field.icon}</InputAdornment> : null
-          }}
-          error={!!errors[field.name]}
-          helperText={errors[field.name]?.message}
-        />
-      </Grid>
-    ))}
-</Grid>
-
-
+            {fields
+              .filter(field => field.name !== 'organizationId')
+              .map((field, index) => (
+                <Grid item xs={12} md={6} key={index}>
+                  <TextField
+                    fullWidth
+                    label={field.label}
+                    placeholder={field.placeholder}
+                    {...register(field.name, getValidationRules(field))}
+                    InputProps={{
+                      startAdornment: field.icon ? <InputAdornment position="start">{field.icon}</InputAdornment> : null
+                    }}
+                    error={!!errors[field.name]}
+                    helperText={errors[field.name]?.message}
+                  />
+                </Grid>
+              ))}
+          </Grid>
         </form>
       </DialogContent>
 
       <DialogActions>
-  <Button
-    onClick={() => {
-      reset(); 
-      onClose(); 
-    }}
-    color='secondary'
-    variant='outlined'
-  >
-    Cancel
-  </Button>
-  <Button type='submit' form='edit-form' variant='contained' disabled={isAnyFieldEmpty() || isLoading}>
-    {isLoading ? <CircularProgress size={24} color='inherit' /> : 'Save'}
-  </Button>
-</DialogActions>
-
+        <Button
+          onClick={() => {
+            reset(); 
+            onClose(); 
+          }}
+          color='secondary'
+          variant='outlined'
+        >
+          Cancel
+        </Button>
+        <Button type='submit' form='edit-form' variant='contained' disabled={isAnyFieldEmpty() || isLoading}>
+          {isLoading ? <CircularProgress size={24} color='inherit' /> : 'Save'}
+        </Button>
+      </DialogActions>
     </Dialog>
   )
 }

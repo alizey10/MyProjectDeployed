@@ -224,6 +224,14 @@ const SensorDialog = ({ open, title, onClose, data, onSave, fields, organization
       readOnly: true,
       startAdornment: <InputAdornment position="start">🏢</InputAdornment>
     }}
+    onFocus={() => {
+      setWarning({
+        field: 'organizationId',
+        message: 'Organization ID cannot be changed.'
+      });
+    }}
+    error={warning.field === 'organizationId'}
+    helperText={warning.field === 'organizationId' ? warning.message : ''}
   />
 </Grid>
 
@@ -276,6 +284,14 @@ const SensorDialog = ({ open, title, onClose, data, onSave, fields, organization
       readOnly: true,
       startAdornment: <InputAdornment position="start">🌿</InputAdornment>
     }}
+    onFocus={() => {
+      setWarning({
+        field: 'branchId',
+        message: 'Branch ID cannot be changed.'
+      });
+    }}
+    error={warning.field === 'branchId'}
+    helperText={warning.field === 'branchId' ? warning.message : ''}
   />
 </Grid>
 {/* Gateway */}
@@ -325,7 +341,16 @@ const SensorDialog = ({ open, title, onClose, data, onSave, fields, organization
       readOnly: true,
       startAdornment: <InputAdornment position="start">🌐</InputAdornment>
     }}
+     onFocus={() => {
+      setWarning({
+        field: 'gatewayId',
+        message: 'Gateway ID cannot be changed.'
+      });
+    }}
+    error={warning.field === 'gatewayId'}
+    helperText={warning.field === 'gatewayId' ? warning.message : ''}
   />
+  
 </Grid>
 
 
