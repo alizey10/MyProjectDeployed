@@ -202,8 +202,12 @@ if (selectedSensor) {
   try {
     const response = await SensorService.deleteSensor(selectedSensor.sensorId)
 
- 
-    if ([200,201, 204].includes(response.status) || response === true) {
+    if (
+      response.status === HttpStatus.OK ||
+      response.status === HttpStatus.Created ||
+      response.status === HttpStatus.NoContent ||
+      response === true
+    ) {
       toast.success('Record Deleted')
       await loadSensors(page, status)
     } else {
@@ -225,22 +229,28 @@ if (selectedSensor) {
   }
 
   const handleActivateClick = async sensor => {
-    if (activatingId) return
-    setActivatingId(sensor.sensorId)
+   if (activatingId) return
+setActivatingId(sensor.sensorId)
 
-    try {
-      const response = await SensorService.activateSensor(sensor.sensorId)
-      if (response.status === HttpStatus.NoContent) {
-        toast.success('Sensor Activated')
-        await loadSensors(page, status)
-      } else {
-        toast.error(getMessage(response))
-      }
-    } catch (error) {
-      toast.error(getMessage(error))
-    } finally {
-      setActivatingId(null)
-    }
+try {
+  const response = await SensorService.activateSensor(sensor.sensorId)
+
+  if (
+    response.status === HttpStatus.OK ||
+    response.status === HttpStatus.Created ||
+    response.status === HttpStatus.NoContent ||
+    response === true
+  ) {
+    toast.success('Sensor Activated')
+    await loadSensors(page, status)
+  } else {
+    toast.error(getMessage(response))
+  }
+} catch (error) {
+  toast.error(getMessage(error))
+} finally {
+  setActivatingId(null)
+}
   }
 
   const columns = [

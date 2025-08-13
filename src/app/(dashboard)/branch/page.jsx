@@ -151,16 +151,17 @@ if (selectedBranch) {
   try {
     const response = await BranchService.deleteBranch(selectedBranch.branchId)
 
-    if ([200, 201, 204].includes(response.status) || response === true) {
+    if (response.status === HttpStatus.OK || response.status === HttpStatus.NoContent || response === true) {
       toast.success('Record Deleted')
       await loadBranches(page, status)
     } else {
-      toast.error(getMessage(response) || 'Cannot delete branch, it is in use.')
+      toast.error(getMessage(response))
     }
   } catch (error) {
     toast.error(getMessage(error))
   }
 }
+
 
     setDeleting(false)
     setSelectedBranch(null)
@@ -172,23 +173,28 @@ if (selectedBranch) {
   }
 
   const handleActivateClick = async branch => {
-    if (activatingId) return
-    setActivatingId(branch.branchId)
+   if (activatingId) return
+setActivatingId(branch.branchId)
 
-    try {
-      const response = await BranchService.activateBranch(branch.branchId)
+try {
+  const response = await BranchService.activateBranch(branch.branchId)
 
-      if (response?.status === HttpStatus.NoContent) {
-        toast.success('Branch Activated')
-        await loadBranches(page, status)
-      } else {
-        toast.error(getMessage(response))
-      }
-    } catch (error) {
-      toast.error(getMessage(error))
-    } finally {
-      setActivatingId(null)
-    }
+  if (
+    response.status === HttpStatus.OK ||
+    response.status === HttpStatus.Created ||
+    response.status === HttpStatus.NoContent ||
+    response === true
+  ) {
+    toast.success('Branch Activated')
+    await loadBranches(page, status)
+  } else {
+    toast.error(getMessage(response))
+  }
+} catch (error) {
+  toast.error(getMessage(error))
+} finally {
+  setActivatingId(null)
+}
   }
 
   const columns = [

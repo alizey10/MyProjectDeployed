@@ -20,20 +20,25 @@ const OrganizationStatus = StatusEnum
 
 const OrganizationManagerPage = () => {
   const handleActivateClick = async org => {
-   if (activatingId) return
+if (activatingId) return
 setActivatingId(org.organizationId)
 
 try {
   const response = await OrganizationService.activateOrganization(org.organizationId)
 
-  if ([200, 201, 204].includes(response.status)) {
+  if (
+    response.status === HttpStatus.OK ||
+    response.status === HttpStatus.Created ||
+    response.status === HttpStatus.NoContent ||
+    response === true
+  ) {
     toast.success('Organization Activated')
     await loadOrganizations(page, status)
   } else {
-    toast.error(getMessage(response) || response?.data?.message || 'Activation failed on server')
+    toast.error(getMessage(response))
   }
 } catch (error) {
-  toast.error(getMessage(error) || error.message || 'Unexpected error occurred')
+  toast.error(getMessage(error))
 } finally {
   setActivatingId(null)
 }
@@ -149,16 +154,19 @@ try {
   const handleConfirmDelete = async () => {
     setConfirmDialogOpen(false)
     setDeleting(true)
-
-   if (selectedOrganization) {
+if (selectedOrganization) {
   try {
     const response = await OrganizationService.deleteOrganization(selectedOrganization.organizationId)
 
-    if ([200, 204].includes(response.status)) {
+    if (
+      response.status === HttpStatus.OK ||
+      response.status === HttpStatus.NoContent ||
+      response === true
+    ) {
       toast.success('Record Deleted')
       await loadOrganizations(page, status)
     } else {
-      toast.error(getMessage(response) || 'Cannot delete organization, it is in use.')
+      toast.error(getMessage(response))
     }
   } catch (error) {
     toast.error(getMessage(error))

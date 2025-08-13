@@ -164,21 +164,21 @@ const GatewayManagerPage = () => {
   const handleConfirmDelete = async () => {
     setConfirmDialogOpen(false)
     setDeleting(true)
-
 if (selectedGateway) {
   try {
     const response = await GatewayService.deleteGateway(selectedGateway.gatewayId)
 
-    if ([200, 201, 204].includes(response.status) || response === true) {
+    if (response.status === HttpStatus.OK || response.status === HttpStatus.NoContent || response === true) {
       toast.success('Record Deleted')
       await loadGateways(page, status)
     } else {
-      toast.error(getMessage(response) || 'Cannot delete gateway, it is in use.')
+      toast.error(getMessage(response))
     }
   } catch (error) {
     toast.error(getMessage(error))
   }
 }
+
 
 setDeleting(false)
 setSelectedGateway(null)
@@ -190,17 +190,17 @@ setSelectedGateway(null)
   }
 
   const handleActivateClick = async gateway => {
-   if (activatingId) return
+if (activatingId) return
 setActivatingId(gateway.gatewayId)
 
 try {
   const response = await GatewayService.activateGateway(gateway.gatewayId)
 
-  if ([200, 201, 204].includes(response.status) || response.success) {
+  if (response.status === HttpStatus.OK || response.status === HttpStatus.Created || response.status === HttpStatus.NoContent || response === true) {
     toast.success('Gateway Activated')
     await loadGateways(page, status)
   } else {
-    toast.error(getMessage(response) || response.message || 'Activation failed')
+    toast.error(getMessage(response))
   }
 } catch (error) {
   toast.error(getMessage(error))
