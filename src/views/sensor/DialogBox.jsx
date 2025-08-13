@@ -31,7 +31,7 @@ const SensorDialog = ({ open, title, onClose, data, onSave, fields, organization
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [branchError, setBranchError] = useState('')
   const [gatewayError, setGatewayError] = useState('')
-    const [warning, setWarning] = useState({ field: '', message: '' })
+  const [warning, setWarning] = useState({ field: '', message: '' })
 
   const {
     control,
@@ -58,14 +58,12 @@ const SensorDialog = ({ open, title, onClose, data, onSave, fields, organization
       if (!orgId) return
       setValue('organizationId', orgId)
 
-      // Fetch branches for organization
       const branchList = await getBranches(orgId)
 
       const branchId = data?.branchId
       if (branchId) {
         setValue('branchId', branchId)
 
-        // Fetch gateways for this branch
         const gatewayList = await getGateways(branchId)
 
         const gatewayId = data?.gatewayId
@@ -98,47 +96,43 @@ const SensorDialog = ({ open, title, onClose, data, onSave, fields, organization
     }
   }
 
- const getGateways = async branchId => {
-  if (!branchId) return []
-  setIsLoading(true)
-  setGatewayError('')
-  try {
-    const res = await GatewayService.getGatewaysByBranch(branchId)
-    const gws = res?.data?.data || []
-    setGateways(gws)
-    if (!gws.length) setGatewayError('No gateways found for this branch.')
-    return gws
-  } catch (err) {
-    console.error(err)
-    setGatewayError('Error fetching gateways. Please try again.')
-    return []
-  } finally {
-    setIsLoading(false)
-  }
-}
-
-
-  // Fetch gateway by ID to get the name
-  // Gateway fetch function
-const fetchGatewayById = async gatewayId => {
-  if (!gatewayId) return
-  setGatewayError('')
-  setIsLoading(true)
-  try {
-    const res = await GatewayService.getGatewayById(gatewayId)
-    if (res?.data?.data?.gatewayName) {
-      setSelectedGatewayName(res.data.data.gatewayName)
-    } else {
-      setGatewayError('Gateway not found')
+  const getGateways = async branchId => {
+    if (!branchId) return []
+    setIsLoading(true)
+    setGatewayError('')
+    try {
+      const res = await GatewayService.getGatewaysByBranch(branchId)
+      const gws = res?.data?.data || []
+      setGateways(gws)
+      if (!gws.length) setGatewayError('No gateways found for this branch.')
+      return gws
+    } catch (err) {
+      console.error(err)
+      setGatewayError('Error fetching gateways. Please try again.')
+      return []
+    } finally {
+      setIsLoading(false)
     }
-  } catch (err) {
-    console.error(err)
-    setGatewayError('Error fetching gateway')
-  } finally {
-    setIsLoading(false)
   }
-}
 
+  const fetchGatewayById = async gatewayId => {
+    if (!gatewayId) return
+    setGatewayError('')
+    setIsLoading(true)
+    try {
+      const res = await GatewayService.getGatewayById(gatewayId)
+      if (res?.data?.data?.gatewayName) {
+        setSelectedGatewayName(res.data.data.gatewayName)
+      } else {
+        setGatewayError('Gateway not found')
+      }
+    } catch (err) {
+      console.error(err)
+      setGatewayError('Error fetching gateway')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const onSubmit = async updatedData => {
     setIsSubmitting(true)
@@ -155,28 +149,43 @@ const fetchGatewayById = async gatewayId => {
 
   const getValidationRules = field => (field.required ? { required: `${field.label} is required` } : {})
   const isAnyFieldEmpty = () => Object.values(formValues).some(v => v === '' || v === undefined || v === null)
-  const handleClose = () => { reset({}); setSelectedGatewayName(''); onClose() }
+  const handleClose = () => {
+    reset({})
+    setSelectedGatewayName('')
+    onClose()
+  }
   const formKey = data ? 'edit-mode' : 'add-mode'
 
   return (
-    <Dialog onClose={handleClose} open={open} fullWidth maxWidth="md" key={formKey}>
+    <Dialog onClose={handleClose} open={open} fullWidth maxWidth='md' key={formKey}>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent sx={{ position: 'relative' }}>
         {(isLoading || isSubmitting) && (
-          <Box sx={{ position: 'absolute', top:0, left:0, width:'100%', height:'100%', backgroundColor:'rgba(255,255,255,0.7)', display:'flex', justifyContent:'center', alignItems:'center' }}>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'rgba(255,255,255,0.7)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
             <CircularProgress />
           </Box>
         )}
-        <form id="sensor-form" onSubmit={handleSubmit(onSubmit)}>
+        <form id='sensor-form' onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={4} mt={0.5}>
-
             {/* Organization */}
             {organization?.length > 0 && (
               <>
                 <Grid item xs={12} md={6}>
                   <InputLabel>Organization</InputLabel>
                   <Controller
-                    name="organizationId"
+                    name='organizationId'
                     control={control}
                     rules={{ required: 'Organization is required' }}
                     render={({ field }) => (
@@ -196,7 +205,11 @@ const fetchGatewayById = async gatewayId => {
                         }}
                       >
                         <MenuItem value=''>Select Organization</MenuItem>
-                        {organization.map(org => <MenuItem key={org.organizationId} value={org.organizationId}>{org.organizationName}</MenuItem>)}
+                        {organization.map(org => (
+                          <MenuItem key={org.organizationId} value={org.organizationId}>
+                            {org.organizationName}
+                          </MenuItem>
+                        ))}
                       </Select>
                     )}
                   />
@@ -204,21 +217,15 @@ const fetchGatewayById = async gatewayId => {
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <TextField
-                    label="Organization ID"
+                    label='Organization ID'
                     value={watch('organizationId') || ''}
                     fullWidth
                     sx={{ mt: 5.5 }}
-                     onClick={() =>
-                      setWarning({ field: 'organizationId', message: 'Organization ID is auto-filled' })
-                    }
+                    onClick={() => setWarning({ field: 'organizationId', message: 'Organization ID is auto-filled' })}
                     InputProps={{ readOnly: true }}
                   />
-                   {errors.organizationId && (
-                                      <FormHelperText error>{errors.organizationId.message}</FormHelperText>
-                                    )}
-                          {warning.field === 'organizationId' && (
-                                        <FormHelperText error>{warning.message}</FormHelperText>
-                                      )}
+                  {errors.organizationId && <FormHelperText error>{errors.organizationId.message}</FormHelperText>}
+                  {warning.field === 'organizationId' && <FormHelperText error>{warning.message}</FormHelperText>}
                 </Grid>
               </>
             )}
@@ -227,7 +234,7 @@ const fetchGatewayById = async gatewayId => {
             <Grid item xs={12} md={6}>
               <InputLabel>Branch</InputLabel>
               <Controller
-                name="branchId"
+                name='branchId'
                 control={control}
                 rules={{ required: 'Branch is required' }}
                 render={({ field }) => (
@@ -245,29 +252,40 @@ const fetchGatewayById = async gatewayId => {
                       await getGateways(branchId)
                     }}
                   >
-                    {branches.length > 0 ? branches.map(b => <MenuItem key={b.branchId} value={b.branchId}>{b.branchName}</MenuItem>) : <MenuItem disabled value="">No branches available</MenuItem>}
+                    {branches.length > 0 ? (
+                      branches.map(b => (
+                        <MenuItem key={b.branchId} value={b.branchId}>
+                          {b.branchName}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled value=''>
+                        No branches available
+                      </MenuItem>
+                    )}
                   </Select>
                 )}
               />
               {branchError && <FormHelperText error>{branchError}</FormHelperText>}
             </Grid>
             <Grid item xs={12} md={6}>
-              <TextField label="Branch ID" value={watch('branchId') || ''} fullWidth sx={{ mt: 5.3 }} 
-               onClick={() =>
-                      setWarning({  field: 'branchId', message: 'Branch ID is auto-filled'})
-                    }InputProps={{ readOnly: true }} />
+              <TextField
+                label='Branch ID'
+                value={watch('branchId') || ''}
+                fullWidth
+                sx={{ mt: 5.3 }}
+                onClick={() => setWarning({ field: 'branchId', message: 'Branch ID is auto-filled' })}
+                InputProps={{ readOnly: true }}
+              />
 
-                     {warning.field === 'branchId' && (
-                                    <FormHelperText error>{warning.message}</FormHelperText>
-                                  )}
-                    
+              {warning.field === 'branchId' && <FormHelperText error>{warning.message}</FormHelperText>}
             </Grid>
 
             {/* Gateway */}
             <Grid item xs={12} md={6}>
               <InputLabel>Gateway</InputLabel>
               <Controller
-                name="gatewayId"
+                name='gatewayId'
                 control={control}
                 rules={{ required: 'Gateway is required' }}
                 render={({ field }) => (
@@ -283,7 +301,17 @@ const fetchGatewayById = async gatewayId => {
                     }}
                   >
                     <MenuItem value=''>Select Gateway</MenuItem>
-                    {gateways.length > 0 ? gateways.map(g => <MenuItem key={g.gatewayId} value={g.gatewayId}>{g.gatewayName}</MenuItem>) : <MenuItem disabled value="">No gateways available</MenuItem>}
+                    {gateways.length > 0 ? (
+                      gateways.map(g => (
+                        <MenuItem key={g.gatewayId} value={g.gatewayId}>
+                          {g.gatewayName}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled value=''>
+                        No gateways available
+                      </MenuItem>
+                    )}
                   </Select>
                 )}
               />
@@ -291,18 +319,14 @@ const fetchGatewayById = async gatewayId => {
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
-                label="Gateway Name"
+                label='Gateway Name'
                 value={selectedGatewayName || ''}
                 fullWidth
                 sx={{ mt: 5.3 }}
-                 onClick={() =>
-                      setWarning({ field: 'gatewayId', message: 'Gateway ID is auto-filled' })
-                    }
+                onClick={() => setWarning({ field: 'gatewayId', message: 'Gateway ID is auto-filled' })}
                 InputProps={{ readOnly: true }}
               />
-             {warning.field === 'gatewayId' && (
-                            <FormHelperText error>{warning.message}</FormHelperText>
-                          )}  
+              {warning.field === 'gatewayId' && <FormHelperText error>{warning.message}</FormHelperText>}
             </Grid>
 
             {/* Dynamic fields */}
@@ -314,26 +338,27 @@ const fetchGatewayById = async gatewayId => {
                   placeholder={field.placeholder}
                   {...register(field.name, getValidationRules(field))}
                   InputProps={{
-                    startAdornment: field.icon ? <InputAdornment position="start">{field.icon}</InputAdornment> : null
+                    startAdornment: field.icon ? <InputAdornment position='start'>{field.icon}</InputAdornment> : null
                   }}
                   error={!!errors[field.name]}
                   helperText={errors[field.name]?.message}
                 />
               </Grid>
             ))}
-
           </Grid>
         </form>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleClose} color="secondary" variant="outlined">Cancel</Button>
+        <Button onClick={handleClose} color='secondary' variant='outlined'>
+          Cancel
+        </Button>
         <Button
-          type="submit"
-          form="sensor-form"
-          variant="contained"
+          type='submit'
+          form='sensor-form'
+          variant='contained'
           disabled={isAnyFieldEmpty() || isSubmitting || !isValid || branchError || gatewayError}
         >
-          {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Save'}
+          {isSubmitting ? <CircularProgress size={24} color='inherit' /> : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>

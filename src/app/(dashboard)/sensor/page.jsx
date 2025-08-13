@@ -5,16 +5,13 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
-
 import DataTable from '@/views/floor/DataTable'
 import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/sensor/DialogBox'
-
 import SensorService from '@services/sensorService'
 import OrganizationService from '@services/organizationService'
 import BranchService from '@services/branchService'
 import GatewayService from '@services/gatewayService'
-
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 import { StatusEnum } from '@/enum/status-enum'
 
@@ -25,23 +22,18 @@ const SensorManagerPage = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const urlStatus = searchParams.get('status') || SensorStatus.ACTIVE
-
   const [status, setStatus] = useState(urlStatus)
   const [sensors, setSensors] = useState([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
   const [deleting, setDeleting] = useState(false)
-
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [selectedSensor, setSelectedSensor] = useState(null)
-
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
   const [activatingId, setActivatingId] = useState(null)
-
-  // Organizations, Branches, Gateways for dropdowns
   const [organization, setOrganization] = useState([])
   const [branches, setBranches] = useState([])
   const [gateways, setGateways] = useState([])
@@ -49,7 +41,6 @@ const SensorManagerPage = () => {
   const [selectedBranchId, setSelectedBranchId] = useState(null)
   const [selectedGatewayId, setSelectedGatewayId] = useState(null)
 
-  // Fetch organizations
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
@@ -63,7 +54,7 @@ const SensorManagerPage = () => {
     fetchOrganizations()
   }, [])
 
-  // Fetch branches when organization changes
+
   useEffect(() => {
     if (!selectedOrgId) {
       setBranches([])
@@ -85,7 +76,6 @@ const SensorManagerPage = () => {
     fetchBranches()
   }, [selectedOrgId])
 
-  // Fetch gateways when branch changes
 useEffect(() => {
   if (!selectedBranchId) {
     setGateways([])
@@ -107,7 +97,6 @@ useEffect(() => {
   fetchGateways()
 }, [selectedBranchId])
 
-  // Load sensors
   const loadSensors = async (currentPage, currentStatus) => {
     setLoading(true)
     try {

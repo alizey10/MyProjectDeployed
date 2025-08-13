@@ -42,29 +42,28 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
   })
 
   const formValues = watch()
-useEffect(() => {
-  const fetchInitialData = async () => {
-    if (!open) return;
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      if (!open) return
 
-    let orgId = data?.organizationId || organization?.[0]?.organizationId
+      let orgId = data?.organizationId || organization?.[0]?.organizationId
 
-    if (data) {
-      reset(data)
-      setValue('organizationId', data.organizationId)
-      setValue('branchId', data.branchId)
-    } else {
-      reset({ organizationId: orgId })
-      setValue('organizationId', orgId)
+      if (data) {
+        reset(data)
+        setValue('organizationId', data.organizationId)
+        setValue('branchId', data.branchId)
+      } else {
+        reset({ organizationId: orgId })
+        setValue('organizationId', orgId)
+      }
+
+      if (orgId) {
+        await getBranches(orgId)
+      }
     }
 
-    if (orgId) {
-      await getBranches(orgId)
-    }
-  }
-
-  fetchInitialData()
-}, [open, data, organization])
-
+    fetchInitialData()
+  }, [open, data, organization])
 
   const onSubmit = async updatedData => {
     setIsSubmitting(true)
@@ -122,7 +121,7 @@ useEffect(() => {
   }
 
   return (
-    <Dialog onClose={handleClose} open={open} fullWidth maxWidth="md" key={formKey}>
+    <Dialog onClose={handleClose} open={open} fullWidth maxWidth='md' key={formKey}>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent sx={{ position: 'relative' }}>
         {(isLoading || isSubmitting) && (
@@ -143,7 +142,7 @@ useEffect(() => {
           </Box>
         )}
 
-        <form id="edit-form" onSubmit={handleSubmit(onSubmit)}>
+        <form id='edit-form' onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={4} mt={0.5}>
             {/* Organization Dropdown */}
             {organization?.length > 0 && (
@@ -151,7 +150,7 @@ useEffect(() => {
                 <Grid item xs={12} md={6}>
                   <InputLabel>Organization</InputLabel>
                   <Controller
-                    name="organizationId"
+                    name='organizationId'
                     control={control}
                     rules={{ required: 'Organization is required' }}
                     render={({ field }) => (
@@ -183,28 +182,22 @@ useEffect(() => {
                       </Select>
                     )}
                   />
-                  {errors.organizationId && (
-                    <FormHelperText error>{errors.organizationId.message}</FormHelperText>
-                  )}
+                  {errors.organizationId && <FormHelperText error>{errors.organizationId.message}</FormHelperText>}
                 </Grid>
 
                 {/* Organization ID */}
                 <Grid item xs={12} md={6}>
                   <TextField
-                    label="Organization ID"
+                    label='Organization ID'
                     value={watch('organizationId') || ''}
                     fullWidth
                     sx={{ mt: 5.5 }}
-                    onClick={() =>
-                      setWarning({ field: 'organizationId', message: 'Organization ID is auto-filled' })
-                    }
+                    onClick={() => setWarning({ field: 'organizationId', message: 'Organization ID is auto-filled' })}
                     InputProps={{
                       readOnly: true
                     }}
                   />
-                  {warning.field === 'organizationId' && (
-                    <FormHelperText error>{warning.message}</FormHelperText>
-                  )}
+                  {warning.field === 'organizationId' && <FormHelperText error>{warning.message}</FormHelperText>}
                 </Grid>
               </>
             )}
@@ -213,7 +206,7 @@ useEffect(() => {
             <Grid item xs={12} md={6}>
               <InputLabel>Branches</InputLabel>
               <Controller
-                name="branchId"
+                name='branchId'
                 control={control}
                 rules={{ required: 'Branch is required' }}
                 render={({ field }) => (
@@ -234,7 +227,7 @@ useEffect(() => {
                         </MenuItem>
                       ))
                     ) : (
-                      <MenuItem disabled value="">
+                      <MenuItem disabled value=''>
                         No branches available
                       </MenuItem>
                     )}
@@ -252,20 +245,16 @@ useEffect(() => {
             {/* Branch ID */}
             <Grid item xs={12} md={6}>
               <TextField
-                label="Branch ID"
+                label='Branch ID'
                 value={watch('branchId') || ''}
                 fullWidth
                 sx={{ mt: 5.3 }}
-                onClick={() =>
-                  setWarning({ field: 'branchId', message: 'Branch ID is auto-filled' })
-                }
+                onClick={() => setWarning({ field: 'branchId', message: 'Branch ID is auto-filled' })}
                 InputProps={{
                   readOnly: true
                 }}
               />
-              {warning.field === 'branchId' && (
-                <FormHelperText error>{warning.message}</FormHelperText>
-              )}
+              {warning.field === 'branchId' && <FormHelperText error>{warning.message}</FormHelperText>}
             </Grid>
 
             {/* Dynamic Fields */}
@@ -277,7 +266,7 @@ useEffect(() => {
                   placeholder={field.placeholder}
                   {...register(field.name, getValidationRules(field))}
                   InputProps={{
-                    startAdornment: field.icon ? <InputAdornment position="start">{field.icon}</InputAdornment> : null
+                    startAdornment: field.icon ? <InputAdornment position='start'>{field.icon}</InputAdornment> : null
                   }}
                   error={!!errors[field.name]}
                   helperText={errors[field.name]?.message}
@@ -288,16 +277,16 @@ useEffect(() => {
         </form>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleClose} color="secondary" variant="outlined">
+        <Button onClick={handleClose} color='secondary' variant='outlined'>
           Cancel
         </Button>
         <Button
-          type="submit"
-          form="edit-form"
-          variant="contained"
+          type='submit'
+          form='edit-form'
+          variant='contained'
           disabled={isAnyFieldEmpty() || isSubmitting || !isValid || branchError}
         >
-          {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Save'}
+          {isSubmitting ? <CircularProgress size={24} color='inherit' /> : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>

@@ -40,7 +40,6 @@ const BranchPage = () => {
 
   const [organization, setOrganization] = useState([])
 
-  // 🟢 Fetch Organizations
   useEffect(() => {
     const fetchOrganization = async () => {
       try {
@@ -54,13 +53,11 @@ const BranchPage = () => {
     fetchOrganization()
   }, [])
 
-  // URL status update
   useEffect(() => {
     setStatus(urlStatus)
     setPage(1)
   }, [urlStatus])
 
-  // 🟢 Fetch Branches
   const loadBranches = async (currentPage, currentStatus) => {
     setLoading(true)
     try {
@@ -89,28 +86,24 @@ const BranchPage = () => {
     loadBranches(page, status)
   }, [page, status])
 
-  // Status change handler
   const handleStatusChange = newStatus => {
     setStatus(newStatus)
     setPage(1)
     router.push(`/branch?status=${newStatus}`)
   }
 
-  // Edit branch
   const handleEdit = branch => {
     setEditData(branch)
     setIsCreateMode(false)
     setEditDialogOpen(true)
   }
 
-  // Add branch
   const handleAdd = () => {
     setEditData(null)
     setIsCreateMode(true)
     setEditDialogOpen(true)
   }
 
-  // Save branch (Create or Update)
   const handleSaveEdit = async updatedData => {
     const payload = {
       BranchId: updatedData.branchId,
@@ -146,7 +139,6 @@ const BranchPage = () => {
     }
   }
 
-  // Delete branch
   const handleDeleteClick = branch => {
     setSelectedBranch(branch)
     setConfirmDialogOpen(true)
@@ -180,7 +172,6 @@ const BranchPage = () => {
     setSelectedBranch(null)
   }
 
-  // Activate branch
   const handleActivateClick = async branch => {
     if (activatingId) return
     setActivatingId(branch.branchId)
@@ -201,7 +192,6 @@ const BranchPage = () => {
     }
   }
 
-  // Table columns
   const columns = [
     { label: 'Branch Id', field: 'branchId' },
     { label: 'Branch Name', field: 'branchName' },
@@ -216,7 +206,6 @@ const BranchPage = () => {
     { label: 'Created', field: 'dateCreated' }
   ]
 
-  // Form fields
   const fields = useMemo(
     () => [
       {
@@ -260,10 +249,10 @@ const BranchPage = () => {
           setEditDialogOpen(false)
           setIsCreateMode(false)
         }}
-        organization={organization}        // important
-  data={isCreateMode ? null : editData}  // branch ka data
-  onSave={handleSaveEdit}
-  fields={fields.filter(f => f.name !== "organizationId")}  
+        organization={organization}
+        data={isCreateMode ? null : editData}
+        onSave={handleSaveEdit}
+        fields={fields.filter(f => f.name !== 'organizationId')}
       />
 
       <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>

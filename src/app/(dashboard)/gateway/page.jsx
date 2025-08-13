@@ -21,29 +21,23 @@ const GatewayManagerPage = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const urlStatus = searchParams.get('status') || GatewayEnum.ACTIVE
-
   const [status, setStatus] = useState(urlStatus)
   const [gateways, setGateways] = useState([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
   const [deleting, setDeleting] = useState(false)
-
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [selectedGateway, setSelectedGateway] = useState(null)
-
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
   const [activatingId, setActivatingId] = useState(null)
-
-  // Organizations, Branches, Gateways for dropdowns
   const [organization, setOrganization] = useState([])
   const [branches, setBranches] = useState([])
   const [selectedOrgId, setSelectedOrgId] = useState(null)
   const [selectedBranchId, setSelectedBranchId] = useState(null)
 
-  // Fetch organizations once
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
@@ -57,7 +51,6 @@ const GatewayManagerPage = () => {
     fetchOrganizations()
   }, [])
 
-  // Fetch branches on org change
   useEffect(() => {
     if (!selectedOrgId) {
       setBranches([])
@@ -79,7 +72,6 @@ const GatewayManagerPage = () => {
     fetchBranches()
   }, [selectedOrgId])
 
-  // Load gateways list with paging and status
   const loadGateways = async (currentPage, currentStatus) => {
     setLoading(true)
     try {
@@ -117,7 +109,6 @@ const GatewayManagerPage = () => {
     router.push(`/gateway?status=${newStatus}`)
   }
 
-  // Open edit dialog, prefill org and branch
   const handleEdit = gateway => {
     setEditData(gateway)
     setSelectedOrgId(gateway.organizationId)
@@ -126,7 +117,6 @@ const GatewayManagerPage = () => {
     setEditDialogOpen(true)
   }
 
-  // Open add dialog, reset selections
   const handleAdd = () => {
     setEditData(null)
     setSelectedOrgId(null)
@@ -136,7 +126,6 @@ const GatewayManagerPage = () => {
     setEditDialogOpen(true)
   }
 
-  // Save handler including selected org and branch
   const handleSaveEdit = async updatedData => {
     const payload = {
       gatewayName: updatedData.gatewayName,
@@ -220,7 +209,6 @@ const GatewayManagerPage = () => {
     }
   }
 
-  // Table columns including organizationId and branchId
   const columns = [
     { label: 'Gateway Id', field: 'gatewayId' },
     { label: 'Gateway', field: 'gatewayName' },
@@ -230,9 +218,7 @@ const GatewayManagerPage = () => {
     { label: 'Branch', field: 'branchName' }
   ]
 
-  // DialogBox expects fields with proper onChange handlers and options for selects
   const fields = [
-    
     {
       label: 'Gateway Id',
       name: 'gatewayId',
@@ -253,7 +239,7 @@ const GatewayManagerPage = () => {
     <>
       <ConfirmDialog
         open={confirmDialogOpen}
-        title="Confirm Deletion"
+        title='Confirm Deletion'
         message={`Are you sure you want to delete "${selectedGateway?.gatewayName}"?`}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
@@ -274,7 +260,7 @@ const GatewayManagerPage = () => {
         <Grid item>
           <Button
             variant={status === GatewayEnum.ACTIVE ? 'contained' : 'outlined'}
-            color="primary"
+            color='primary'
             sx={{ mr: 2 }}
             onClick={() => handleStatusChange(GatewayEnum.ACTIVE)}
           >
@@ -282,7 +268,7 @@ const GatewayManagerPage = () => {
           </Button>
           <Button
             variant={status === GatewayEnum.INACTIVE ? 'contained' : 'outlined'}
-            color="primary"
+            color='primary'
             onClick={() => handleStatusChange(GatewayEnum.INACTIVE)}
           >
             Inactive
@@ -290,7 +276,7 @@ const GatewayManagerPage = () => {
         </Grid>
 
         <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant="contained" color="success" startIcon={<i className="ri-add-line" />} onClick={handleAdd}>
+          <Button variant='contained' color='success' startIcon={<i className='ri-add-line' />} onClick={handleAdd}>
             Add Gateway
           </Button>
         </Grid>
