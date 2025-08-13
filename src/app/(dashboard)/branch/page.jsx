@@ -260,10 +260,10 @@ const BranchPage = () => {
           setEditDialogOpen(false)
           setIsCreateMode(false)
         }}
-        organization={organization}
-        data={isCreateMode ? '' : editData}
-        onSave={handleSaveEdit}
-        fields={fields}
+        organization={organization}        // important
+  data={isCreateMode ? null : editData}  // branch ka data
+  onSave={handleSaveEdit}
+  fields={fields.filter(f => f.name !== "organizationId")}  
       />
 
       <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>

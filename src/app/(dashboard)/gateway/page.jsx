@@ -5,20 +5,12 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
-import FormControl from '@mui/material/FormControl'
-import InputLabel from '@mui/material/InputLabel'
-import Select from '@mui/material/Select'
-import MenuItem from '@mui/material/MenuItem'
-import CircularProgress from '@mui/material/CircularProgress'
-
 import DataTable from '@/views/floor/DataTable'
 import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/gateway/DialogBox'
-
 import GatewayService from '@services/gatewayService'
 import OrganizationService from '@services/organizationService'
 import BranchService from '@services/branchService'
-
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 import { StatusEnum } from '@/enum/status-enum'
 
@@ -44,18 +36,28 @@ const GatewayManagerPage = () => {
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
   const [activatingId, setActivatingId] = useState(null)
+
+  // Organizations, Branches, Gateways for dropdowns
   const [organization, setOrganization] = useState([])
+  const [branches, setBranches] = useState([])
+  const [selectedOrgId, setSelectedOrgId] = useState(null)
+  const [selectedBranchId, setSelectedBranchId] = useState(null)
+
+  // Fetch organizations once
   useEffect(() => {
-    const fetchOrganization = async () => {
-      const organizations = await OrganizationService.getOrganizations(0, 0)
-      const newData = organizations.data
-
-      setOrganization(newData)
+    const fetchOrganizations = async () => {
+      try {
+        const res = await OrganizationService.getOrganizations(0, 0)
+        const orgs = res?.data?.data || res?.data || []
+        setOrganization(orgs)
+      } catch (error) {
+        toast.error('Failed to load organizations')
+      }
     }
-
-    fetchOrganization()
+    fetchOrganizations()
   }, [])
 
+  // Fetch branches on org change
   useEffect(() => {
     if (!selectedOrgId) {
       setBranches([])
@@ -115,6 +117,7 @@ const GatewayManagerPage = () => {
     router.push(`/gateway?status=${newStatus}`)
   }
 
+  // Open edit dialog, prefill org and branch
   const handleEdit = gateway => {
     setEditData(gateway)
     setSelectedOrgId(gateway.organizationId)
@@ -133,6 +136,7 @@ const GatewayManagerPage = () => {
     setEditDialogOpen(true)
   }
 
+  // Save handler including selected org and branch
   const handleSaveEdit = async updatedData => {
     const payload = {
       gatewayName: updatedData.gatewayName,
@@ -176,11 +180,11 @@ const GatewayManagerPage = () => {
       try {
         const response = await GatewayService.deleteGateway(selectedGateway.gatewayId)
 
-        if (response.status === HttpStatus.OK || response.status === HttpStatus.NoContent) {
+        if (response.status === 200 || response.status === 204) {
           toast.success('Record Deleted')
           await loadGateways(page, status)
         } else {
-          toast.error(getMessage(response))
+          toast.error(response?.data?.message || 'Cannot delete gateway, it is in use.')
         }
       } catch (error) {
         toast.error(getMessage(error))
@@ -203,11 +207,11 @@ const GatewayManagerPage = () => {
     try {
       const response = await GatewayService.activateGateway(gateway.gatewayId)
 
-      if (response?.status === HttpStatus.NoContent) {
+      if (response.success) {
         toast.success('Gateway Activated')
         await loadGateways(page, status)
       } else {
-        toast.error(getMessage(response))
+        toast.error(response.message || 'Activation failed')
       }
     } catch (error) {
       toast.error(getMessage(error))
@@ -216,6 +220,7 @@ const GatewayManagerPage = () => {
     }
   }
 
+  // Table columns including organizationId and branchId
   const columns = [
     { label: 'Gateway Id', field: 'gatewayId' },
     { label: 'Gateway', field: 'gatewayName' },
@@ -227,23 +232,28 @@ const GatewayManagerPage = () => {
 
   // DialogBox expects fields with proper onChange handlers and options for selects
   const fields = [
+    
     {
-      label: 'Organization Id',
-      name: 'organizationId',
-      placeholder: 'Select Organization',
-      icon: '🏢',
-      required: true
+      label: 'Gateway Id',
+      name: 'gatewayId',
+      placeholder: 'Gateway Id',
+      required: true,
+      value: editData?.gatewayId || ''
     },
-    { label: 'Branch Id', name: 'branchId', placeholder: 'Select Branch', icon: '🌿', required: true },
-    { label: 'Gateway Id', name: 'gatewayId', placeholder: '123', icon: '', required: true },
-    { label: 'Gateway Name', name: 'gatewayName', placeholder: 'Main Gateway', icon: '', required: true }
+    {
+      label: 'Gateway Name',
+      name: 'gatewayName',
+      placeholder: 'Gateway Name',
+      required: true,
+      value: editData?.gatewayName || ''
+    }
   ]
 
   return (
     <>
       <ConfirmDialog
         open={confirmDialogOpen}
-        title='Confirm Deletion'
+        title="Confirm Deletion"
         message={`Are you sure you want to delete "${selectedGateway?.gatewayName}"?`}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
@@ -264,7 +274,7 @@ const GatewayManagerPage = () => {
         <Grid item>
           <Button
             variant={status === GatewayEnum.ACTIVE ? 'contained' : 'outlined'}
-            color='primary'
+            color="primary"
             sx={{ mr: 2 }}
             onClick={() => handleStatusChange(GatewayEnum.ACTIVE)}
           >
@@ -272,7 +282,7 @@ const GatewayManagerPage = () => {
           </Button>
           <Button
             variant={status === GatewayEnum.INACTIVE ? 'contained' : 'outlined'}
-            color='primary'
+            color="primary"
             onClick={() => handleStatusChange(GatewayEnum.INACTIVE)}
           >
             Inactive
@@ -280,7 +290,7 @@ const GatewayManagerPage = () => {
         </Grid>
 
         <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant='contained' color='success' startIcon={<i className='ri-add-line' />} onClick={handleAdd}>
+          <Button variant="contained" color="success" startIcon={<i className="ri-add-line" />} onClick={handleAdd}>
             Add Gateway
           </Button>
         </Grid>

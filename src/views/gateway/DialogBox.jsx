@@ -26,6 +26,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [branchError, setBranchError] = useState('')
+  const [warning, setWarning] = useState({ field: '', message: '' })
 
   const {
     control,
@@ -41,26 +42,29 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
   })
 
   const formValues = watch()
+useEffect(() => {
+  const fetchInitialData = async () => {
+    if (!open) return;
 
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      if (open) {
-        let orgId = data?.organizationId || organization?.[0]?.organizationId
+    let orgId = data?.organizationId || organization?.[0]?.organizationId
 
-        if (data) {
-          reset(data)
-        } else {
-          reset({ organizationId: orgId })
-        }
-
-        if (orgId) {
-          await getBranches(orgId)
-        }
-      }
+    if (data) {
+      reset(data)
+      setValue('organizationId', data.organizationId)
+      setValue('branchId', data.branchId)
+    } else {
+      reset({ organizationId: orgId })
+      setValue('organizationId', orgId)
     }
 
-    fetchInitialData()
-  }, [open])
+    if (orgId) {
+      await getBranches(orgId)
+    }
+  }
+
+  fetchInitialData()
+}, [open, data, organization])
+
 
   const onSubmit = async updatedData => {
     setIsSubmitting(true)
@@ -144,7 +148,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
             {/* Organization Dropdown */}
             {organization?.length > 0 && (
               <>
-                <Grid item xs={12} md={6} >
+                <Grid item xs={12} md={6}>
                   <InputLabel>Organization</InputLabel>
                   <Controller
                     name="organizationId"
@@ -190,12 +194,17 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
                     label="Organization ID"
                     value={watch('organizationId') || ''}
                     fullWidth
-                     sx={{ mt: 5.5}} 
+                    sx={{ mt: 5.5 }}
+                    onClick={() =>
+                      setWarning({ field: 'organizationId', message: 'Organization ID is auto-filled' })
+                    }
                     InputProps={{
-                      readOnly: true,
-                      
+                      readOnly: true
                     }}
                   />
+                  {warning.field === 'organizationId' && (
+                    <FormHelperText error>{warning.message}</FormHelperText>
+                  )}
                 </Grid>
               </>
             )}
@@ -246,11 +255,17 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
                 label="Branch ID"
                 value={watch('branchId') || ''}
                 fullWidth
-                 sx={{ mt: 5.3}} 
+                sx={{ mt: 5.3 }}
+                onClick={() =>
+                  setWarning({ field: 'branchId', message: 'Branch ID is auto-filled' })
+                }
                 InputProps={{
-                  readOnly: true,
+                  readOnly: true
                 }}
               />
+              {warning.field === 'branchId' && (
+                <FormHelperText error>{warning.message}</FormHelperText>
+              )}
             </Grid>
 
             {/* Dynamic Fields */}

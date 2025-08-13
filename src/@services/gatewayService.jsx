@@ -5,6 +5,14 @@ class GatewayService extends BaseService {
     super()
     this.controllerName = 'gateway'  
   }
+  
+getGatewaysByBranch(branchId, page = 1, pageSize = 20) {
+  return this.Get('', { branchId, Page: page, PageSize: pageSize })
+}
+getGatewayById(gatewayId) {
+  return this.Get(`${gatewayId}`)
+}
+
 
   getGateways(page = 1, pageSize = 20, InActive = false) {
     return this.Get('', { Page: page, PageSize: pageSize, InActive })

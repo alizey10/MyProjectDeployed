@@ -14,8 +14,10 @@ import {
   Dialog,
   Select,
   MenuItem,
-  CircularProgress
+  CircularProgress,
+  FormHelperText   
 } from '@mui/material'
+
 import { useForm } from 'react-hook-form'
 
 const DialogBox = ({ open, title, onClose, data, onSave, fields, organization }) => {
@@ -32,6 +34,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
   })
 
   const [isLoading, setIsLoading] = useState(false)
+  const [warning, setWarning] = useState({ field: '', message: '' })
 
   const formValues = watch()
 
@@ -83,46 +86,67 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization })
     <Dialog open={open} onClose={onClose} fullWidth maxWidth='md'>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
-        <form id='edit-form' onSubmit={handleSubmit(onSubmit)}>
-          <Grid container spacing={4} mt={0.5}>
-            {organization?.length > 0 && !data && (
-              <Grid item xs={12}>
-                <InputLabel>Organization</InputLabel>
-                <Select
-                  label='Organization'
-                  defaultValue={organization[0]?.organizationId}
-                  fullWidth
-                  {...register('organizationId', { required: 'Organization is required' })}
-                >
-                  {organization.map(org => (
-                    <MenuItem key={org.organizationId} value={org.organizationId}>
-                      {org.organizationName}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {errors.organizationId && (
-                  <p style={{ color: 'red', fontSize: '12px' }}>{errors.organizationId.message}</p>
-                )}
-              </Grid>
+  <form id='edit-form' onSubmit={handleSubmit(onSubmit)}>
+    <Grid container spacing={4} mt={0.5}>
+      
+      {/* Organization dropdown + read-only ID */}
+      {organization?.length > 0 && (
+        <>
+          <Grid item xs={12} md={6}>
+            <InputLabel>Organization</InputLabel>
+            <Select
+              label="Organization"
+              value={watch("organizationId") || ""}
+              fullWidth
+              {...register("organizationId", { required: "Organization is required" })}
+              onChange={e => setValue("organizationId", e.target.value)}
+            >
+              {organization.map(org => (
+                <MenuItem key={org.organizationId} value={org.organizationId}>
+                  {org.organizationName}
+                </MenuItem>
+              ))}
+            </Select>
+            {errors.organizationId && (
+              <FormHelperText error>{errors.organizationId.message}</FormHelperText>
             )}
-            {fields.map((field, index) => (
-              <Grid item xs={12} md={6} key={index}>
-                <TextField
-                  fullWidth
-                  label={field.label}
-                  placeholder={field.placeholder}
-                  {...register(field.name, getValidationRules(field))}
-                  InputProps={{
-                    startAdornment: field.icon ? <InputAdornment position='start'>{field.icon}</InputAdornment> : null
-                  }}
-                  error={!!errors[field.name]}
-                  helperText={errors[field.name]?.message}
-                />
-              </Grid>
-            ))}
           </Grid>
-        </form>
-      </DialogContent>
+
+          <Grid item xs={12} md={6}>
+            <TextField
+              label="Organization Id"
+              fullWidth
+               sx={{ mt: 5.5 }}
+              value={watch("organizationId") || ""}
+              InputProps={{ readOnly: true }}
+            />
+          </Grid>
+        </>
+      )}
+
+      {/* Baaki dynamic fields */}
+      {fields
+        .filter(field => field.name !== 'organizationId')
+        .map((field, index) => (
+          <Grid item xs={12} md={6} key={index}>
+            <TextField
+              fullWidth
+              label={field.label}
+              placeholder={field.placeholder}
+              {...register(field.name, getValidationRules(field))}
+              InputProps={{
+                startAdornment: field.icon ? <InputAdornment position="start">{field.icon}</InputAdornment> : null
+              }}
+              error={!!errors[field.name]}
+              helperText={errors[field.name]?.message}
+            />
+          </Grid>
+      ))}
+
+    </Grid>
+  </form>
+</DialogContent>
+
       <DialogActions>
         <Button
           onClick={() => {
