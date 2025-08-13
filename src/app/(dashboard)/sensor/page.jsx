@@ -153,20 +153,20 @@ useEffect(() => {
     setEditDialogOpen(true)
   }
 
-  const handleSaveEdit = async updatedData => {
-    const payload = {
-      sensorId: updatedData.sensorId,
-      sensorName: updatedData.sensorName,
-      organizationId: selectedOrgId,
-      branchId: selectedBranchId,
-      gatewayId: selectedGatewayId,
-      floorSectionId: updatedData.floorSectionId,
-      floorSectionName: updatedData.floorSectionName,
-      linkedDevice: updatedData.linkedDevice,
-      minTemperature: updatedData.minTemperature,
-      maxTemperature: updatedData.maxTemperature,
-      alertType: updatedData.alertType
-    }
+const handleSaveEdit = async updatedData => {
+  const payload = {
+    sensorId: updatedData.sensorId,
+    sensorName: updatedData.sensorName,
+    organizationId: updatedData.organizationId, // <- use updatedData instead of selectedOrgId
+    branchId: updatedData.branchId,
+    gatewayId: updatedData.gatewayId,
+    floorSectionId: updatedData.floorSectionId,
+    floorSectionName: updatedData.floorSectionName,
+    linkedDevice: updatedData.linkedDevice,
+    minTemperature: updatedData.minTemperature,
+    maxTemperature: updatedData.maxTemperature,
+    alertType: updatedData.alertType
+  }
 
     try {
       const result = isCreateMode
@@ -198,18 +198,26 @@ useEffect(() => {
   const handleConfirmDelete = async () => {
     setConfirmDialogOpen(false)
     setDeleting(true)
+if (selectedSensor) {
+  try {
+    const response = await SensorService.deleteSensor(selectedSensor.sensorId)
 
-    if (selectedSensor) {
-      try {
-        const success = await SensorService.deleteSensor(selectedSensor.sensorId)
-        if (success) {
-          toast.success('Record Deleted')
-          await loadSensors(page, status)
-        }
-      } catch (error) {
-        toast.error(getMessage(error))
-      }
+    if (
+      response.status === HttpStatus.OK ||
+      response.status === HttpStatus.Created ||
+      response.status === HttpStatus.NoContent ||
+      response === true
+    ) {
+      toast.success('Record Deleted')
+      await loadSensors(page, status)
+    } else {
+      toast.error(getMessage(response))
     }
+  } catch (error) {
+    toast.error(getMessage(error))
+  }
+}
+
 
     setDeleting(false)
     setSelectedSensor(null)
@@ -221,22 +229,28 @@ useEffect(() => {
   }
 
   const handleActivateClick = async sensor => {
-    if (activatingId) return
-    setActivatingId(sensor.sensorId)
+   if (activatingId) return
+setActivatingId(sensor.sensorId)
 
-    try {
-      const response = await SensorService.activateSensor(sensor.sensorId)
-      if (response.status === HttpStatus.NoContent) {
-        toast.success('Sensor Activated')
-        await loadSensors(page, status)
-      } else {
-        toast.error(getMessage(response))
-      }
-    } catch (error) {
-      toast.error(getMessage(error))
-    } finally {
-      setActivatingId(null)
-    }
+try {
+  const response = await SensorService.activateSensor(sensor.sensorId)
+
+  if (
+    response.status === HttpStatus.OK ||
+    response.status === HttpStatus.Created ||
+    response.status === HttpStatus.NoContent ||
+    response === true
+  ) {
+    toast.success('Sensor Activated')
+    await loadSensors(page, status)
+  } else {
+    toast.error(getMessage(response))
+  }
+} catch (error) {
+  toast.error(getMessage(error))
+} finally {
+  setActivatingId(null)
+}
   }
 
   const columns = [
