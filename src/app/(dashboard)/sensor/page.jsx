@@ -153,20 +153,20 @@ useEffect(() => {
     setEditDialogOpen(true)
   }
 
-  const handleSaveEdit = async updatedData => {
-    const payload = {
-      sensorId: updatedData.sensorId,
-      sensorName: updatedData.sensorName,
-      organizationId: selectedOrgId,
-      branchId: selectedBranchId,
-      gatewayId: selectedGatewayId,
-      floorSectionId: updatedData.floorSectionId,
-      floorSectionName: updatedData.floorSectionName,
-      linkedDevice: updatedData.linkedDevice,
-      minTemperature: updatedData.minTemperature,
-      maxTemperature: updatedData.maxTemperature,
-      alertType: updatedData.alertType
-    }
+const handleSaveEdit = async updatedData => {
+  const payload = {
+    sensorId: updatedData.sensorId,
+    sensorName: updatedData.sensorName,
+    organizationId: updatedData.organizationId, // <- use updatedData instead of selectedOrgId
+    branchId: updatedData.branchId,
+    gatewayId: updatedData.gatewayId,
+    floorSectionId: updatedData.floorSectionId,
+    floorSectionName: updatedData.floorSectionName,
+    linkedDevice: updatedData.linkedDevice,
+    minTemperature: updatedData.minTemperature,
+    maxTemperature: updatedData.maxTemperature,
+    alertType: updatedData.alertType
+  }
 
     try {
       const result = isCreateMode
