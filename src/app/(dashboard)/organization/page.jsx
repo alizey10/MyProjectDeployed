@@ -209,7 +209,8 @@ if (selectedOrganization) {
       <ConfirmDialog
         open={confirmDialogOpen}
         title='Confirm Deletion'
-        message={`Are you sure you want to delete "${selectedOrg?.organizationName}"?`}
+  message={`Are you sure you want to delete "${selectedOrganization?.organizationName || 'this organization'}"?`}
+
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
       />

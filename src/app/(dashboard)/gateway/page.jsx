@@ -128,32 +128,39 @@ const GatewayManagerPage = () => {
 
   const handleSaveEdit = async updatedData => {
     const payload = {
-      gatewayName: updatedData.gatewayName,
-      gatewayId: updatedData.gatewayId,
-      organizationId: selectedOrgId,
-      branchId: selectedBranchId
-    }
+    gatewayName: updatedData.gatewayName,
+    gatewayId: updatedData.gatewayId,
+    organizationId: updatedData.organizationId,
+    branchId: updatedData.branchId
+  }
 
-    try {
-      const result = isCreateMode
-        ? await GatewayService.createGateway(payload)
-        : await GatewayService.updateGateway(editData.gatewayId, payload)
-
-      const code = getStatusCode(result)
-      const message = getMessage(result)
-
-      if (code !== HttpStatus.OK && code !== HttpStatus.Created) {
-        toast.error(message)
+  try {
+    if (isCreateMode) {
+      const result = await GatewayService.createGateway(payload)
+      if (result?.status === HttpStatus.Created) {
+        toast.success('Record Saved')
+        setIsCreateMode(false)
+        setEditDialogOpen(false)
+        await loadGateways(page)
         return
+      } else {
+        toast.error(getMessage(result))
       }
-
-      toast.success(message)
-      setEditDialogOpen(false)
-      setIsCreateMode(false)
-      await loadGateways(page, status)
-    } catch (error) {
-      toast.error(getMessage(error))
+    } else {
+      const result = await GatewayService.updateGateway(editData.gatewayId, payload)
+      if (result?.status === HttpStatus.OK) {
+        toast.success('Record Updated')
+        setEditDialogOpen(false)
+        await loadGateways(page)
+        return
+      } else {
+    toast.error(getMessage(result))
+      }
     }
+  } catch (error) {
+    console.error("Full API error:", error)
+toast.error(getMessage(error))
+  }
   }
 
   const handleDeleteClick = gateway => {
@@ -236,6 +243,7 @@ try {
       value: editData?.gatewayName || ''
     }
   ]
+
 
   return (
     <>

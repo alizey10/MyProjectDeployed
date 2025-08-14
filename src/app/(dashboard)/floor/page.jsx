@@ -5,8 +5,7 @@ import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 
 import Grid from '@mui/material/Grid'
-import Button from '@mui/material/Button'
-
+import Button from '@mui/material/Button' 
 import DataTable from '@/views/floor/DataTable'
 import DialogBox from '@/views/common/DialogBox'
 import floorService from '@/@services/floorService'
@@ -48,6 +47,7 @@ const FloorPage = () => {
 
       if (success) {
         await loadFloor(page)
+        
       }
     }
   }
@@ -80,10 +80,9 @@ const FloorPage = () => {
     loadFloor(page)
   }, [page])
 
-  // Define columns for DataTable
+
   const columns = [{ label: 'Floor Name', field: 'floorSectionName' }]
 
-  // Define fields for DialogBox
   const fields = [{ label: 'Floor Name', name: 'floorName', placeholder: 'First Floor', icon: '🏢', required: true }]
 
   return (
@@ -96,6 +95,7 @@ const FloorPage = () => {
         }}
         onSave={handleSaveEdit}
         fields={fields}
+        
       />
 
       <Grid container spacing={6}>
