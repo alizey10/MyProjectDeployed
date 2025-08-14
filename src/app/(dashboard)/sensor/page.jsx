@@ -14,6 +14,7 @@ import BranchService from '@services/branchService'
 import GatewayService from '@services/gatewayService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 import { StatusEnum } from '@/enum/status-enum'
+import FloorService from '@services/floorService';
 
 const PAGE_SIZE = 10
 const SensorStatus = StatusEnum
@@ -40,6 +41,13 @@ const SensorManagerPage = () => {
   const [selectedOrgId, setSelectedOrgId] = useState(null)
   const [selectedBranchId, setSelectedBranchId] = useState(null)
   const [selectedGatewayId, setSelectedGatewayId] = useState(null)
+  const [floors, setFloors] = useState([]);
+const [selectedFloorId, setSelectedFloorId] = useState(null);
+const [selectedFloorName, setSelectedFloorName] = useState(null);
+
+
+
+
 
   useEffect(() => {
     const fetchOrganizations = async () => {
@@ -96,6 +104,22 @@ useEffect(() => {
   }
   fetchGateways()
 }, [selectedBranchId])
+useEffect(() => {
+  const fetchFloors = async () => {
+    try {
+      const res = await FloorService.getFloor(1, 1000, false);
+      const floorsData = res?.data?.data || [];
+      setFloors(floorsData);
+      setSelectedFloorId(null);
+    } catch (error) {
+      toast.error('Failed to load floors');
+      setFloors([]);
+      setSelectedFloorId(null);
+    }
+  };
+
+  if (editDialogOpen) fetchFloors();
+}, [editDialogOpen]);
 
   const loadSensors = async (currentPage, currentStatus) => {
     setLoading(true)
@@ -140,6 +164,8 @@ useEffect(() => {
     setSelectedGatewayId(sensor.gatewayId)
     setIsCreateMode(false)
     setEditDialogOpen(true)
+      setSelectedFloorId(sensor.floorSectionId);
+    setSelectedFloorName(sensor.floorSectionName);
   }
 
   const handleAdd = () => {
@@ -157,11 +183,12 @@ const handleSaveEdit = async updatedData => {
   const payload = {
     sensorId: updatedData.sensorId,
     sensorName: updatedData.sensorName,
-    organizationId: updatedData.organizationId, // <- use updatedData instead of selectedOrgId
+    organizationId: updatedData.organizationId,
     branchId: updatedData.branchId,
     gatewayId: updatedData.gatewayId,
-    floorSectionId: updatedData.floorSectionId,
-    floorSectionName: updatedData.floorSectionName,
+  floorSectionId: updatedData.floorId || null,
+  floorSectionName: updatedData.floorSectionName || '',
+
     linkedDevice: updatedData.linkedDevice,
     minTemperature: updatedData.minTemperature,
     maxTemperature: updatedData.maxTemperature,
@@ -274,7 +301,6 @@ try {
   const fields = [
  { label: 'Sensor Name', name: 'sensorName', placeholder: 'Temperature Sensor', icon: '📡', required: true },
     { label: 'Sensor Id', name: 'sensorId', placeholder: 'Unique Sensor ID', icon: '🆔', required: true },
-    { label: 'Floor Section Id', name: 'floorSectionId', placeholder: 'Floor Section Id', icon: '🏢' },
     { label: 'Linked Device', name: 'linkedDevice', placeholder: 'Device Name', icon: '🔗', required: true },
     { label: 'Min Temperature', name: 'minTemperature', placeholder: '0', icon: '🌡️' },
     { label: 'Max Temperature', name: 'maxTemperature', placeholder: '100', icon: '🌡️' },
@@ -299,8 +325,9 @@ try {
         branches={branches}
         gateways={gateways}
         data={editData}
-        onSave={handleSaveEdit}
+         onSave={handleSaveEdit} 
         fields={fields}
+          floors={floors} 
     
       />
 
@@ -341,6 +368,7 @@ try {
         onDelete={handleDeleteClick}
         onActivate={handleActivateClick}
         status={status}
+          floors={floors} 
         activatingId={activatingId}
       />
     </>
