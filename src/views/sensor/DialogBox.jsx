@@ -18,7 +18,7 @@ import {
   Box
 } from '@mui/material'
 import { useForm, Controller } from 'react-hook-form'
-
+import FloorService from '@/@services/floorService'
 import BranchService from '@/@services/branchService'
 import GatewayService from '@/@services/gatewayService'
 import { toast } from 'react-toastify'
@@ -32,6 +32,9 @@ const SensorDialog = ({ open, title, onClose, data, onSave, fields, organization
   const [branchError, setBranchError] = useState('')
   const [gatewayError, setGatewayError] = useState('')
   const [warning, setWarning] = useState({ field: '', message: '' })
+   const [floors, setFloors] = useState([]);
+    const [floorError, setFloorError] = useState('')
+  
 
   const {
     control,
@@ -49,33 +52,35 @@ const SensorDialog = ({ open, title, onClose, data, onSave, fields, organization
   const formValues = watch()
 
   useEffect(() => {
-    const fetchInitialData = async () => {
-      if (!open) return
+  const fetchInitialData = async () => {
+    if (!open) return
 
-      reset(data || { organizationId: organization?.[0]?.organizationId })
+    reset(data || { organizationId: organization?.[0]?.organizationId })
 
-      const orgId = data?.organizationId || organization?.[0]?.organizationId
-      if (!orgId) return
-      setValue('organizationId', orgId)
+    const orgId = data?.organizationId || organization?.[0]?.organizationId
+    if (!orgId) return
+    setValue('organizationId', orgId)
 
-      const branchList = await getBranches(orgId)
+    await getFloors() // ⬅️ yahan floors laa rahe hain
 
-      const branchId = data?.branchId
-      if (branchId) {
-        setValue('branchId', branchId)
+    const branchList = await getBranches(orgId)
 
-        const gatewayList = await getGateways(branchId)
+    const branchId = data?.branchId
+    if (branchId) {
+      setValue('branchId', branchId)
+      const gatewayList = await getGateways(branchId)
 
-        const gatewayId = data?.gatewayId
-        if (gatewayId) {
-          setValue('gatewayId', gatewayId)
-          await fetchGatewayById(gatewayId)
-        }
+      const gatewayId = data?.gatewayId
+      if (gatewayId) {
+        setValue('gatewayId', gatewayId)
+        await fetchGatewayById(gatewayId)
       }
     }
+  }
 
-    fetchInitialData()
-  }, [open])
+  fetchInitialData()
+}, [open])
+
 
   const getBranches = async orgId => {
     if (!orgId) return []
@@ -95,6 +100,30 @@ const SensorDialog = ({ open, title, onClose, data, onSave, fields, organization
       setIsLoading(false)
     }
   }
+const getFloors = async () => {
+  setIsLoading(true);
+  setFloorError('');
+  try {
+    const res = await FloorService.getFloor(); // call your service
+    const floorsData = res?.data?.data
+      ? Array.isArray(res.data.data)
+        ? res.data.data
+        : [res.data.data]
+      : [];
+    setFloors(floorsData);
+    if (!floorsData.length) setFloorError('No floors found.');
+    return floorsData;
+  } catch (err) {
+    console.error(err);
+    setFloorError('Error fetching floors.');
+    return [];
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+
 
   const getGateways = async branchId => {
     if (!branchId) return []
@@ -255,6 +284,7 @@ const SensorDialog = ({ open, title, onClose, data, onSave, fields, organization
           const branch = branches.find(b => b.branchId === branchId)
           if (branch) setValue('branchName', branch.branchName)
           await getGateways(branchId)
+
         }}
         startAdornment={<InputAdornment position="start">🌿</InputAdornment>}
       >
@@ -354,11 +384,45 @@ const SensorDialog = ({ open, title, onClose, data, onSave, fields, organization
 </Grid>
 
 
+ {/*  Floor Dropdown */}
+            <Grid item xs={12} md={6}>
+              <InputLabel>Floor</InputLabel>
+              <Controller
+                name='floorId'
+                control={control}
+                rules={{ required: 'Floor is required' }}
+                render={({ field }) => (
+                  <Select
+  {...field}
+  fullWidth
+  
+  value={field.value || ''}
+  onChange={e => {
+    const floorSectionId = e.target.value;
+    field.onChange(floorSectionId);
+    const floor = floors.find(f => f.floorSectionId === floorSectionId);
+    if (floor) setValue('floorSectionName', floor.floorSectionName);
+  }}
+>
+  <MenuItem value=''>Select Floor</MenuItem>
+  {floors.length > 0 ? (
+    floors.map(f => (
+      <MenuItem key={f.floorSectionId} value={f.floorSectionId}>
+        {f.floorSectionName}
+      </MenuItem>
+    ))
+  ) : (
+    <MenuItem disabled>No floors available</MenuItem>
+  )}
+</Select>
 
+                )}
+              />
+            </Grid>
 
             {/* Dynamic fields */}
             {fields?.map((field, i) => (
-              <Grid item xs={12} md={6} key={i}>
+              <Grid item xs={12} md={6} key={i}   sx={field.name === 'sensorName' ? { mt: 5  } : undefined}>
                 <TextField
                   fullWidth
                   label={field.label}
@@ -375,19 +439,20 @@ const SensorDialog = ({ open, title, onClose, data, onSave, fields, organization
           </Grid>
         </form>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose} color='secondary' variant='outlined'>
-          Cancel
-        </Button>
-        <Button
-          type='submit'
-          form='sensor-form'
-          variant='contained'
-          disabled={isAnyFieldEmpty() || isSubmitting || !isValid || branchError || gatewayError}
-        >
-          {isSubmitting ? <CircularProgress size={24} color='inherit' /> : 'Save'}
-        </Button>
-      </DialogActions>
+    <DialogActions>
+  <Button onClick={handleClose} color='secondary' variant='outlined'>
+    Cancel
+  </Button>
+  <Button
+    type='submit'
+    form='sensor-form'
+    variant='contained'
+    disabled={isAnyFieldEmpty() || isSubmitting || !isValid || branchError || gatewayError  || floorError}
+  >
+    {isSubmitting ? <CircularProgress size={24} color='inherit' /> : 'Save'}
+  </Button>
+</DialogActions>
+
     </Dialog>
   )
 }
