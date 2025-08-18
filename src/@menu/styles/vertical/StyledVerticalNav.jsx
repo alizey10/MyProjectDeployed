@@ -2,8 +2,9 @@
 import styled from '@emotion/styled'
 
 // Util Imports
-import { verticalNavClasses } from '../../utils/menuClasses'
+import { tverticalNavClasses as verticalNavClasses } from '../../utils/menuClasses'
 
+  
 const StyledVerticalNav = styled.aside`
   position: sticky;
   inset-block-start: 0;

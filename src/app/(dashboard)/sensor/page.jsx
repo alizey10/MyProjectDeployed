@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
-import DataTable from '@/views/floor/DataTable'
+import DataTable from '@/views/common/DataTable'
 import ConfirmDialog from '@components/Dialog'
 import DialogBox from '@/views/sensor/DialogBox'
 import SensorService from '@services/sensorService'
@@ -15,6 +15,8 @@ import GatewayService from '@services/gatewayService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 import { StatusEnum } from '@/enum/status-enum'
 import FloorService from '@services/floorService';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 
 const PAGE_SIZE = 10
 const SensorStatus = StatusEnum
@@ -44,6 +46,30 @@ const SensorManagerPage = () => {
   const [floors, setFloors] = useState([]);
 const [selectedFloorId, setSelectedFloorId] = useState(null);
 const [selectedFloorName, setSelectedFloorName] = useState(null);
+
+
+const sensorId = searchParams.get('sensorId')
+
+useEffect(() => {
+  const fetchData = async () => {
+    if (sensorId) {
+      try {
+        const res = await SensorService.getSensorById(sensorId)
+        const list = res?.data?.data || []   
+        const match = list.find(item => String(item.sensorId) === String(sensorId))
+        if (match) {
+          setSensors([{ ...match, totalRecord: 1 }])
+          setTotalPages(1)
+        }
+      } catch(err) {
+        toast.error("Failed to load sensor")
+      }
+      return
+    }
+    loadSensors(page, status)
+  }
+  fetchData()
+}, [sensorId, page, status])
 
 
 
@@ -147,10 +173,7 @@ useEffect(() => {
     }
   }
 
-  useEffect(() => {
-    loadSensors(page, status)
-  }, [page, status])
-
+  
   const handleStatusChange = newStatus => {
     setStatus(newStatus)
     setPage(1)
@@ -221,6 +244,11 @@ const handleSaveEdit = async updatedData => {
     setSelectedSensor(sensor)
     setConfirmDialogOpen(true)
   }
+
+  const handleCloseRowClick = (sensor) => {
+
+  router.push('/sensor?status=' + status); 
+}
 
   const handleConfirmDelete = async () => {
     setConfirmDialogOpen(false)
@@ -350,11 +378,66 @@ try {
           </Button>
         </Grid>
 
-        <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant="contained" color="success" startIcon={<i className='ri-add-line' />}onClick={handleAdd}>
-            Add Sensor
-          </Button>
-        </Grid>
+  {/* Breadcrumb / Tab */}
+  {sensorId && (
+    <Grid item>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          bgcolor: '#e0e0e0', 
+        borderRadius: 2,
+          bgcolor: '#E5E5E5',
+          borderRadius: 2,
+          px: 0.7,
+          py: 1.9,
+          ml: 0,
+           cursor: 'pointer',
+        '&:hover': {
+          bgcolor: '#d5d5d5',
+        },
+        }}
+        onClick={() => router.push(`/sensor?status=${status}`)}
+      >
+        <Typography variant='body2' sx={{ mr: 1 }}>
+          Sensor ID: {sensorId}
+        </Typography>
+        <Button
+          size='small'
+          onClick={() => router.push(`/sensor?status=${status}`)}
+          sx={{
+            minWidth: 0,
+            p: 0,
+           
+            fontWeight: 'bold',
+              color: '#666',
+            ml: 1,
+           
+          '&:hover': {
+            backgroundColor: '#bbb',
+          },
+            
+          }}
+        >
+          ✖
+        </Button>
+      </Box>
+    </Grid>
+  )}
+
+  <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+    {!sensorId && (
+      <Button
+        variant="contained"
+        color="success"
+        startIcon={<i className='ri-add-line' />}
+        onClick={handleAdd}
+      >
+        Add Sensor
+      </Button>
+    )}
+  </Grid>
+
       </Grid>
 
       <DataTable
@@ -367,9 +450,11 @@ try {
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
         onActivate={handleActivateClick}
+        onCloseRow={handleCloseRowClick}
         status={status}
           floors={floors} 
         activatingId={activatingId}
+        sensorId={sensorId}  
       />
     </>
   )

@@ -11,7 +11,8 @@ import useMediaQuery from '../../hooks/useMediaQuery'
 import useVerticalNav from '../../hooks/useVerticalNav'
 
 // Util Imports
-import { verticalNavClasses } from '../../utils/menuClasses'
+import { tverticalNavClasses as verticalNavClasses } from '../../utils/menuClasses'
+
 
 // Styled Component Imports
 import StyledBackdrop from '../../styles/StyledBackdrop'

@@ -85,6 +85,7 @@ const TopNav = ({ onFiltersChange }) => {
 
     loadBranches()
   }, [organizationId])
+  
 
   // Call EntityCounts API on any field change
   useEffect(() => {

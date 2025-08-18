@@ -18,7 +18,9 @@ const DataTable = ({
   loading = false,
   onPageChange = () => {},
   onEdit = () => {},
-  onDelete = () => {}
+  onDelete = () => {},
+ 
+    sensorId = null,
 }) => {
   return (
     <Card>
@@ -58,16 +60,36 @@ const DataTable = ({
                       )}
                     </td>
                   ))}
-                  <td>
-                    <div className='flex gap-2'>
-                      <Button size='small' variant='outlined' color='info' onClick={() => onEdit(item)}>
-                        Edit
-                      </Button>
-                      <Button size='small' variant='outlined' color='error' onClick={() => onDelete(item)}>
-                        Delete
-                      </Button>
-                    </div>
-                  </td>
+                <td>
+  <div className='flex gap-2 items-center justify-between'>
+    {!sensorId && (
+      <div className='flex gap-2'>
+   
+        <Button
+          size='small'
+          variant='outlined'
+            color='primary'
+          onClick={() => onEdit(item)}
+        >
+          Edit
+        </Button>
+
+        <Button
+          size='small'
+          variant='contained'
+          color='error'
+          onClick={() => onDelete(item)}
+        >
+          Delete
+        </Button>
+      </div>
+    )}
+
+    
+  </div>
+</td>
+
+
                 </tr>
               ))}
             </tbody>

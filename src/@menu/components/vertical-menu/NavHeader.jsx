@@ -2,7 +2,8 @@
 import styled from '@emotion/styled'
 
 // Util Imports
-import { verticalNavClasses } from '../../utils/menuClasses'
+import { tverticalNavClasses as verticalNavClasses } from '../../utils/menuClasses'
+
 
 const StyledNavHeader = styled.div`
   padding: 15px;
