@@ -1,6 +1,6 @@
 
 'use client'
-
+import ReportServices from '@/@services/reportService'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -28,32 +28,35 @@ const AlarmAndOrgCharts = ({ entityCounts }) => {
 
   const [groupedData, setGroupedData] = useState({})
 
-  useEffect(() => {
-    fetch('https://api.vspine.co.uk/api/Report/SensorSummary', {
-      headers: { accept: 'application/json' }
-    })
-      .then(res => res.json())
-      .then(res => {
-        const grouped = {}
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const res = await ReportServices.getSensorSummary()
+      const grouped = {}
 
-        res?.data?.forEach(item => {
-          const dateObj = new Date(item.serverTime)
-          const day = !isNaN(dateObj.getTime()) ? dateObj.toLocaleDateString('en-GB') : null
-          if (!day) return
+      res?.data?.data?.forEach(item => {
+        const dateObj = new Date(item.serverTime)
+        const day = !isNaN(dateObj.getTime()) ? dateObj.toLocaleDateString('en-GB') : null
+        if (!day) return
 
-          if (!grouped[item.sensorId]) grouped[item.sensorId] = []
-          grouped[item.sensorId].push({
-            day,
-            temperature: Number(item.currentTemperature) || 0,
-            sensorData: item
-          })
+        if (!grouped[item.sensorId]) grouped[item.sensorId] = []
+        grouped[item.sensorId].push({
+          day,
+          temperature: Number(item.currentTemperature) || 0,
+          sensorData: item
         })
-
-        console.log('Grouped Sensor Keys:', Object.keys(grouped))
-        setGroupedData(grouped)
       })
-      .catch(err => console.error('Error fetching sensor summary:', err))
-  }, [])
+
+      setGroupedData(grouped)
+    } catch (err) {
+      console.error('Error fetching sensor summary:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  fetchData()
+}, [])
 
   const [pieData, setPieData] = useState([])
   const router = useRouter()
@@ -117,16 +120,15 @@ const [showTooltip, setShowTooltip] = useState(false)
   }, [entityCounts])
 
   const renderLabel = ({ value }) => (value === 0 ? null : `${value}`)
-  useEffect(() => {
+ useEffect(() => {
   setLoading(true);
-  fetch('https://api.vspine.co.uk/api/Report/SensorSummary', {
-    headers: { accept: 'application/json' }
-  })
-    .then(res => res.json())
-    .then(res => {
+
+  const fetchData = async () => {
+    try {
+      const res = await ReportServices.getSensorSummary()
       const grouped = {}
 
-      res?.data?.forEach(item => {
+      res?.data?.data?.forEach(item => {
         const dateObj = new Date(item.serverTime)
         const day = !isNaN(dateObj.getTime()) ? dateObj.toLocaleDateString('en-GB') : null
         if (!day) return
@@ -140,10 +142,16 @@ const [showTooltip, setShowTooltip] = useState(false)
       })
 
       setGroupedData(grouped)
-    })
-    .catch(err => console.error('Error fetching sensor summary:', err))
-    .finally(() => setLoading(false)); 
-}, []);
+    } catch (err) {
+      console.error('Error fetching sensor summary:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  fetchData()
+}, [])
+
 
 
   return (
