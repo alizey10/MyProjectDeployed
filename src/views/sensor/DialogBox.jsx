@@ -61,7 +61,7 @@ const SensorDialog = ({ open, title, onClose, data, onSave, fields, organization
     if (!orgId) return
     setValue('organizationId', orgId)
 
-    await getFloors() // ⬅️ yahan floors laa rahe hain
+    await getFloors() 
 
     const branchList = await getBranches(orgId)
 
@@ -104,7 +104,7 @@ const getFloors = async () => {
   setIsLoading(true);
   setFloorError('');
   try {
-    const res = await FloorService.getFloor(); // call your service
+    const res = await FloorService.getFloor();
     const floorsData = res?.data?.data
       ? Array.isArray(res.data.data)
         ? res.data.data

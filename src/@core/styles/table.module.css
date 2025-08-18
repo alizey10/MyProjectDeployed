@@ -23,10 +23,12 @@
       text-align: start;
       block-size: 56px;
       background-color: var(--mui-palette-customColors-tableHeaderBg);
+
       &:not(:first-of-type):not(:last-of-type) {
         padding-block: 0.5rem;
         padding-inline: 1rem;
       }
+
       &:first-of-type {
         &:not(:has(input[type='checkbox'])) {
           padding-block: 0.5rem;
@@ -36,6 +38,7 @@
           padding-inline-start: 0.6875rem;
         }
       }
+
       &:last-of-type {
         padding-block: 0.5rem;
         padding-inline: 1rem 1.25rem;
@@ -51,10 +54,12 @@
       font-size: 0.9375rem;
       line-height: 1.4667;
       block-size: 50px;
+      position: relative; 
       &:not(:first-of-type):not(:last-of-type) {
         padding-block: 0.5rem;
         padding-inline: 1rem;
       }
+
       &:first-of-type {
         &:not(:has(input[type='checkbox'])) {
           padding-block: 0.5rem;
@@ -64,6 +69,7 @@
           padding-inline-start: 0.6875rem;
         }
       }
+
       &:last-of-type {
         padding-block: 0.5rem;
         padding-inline: 1rem 1.25rem;

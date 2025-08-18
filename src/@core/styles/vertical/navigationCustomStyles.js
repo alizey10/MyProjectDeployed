@@ -1,5 +1,6 @@
 // Util Imports
-import { menuClasses, verticalNavClasses } from '@menu/utils/menuClasses'
+import { menuClasses, tverticalNavClasses as verticalNavClasses } from '@menu/utils/menuClasses'
+
 
 const navigationCustomStyles = theme => {
   return {

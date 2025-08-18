@@ -8,7 +8,7 @@ import Pagination from '@mui/material/Pagination'
 import CircularProgress from '@mui/material/CircularProgress'
 import Box from '@mui/material/Box'
 
-// import StatusActionButtons from 'src/components/StatusActionButtons';
+
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -23,7 +23,7 @@ const DataTable = ({
   onDelete = () => {},
   onActivate = () => {},
   status = 'active',
-  activatingId = null  // <- default value yahan add karo
+  activatingId = null  
 }) => {
 
 
@@ -43,7 +43,7 @@ const DataTable = ({
                 {columns.map((column, index) => (
                   <th key={index}>{column.label}</th>
                 ))}
-                <th>Actions</th> {/* ✅ Add Actions column */}
+                <th>Actions</th> 
               </tr>
             </thead>
             <tbody>
@@ -68,16 +68,7 @@ const DataTable = ({
                     </td>
                     
                   ))}
-                  {/* <td>
-        <StatusActionButtons
-          status={status}
-          onEdit={() => onEdit(item)}
-          onDelete={() => onDelete(item)}
-          onActivate={() => onActivate(item)}
-        />
-      </td> */}
-
-                  {/* ✅ Action Buttons */}
+                
                  <td>
   <Box sx={{ display: 'flex', gap: 1 }}>
     {status === 'active' ? (
@@ -111,7 +102,7 @@ const DataTable = ({
     }
   }}
   onClick={() => onActivate(item)}
-  disabled={activatingId === item.organizationId}  // disable while activating
+  disabled={activatingId === item.organizationId}  
 >
   {activatingId === item.organizationId ? (
     <CircularProgress size={20} sx={{ color: '#fff' }} />

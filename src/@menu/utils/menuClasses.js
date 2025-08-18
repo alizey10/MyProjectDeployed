@@ -20,7 +20,7 @@ export const menuClasses = {
 }
 
 // Classes for vertical navigation menu
-export const verticalNavClasses = {
+export const tverticalNavClasses = {
   root: 'ts-vertical-nav-root',
   container: 'ts-vertical-nav-container',
   bgColorContainer: 'ts-vertical-nav-bg-color-container',

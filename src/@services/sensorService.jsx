@@ -9,6 +9,11 @@ class SensorService extends BaseService {
   getSensors(page = 1, pageSize = 20, InActive = false) {
     return this.Get('', { Page: page, PageSize: pageSize, InActive })
   }
+  getSensorById(id) {
+  return this.Get('', { sensorId: id })
+}
+
+
 
   deleteSensor(sensorId) {
     return this.Delete(`${sensorId}`)
