@@ -1,13 +1,8 @@
 'use client'
 
-// React Imports
 import { useRef, useState } from 'react'
-
-// Next Imports
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-
-// MUI Imports
 import { styled } from '@mui/material/styles'
 import Badge from '@mui/material/Badge'
 import Avatar from '@mui/material/Avatar'
@@ -20,8 +15,13 @@ import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 import MenuItem from '@mui/material/MenuItem'
 import Button from '@mui/material/Button'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogTitle from '@mui/material/DialogTitle'
+import DialogContent from '@mui/material/DialogContent'
+import DialogContentText from '@mui/material/DialogContentText'
+import useAuth from '@/app/hooks/useAuth'
 
-// Styled component for badge content
 const BadgeContentSpan = styled('span')({
   width: 8,
   height: 8,
@@ -32,107 +32,121 @@ const BadgeContentSpan = styled('span')({
 })
 
 const UserDropdown = () => {
-  // States
+  const { user, accessToken, refreshToken, clearAuth } = useAuth()
   const [open, setOpen] = useState(false)
-
-  // Refs
   const anchorRef = useRef(null)
-
-  // Hooks
   const router = useRouter()
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+  console.log('User object from useAuth():', user)
+  const imgSrc = user?.avatar || undefined
+const userLoaded = user && (user.firstName || user.email);
 
-  const handleDropdownOpen = () => {
-    !open ? setOpen(true) : setOpen(false)
-  }
+const displayName = userLoaded
+  ? user.firstName
+      ? `${user.firstName} ${user.lastName || ''}`.trim()
+      : user.email
+  : ''; 
 
-  const handleDropdownClose = (event, url) => {
-    if (url) {
-      router.push(url)
+const avatarInitial = !user?.avatar && userLoaded
+  ? user.firstName
+      ? user.firstName[0].toUpperCase()
+      : user.email[0].toUpperCase()
+  : undefined;
+
+
+
+
+
+
+  const confirmLogout = async () => {
+    try {
+      if (accessToken) {
+        const api = new (await import('@/@services/baseService')).default(accessToken, refreshToken)
+        await api.Post('Auth/Logout')
+      }
+    } catch (err) {
+      console.error('Logout failed', err)
+    } finally {
+      clearAuth()
     }
-
-    if (anchorRef.current && anchorRef.current.contains(event?.target)) {
-      return
-    }
-
-    setOpen(false)
   }
 
   return (
     <>
       <Badge
         ref={anchorRef}
-        overlap='circular'
-        badgeContent={<BadgeContentSpan onClick={handleDropdownOpen} />}
+        overlap="circular"
+        badgeContent={<BadgeContentSpan onClick={() => setOpen(prev => !prev)} />}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        className='mis-2'
+        className="mis-2"
       >
         <Avatar
-          ref={anchorRef}
-          alt='John Doe'
-          src='/images/avatars/1.png'
-          onClick={handleDropdownOpen}
-          className='cursor-pointer bs-[38px] is-[38px]'
+          alt={displayName || 'User'}
+          src={imgSrc}
+          children={avatarInitial}
+          onClick={() => setOpen(prev => !prev)}
+          className="cursor-pointer bs-[38px] is-[38px]"
         />
       </Badge>
-      <Popper
-        open={open}
-        transition
-        disablePortal
-        placement='bottom-end'
-        anchorEl={anchorRef.current}
-        className='min-is-[240px] !mbs-4 z-[1]'
-      >
+
+      <Popper open={open} transition disablePortal placement="bottom-end" anchorEl={anchorRef.current} className="min-is-[240px] !mbs-4 z-[1]">
         {({ TransitionProps, placement }) => (
-          <Fade
-            {...TransitionProps}
-            style={{
-              transformOrigin: placement === 'bottom-end' ? 'right top' : 'left top'
-            }}
-          >
-            <Paper className='shadow-lg'>
-              <ClickAwayListener onClickAway={e => handleDropdownClose(e)}>
+          <Fade {...TransitionProps} style={{ transformOrigin: placement === 'bottom-end' ? 'right top' : 'left top' }}>
+            <Paper className="shadow-lg p-2">
+              <ClickAwayListener onClickAway={() => setOpen(false)}>
                 <MenuList>
-                  <div className='flex items-center plb-2 pli-4 gap-2' tabIndex={-1}>
-                    <Avatar alt='John Doe' src='/images/avatars/1.png' />
-                    <div className='flex items-start flex-col'>
-                      <Typography className='font-medium' color='text.primary'>
-                        John Doe
+                  {user ? (
+                    <>
+                      <div className="flex items-center plb-2 pli-4 gap-2">
+                        <Avatar src={imgSrc} children={avatarInitial} />
+                        <div className="flex flex-col items-start">
+                          <Typography className="font-medium">{displayName}</Typography>
+                          <Typography variant="caption">{user.role}</Typography>
+                        </div>
+                      </div>
+                      <Divider className="mlb-1" />
+                      <Link href="/account-settings">
+                        <MenuItem className="gap-3" onClick={() => setOpen(false)}>
+                          <i className="ri-user-3-line" />
+                          <Typography>My Profile</Typography>
+                        </MenuItem>
+                      </Link>
+                      <Divider />
+                      <div className="flex flex-col items-center p-2 gap-1">
+                        <Button fullWidth variant="contained" color="error" size="small" onClick={() => setLogoutDialogOpen(true)}>
+                          Logout
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center p-3 gap-2">
+                      <Typography variant="caption" color="text.secondary">
+                        Not logged in
                       </Typography>
-                      <Typography variant='caption'>Admin</Typography>
+                      <Button fullWidth variant="contained" size="small" onClick={() => router.push('/login')}>
+                        Login
+                      </Button>
                     </div>
-                  </div>
-                  <Divider className='mlb-1' />
-                  <Link href='/account-settings'>
-                    <MenuItem className='gap-3' onClick={e => handleDropdownClose(e)}>
-                      <i className='ri-user-3-line' />
-                      <Typography color='text.primary'>My Profile</Typography>
-                    </MenuItem>
-                  </Link>
-                  <Link href='/account-settings'>
-                    <MenuItem className='gap-3' onClick={e => handleDropdownClose(e)}>
-                      <i className='ri-settings-4-line' />
-                      <Typography color='text.primary'>Settings</Typography>
-                    </MenuItem>
-                  </Link>
-                  <div className='flex items-center plb-2 pli-4'>
-                    <Button
-                      fullWidth
-                      variant='contained'
-                      color='error'
-                      size='small'
-                      endIcon={<i className='ri-logout-box-r-line' />}
-                      onClick={e => handleDropdownClose(e, '/login')}
-                      sx={{ '& .MuiButton-endIcon': { marginInlineStart: 1.5 } }}
-                    >
-                      Logout
-                    </Button>
-                  </div>
+                  )}
                 </MenuList>
               </ClickAwayListener>
             </Paper>
           </Fade>
         )}
       </Popper>
+
+      <Dialog open={logoutDialogOpen} onClose={() => setLogoutDialogOpen(false)}>
+        <DialogTitle>Confirm Logout</DialogTitle>
+        <DialogContent>
+          <DialogContentText>Are you sure you want to logout?</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLogoutDialogOpen(false)}>Cancel</Button>
+          <Button color="error" onClick={confirmLogout}>
+            Logout
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   )
 }

@@ -1,112 +1,106 @@
-import axios from 'axios'
+import axios from "axios";
 
 export default class BaseService {
-  controllerName = 'ping'
-  baseHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Content-type': 'Application/json'
-  }
-  baseHeadersFile = {
-    'content-type': 'multipart/form-data'
-  }
-  timeout
+  constructor(accessToken, refreshToken, refreshAccessToken) {
+    this.controllerName = "Account";
+    this.baseHeaders = { "Content-Type": "application/json" };
+    this.timeout = 60000;
+    this.accessToken = accessToken;
+    this.refreshToken = refreshToken;
+    this.refreshAccessToken = refreshAccessToken;
 
-  constructor() {
-    this.timeout = 60000
-    axios.defaults.timeout = this.timeout
-  }
+    this.client = axios.create({
+      baseURL: process.env.NEXT_PUBLIC_HEALTH_AND_SAFETY_API_ADDRESS,
+      timeout: this.timeout,
+      headers: this.accessToken
+        ? { Authorization: `Bearer ${this.accessToken}` }
+        : {},
+    });
 
-  async Get(action, body) {
-    const headers = await this.assembleHeaders()
+    this.client.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
 
-    try {
-      const response = await axios.get(this.assembleEndpoint(action, body), {
-        headers: { ...headers }
-      })
+        if (
+          error.response?.status === 401 &&
+          this.refreshToken &&
+          !originalRequest._retry
+        ) {
+          originalRequest._retry = true;
+          try {
+            let newAccessToken = null;
 
-      return response
-    } catch (e) {
-      return e
-    }
-  }
+            if (this.refreshAccessToken) {
+              newAccessToken = await this.refreshAccessToken();
+            } else {
+              const res = await axios.post(
+                `${process.env.NEXT_PUBLIC_HEALTH_AND_SAFETY_API_ADDRESS}/Auth/Refresh`,
+                { refreshToken: this.refreshToken }
+              );
+              if (res?.data?.success) {
+                newAccessToken = res.data.data.accessToken;
+                this.refreshToken =
+                  res.data.data.refreshToken || this.refreshToken;
+              }
+            }
 
-  async Post(action, body) {
-    const headers = await this.assembleHeaders()
+            if (!newAccessToken) throw new Error("Token refresh failed");
 
-    try {
-      const response = await axios.post(this.assembleEndpoint(action), body, {
-        headers: { ...headers }
-      })
+            this.accessToken = newAccessToken;
+            originalRequest.headers["Authorization"] = `Bearer ${this.accessToken}`;
 
-      return response
-    } catch (e) {
-      return e
-    }
-  }
+            return this.client(originalRequest);
+          } catch (refreshError) {
+            console.error("Refresh token expired. Please login again.");
+            return Promise.reject(refreshError);
+          }
+        }
 
-  async Patch(action, body) {
-    const headers = await this.assembleHeaders()
-
-    try {
-      const response = await axios.patch(this.assembleEndpoint(action), body, {
-        headers: { ...headers }
-      })
-
-      return response
-    } catch (e) {
-      return e
-    }
-  }
-
-  async Put(action, body) {
-    const headers = await this.assembleHeaders()
-
-    try {
-      const response = await axios.put(this.assembleEndpoint(action), body, {
-        headers: { ...headers }
-      })
-
-      return response
-    } catch (e) {
-      return e
-    }
-  }
-
-  async Delete(action) {
-    const headers = await this.assembleHeaders()
-
-    try {
-      const response = await axios.delete(this.assembleEndpoint(action), {
-        headers: { ...headers }
-      })
-
-      return response
-    } catch (e) {
-      return e
-    }
-  }
-
-  assembleEndpoint(action, data) {
-    const apiAddress = process.env.NEXT_PUBLIC_HEALTH_AND_SAFETY_API_ADDRESS
-    let endpoint
-
-    if (action) endpoint = `${apiAddress}/${this.controllerName}/${action}`
-    else endpoint = `${apiAddress}/${this.controllerName}`
-
-    if (data) {
-      let query = ''
-
-      Object.keys(data).forEach(k => {
-        query = `${query}${k}=${data[k]}&`
-      })
-
-      endpoint = `${endpoint}?${query}`
-    }
-
-    return endpoint
+        return Promise.reject(error);
+      }
+    );
   }
 
   async assembleHeaders() {
-    return { ...this.baseHeaders }
+    const headers = { ...this.baseHeaders };
+    if (this.accessToken) headers["Authorization"] = `Bearer ${this.accessToken}`;
+    return headers;
+  }
+
+  assembleEndpoint(action, data) {
+    const apiAddress = process.env.NEXT_PUBLIC_HEALTH_AND_SAFETY_API_ADDRESS;
+    let endpoint = action
+      ? `${apiAddress}/${this.controllerName}/${action}`
+      : `${apiAddress}/${this.controllerName}`;
+
+    if (data) endpoint = `${endpoint}?${new URLSearchParams(data).toString()}`;
+
+    return endpoint;
+  }
+
+  async Get(action, params) {
+    const headers = await this.assembleHeaders();
+    return this.client.get(this.assembleEndpoint(action, params), { headers });
+  }
+
+  async Post(action, body) {
+    const headers = await this.assembleHeaders();
+    return this.client.post(this.assembleEndpoint(action), body, { headers });
+  }
+
+  async Put(action, body) {
+    const headers = await this.assembleHeaders();
+    return this.client.put(this.assembleEndpoint(action), body, { headers });
+  }
+
+  async Patch(action, body) {
+    const headers = await this.assembleHeaders();
+    return this.client.patch(this.assembleEndpoint(action), body, { headers });
+  }
+
+  async Delete(action) {
+    const headers = await this.assembleHeaders();
+    return this.client.delete(this.assembleEndpoint(action), { headers });
   }
 }

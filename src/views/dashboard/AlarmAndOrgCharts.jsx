@@ -1,6 +1,6 @@
 
 'use client'
-import ReportServices from '@/@services/reportService'
+import ReportServices from '../../@services/reportService'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -26,15 +26,31 @@ const StatusEnum = { ACTIVE: 'active', INACTIVE: 'inactive' }
 
 const AlarmAndOrgCharts = ({ entityCounts }) => {
 
-  const [groupedData, setGroupedData] = useState({})
 
-useEffect(() => {
-  const fetchData = async () => {
+
+const [groupedData, setGroupedData] = useState({})
+  const [pieData, setPieData] = useState([])
+  const router = useRouter()
+const [loading, setLoading] = useState(true);
+const [showTooltip, setShowTooltip] = useState(false)
+
+  const chartRef = useRef(null)
+  const [anchorPosition, setAnchorPosition] = useState(null)
+  const [selectedSensor, setSelectedSensor] = useState(null)
+  useEffect(() => {
+  const fetchSensorData = async () => {
+    setLoading(true)
     try {
-      const res = await ReportServices.getSensorSummary()
-      const grouped = {}
+     const res = await ReportServices.getSensorSummary({
+        OrganizationId: '',
+        OrgCountry: '',
+        BranchId: '',
+        FloorSectionId: ''
+      })
+      const sensorList = res?.data?.data || []
 
-      res?.data?.data?.forEach(item => {
+      const grouped = {}
+      sensorList.forEach(item => {
         const dateObj = new Date(item.serverTime)
         const day = !isNaN(dateObj.getTime()) ? dateObj.toLocaleDateString('en-GB') : null
         if (!day) return
@@ -55,17 +71,21 @@ useEffect(() => {
     }
   }
 
-  fetchData()
+  fetchSensorData()
 }, [])
+useEffect(() => {
+  if (!entityCounts || !Array.isArray(entityCounts)) return
+  const formatted = []
+  entityCounts.forEach(item => {
+    const entityLabel = EntityType[item.entity]
+    if (entityLabel) {
+      formatted.push({ name: `Active ${entityLabel}`, value: item.activeCount })
+      formatted.push({ name: `Inactive ${entityLabel}`, value: item.inActiveCount })
+    }
+  })
+  setPieData(formatted.filter(entry => entry.value > 0))
+}, [entityCounts])
 
-  const [pieData, setPieData] = useState([])
-  const router = useRouter()
-const [loading, setLoading] = useState(true);
-const [showTooltip, setShowTooltip] = useState(false)
-
-  const chartRef = useRef(null)
-  const [anchorPosition, setAnchorPosition] = useState(null)
-  const [selectedSensor, setSelectedSensor] = useState(null)
 
   const handleLineClick = (sensorData) => {
     if (!chartRef.current) return
@@ -106,53 +126,12 @@ const [showTooltip, setShowTooltip] = useState(false)
   }
 
 
-  useEffect(() => {
-    if (!entityCounts || !Array.isArray(entityCounts)) return
-    const formatted = []
-    entityCounts.forEach(item => {
-      const entityLabel = EntityType[item.entity]
-      if (entityLabel) {
-        formatted.push({ name: `Active ${entityLabel}`, value: item.activeCount })
-        formatted.push({ name: `Inactive ${entityLabel}`, value: item.inActiveCount })
-      }
-    })
-    setPieData(formatted.filter(entry => entry.value > 0))
-  }, [entityCounts])
-
-  const renderLabel = ({ value }) => (value === 0 ? null : `${value}`)
- useEffect(() => {
-  setLoading(true);
-
-  const fetchData = async () => {
-    try {
-      const res = await ReportServices.getSensorSummary()
-      const grouped = {}
-
-      res?.data?.data?.forEach(item => {
-        const dateObj = new Date(item.serverTime)
-        const day = !isNaN(dateObj.getTime()) ? dateObj.toLocaleDateString('en-GB') : null
-        if (!day) return
-
-        if (!grouped[item.sensorId]) grouped[item.sensorId] = []
-        grouped[item.sensorId].push({
-          day,
-          temperature: Number(item.currentTemperature) || 0,
-          sensorData: item
-        })
-      })
-
-      setGroupedData(grouped)
-    } catch (err) {
-      console.error('Error fetching sensor summary:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  fetchData()
-}, [])
 
 
+const renderLabel = ({ value }) => {
+  if (value === 0) return null
+  return `${value}`
+}
 
   return (
     <Grid container spacing={4}>
@@ -224,38 +203,34 @@ const [showTooltip, setShowTooltip] = useState(false)
         <CircularProgress size={40} />
       </Box>
     ) : (
-      <ResponsiveContainer width='100%' height='100%'>
-        <LineChart>
-          <XAxis dataKey="day" />
-          <YAxis />
-          <Tooltip />
-         {Object.keys(groupedData).map((sensorId, index) => (
-  <Line
-    key={sensorId}
-    data={groupedData[sensorId]}
-    type="monotone"
-    dataKey="temperature"
-    stroke={COLORS[index % COLORS.length]}
-    dot={(props) => {
-      const { cx, cy, payload } = props;
-      const temp = payload.temperature;
-      const min = payload.sensorData.minTemperature;
-      const max = payload.sensorData.maxTemperature;
-      const fillColor = (temp < min || temp > max) ? '#FF4D6D' : COLORS[index % COLORS.length];
+     <ResponsiveContainer width='100%' height='100%'>
+  <LineChart data={Object.values(groupedData).flat()}>
+    <XAxis dataKey="day" />
+    <YAxis />
+    <Tooltip />
+    {Object.keys(groupedData).map((sensorId, index) => (
+      <Line
+        key={sensorId}
+        data={groupedData[sensorId]}
+        type="monotone"
+        dataKey="temperature"
+        stroke={COLORS[index % COLORS.length]}
+        dot={({ cx, cy, payload }) => {
+          const temp = payload.temperature
+          const min = payload.sensorData.minTemperature
+          const max = payload.sensorData.maxTemperature
+          const fillColor = (temp < min || temp > max) ? '#FF4D6D' : COLORS[index % COLORS.length]
+          return <circle cx={cx} cy={cy} r={4} fill={fillColor} stroke="#fff" strokeWidth={1} />
+        }}
+        activeDot={{
+          r: 8,
+          onClick: (_, payload) => handleLineClick(payload.payload.sensorData),
+        }}
+      />
+    ))}
+  </LineChart>
+</ResponsiveContainer>
 
-      return (
-        <circle cx={cx} cy={cy} r={4} fill={fillColor} stroke="#fff" strokeWidth={1} />
-      );
-    }}
-    activeDot={{
-      r: 8,
-      onClick: (_, payload) => handleLineClick(payload.payload.sensorData),
-    }}
-  />
-))}
-
-        </LineChart>
-      </ResponsiveContainer>
     )}
   </Box>
   <Box mt={1}>

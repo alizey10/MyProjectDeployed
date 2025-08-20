@@ -5,6 +5,7 @@ import { useState } from 'react'
 
 // Next Imports
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 // MUI Imports
 import Card from '@mui/material/Card'
@@ -18,24 +19,88 @@ import Button from '@mui/material/Button'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Divider from '@mui/material/Divider'
 
-// Component Imports
+
 import Illustrations from '@components/Illustrations'
 import Logo from '@components/layout/shared/Logo'
 
-// Hook Imports
+
 import { useImageVariant } from '@core/hooks/useImageVariant'
+import BaseService from '@/@services/baseService'
+import useAuth from '@/app/hooks/useAuth' 
 
 const Register = ({ mode }) => {
-  // States
-  const [isPasswordShown, setIsPasswordShown] = useState(false)
+  const router = useRouter()
+  const { setAccessToken } = useAuth() 
 
-  // Vars
+
+  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [isPasswordShown, setIsPasswordShown] = useState(false)
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: ''
+  })
+  const [errors, setErrors] = useState({
+    username: '',
+    email: '',
+    password: ''
+  })
+
+
   const darkImg = '/images/pages/auth-v1-mask-dark.png'
   const lightImg = '/images/pages/auth-v1-mask-light.png'
 
-  // Hooks
+
   const authBackground = useImageVariant(mode, lightImg, darkImg)
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
+  const handleChange = (field, value) => setFormData({ ...formData, [field]: value })
+
+  const handleSignUp = async () => {
+    let valid = true
+    const newErrors = { username: '', email: '', password: '' }
+
+    if (!formData.username.trim()) {
+      newErrors.username = 'Username is required'
+      valid = false
+    }
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required'
+      valid = false
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid'
+      valid = false
+    }
+    if (!formData.password.trim()) {
+      newErrors.password = 'Password is required'
+      valid = false
+    }
+    if (!termsAccepted) {
+      valid = false
+    }
+
+    setErrors(newErrors)
+    if (!valid) return
+
+    try {
+
+      const api = new BaseService() 
+      const response = await api.Post('Auth/Register', {
+        firstName: formData.username,
+        email: formData.email,
+        password: formData.password,
+        avatar: '/images/avatars/1.png'
+      })
+      
+      if (response?.data?.data?.token) {
+       
+        setAccessToken(response.data.data.token)
+        router.push('/dashboard')
+      }
+    } catch (err) {
+      console.error('Registration failed', err)
+    
+    }
+  }
 
   return (
     <div className='flex flex-col justify-center items-center min-bs-[100dvh] relative p-6'>
@@ -48,12 +113,29 @@ const Register = ({ mode }) => {
           <div className='flex flex-col gap-5'>
             <Typography className='mbs-1'>Make your app management easy and fun!</Typography>
             <form noValidate autoComplete='off' onSubmit={e => e.preventDefault()} className='flex flex-col gap-5'>
-              <TextField autoFocus fullWidth label='Username' />
-              <TextField fullWidth label='Email' />
+              <TextField
+                autoFocus
+                fullWidth
+                label='Username'
+                value={formData.username}
+                onChange={e => handleChange('username', e.target.value)}
+                error={!!errors.username}
+                helperText={errors.username}
+              />
+              <TextField
+                fullWidth
+                label='Email'
+                value={formData.email}
+                onChange={e => handleChange('email', e.target.value)}
+                error={!!errors.email}
+                helperText={errors.email}
+              />
               <TextField
                 fullWidth
                 label='Password'
                 type={isPasswordShown ? 'text' : 'password'}
+                value={formData.password}
+                onChange={e => handleChange('password', e.target.value)}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position='end'>
@@ -68,19 +150,31 @@ const Register = ({ mode }) => {
                     </InputAdornment>
                   )
                 }}
+                error={!!errors.password}
+                helperText={errors.password}
               />
               <FormControlLabel
-                control={<Checkbox />}
+                control={
+                  <Checkbox
+                    checked={termsAccepted}
+                    onChange={e => setTermsAccepted(e.target.checked)}
+                  />
+                }
                 label={
                   <>
                     <span>I agree to </span>
-                    <Link className='text-primary' href='/' onClick={e => e.preventDefault()}>
+                    <Link href='/' onClick={e => e.preventDefault()} className='text-primary'>
                       privacy policy & terms
                     </Link>
                   </>
                 }
               />
-              <Button fullWidth variant='contained' type='submit'>
+              {!termsAccepted && (
+                <Typography variant="caption" color="error">
+                  Please accept the terms & policy
+                </Typography>
+              )}
+              <Button fullWidth variant='contained' type='button' onClick={handleSignUp}>
                 Sign Up
               </Button>
               <div className='flex justify-center items-center flex-wrap gap-2'>

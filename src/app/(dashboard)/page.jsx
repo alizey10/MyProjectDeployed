@@ -1,21 +1,32 @@
 'use client'
-import { useState } from 'react'
 
+import { useState, useEffect } from 'react'
+import useAuth from '../hooks/useAuth'
 import Grid from '@mui/material/Grid'
+import TopNav from '../../views/dashboard/TopNav'
 
-import WeeklyOverview from '@views/dashboard/WeeklyOverview'
-import TotalEarning from '@views/dashboard/TotalEarning'
-import LineChart from '@views/dashboard/LineChart'
-import DistributedColumnChart from '@views/dashboard/DistributedColumnChart'
-import CardStatVertical from '@components/card-statistics/Vertical'
-import TopNav from '@/views/dashboard/TopNav'
-import AlarmAndOrgCharts from '@/views/dashboard/AlarmAndOrgCharts'
+import AlarmAndOrgCharts from '../../views/dashboard/AlarmAndOrgCharts'
+import { useRouter } from 'next/navigation'
 
 const DashboardAnalytics = () => {
+  const router = useRouter()
   const [entityCount, setEnityCount] = useState([])
+  const  {user} = useAuth()   
+
   const filteredChanges = data => {
     setEnityCount(data?.entityCounts)
   }
+
+
+  useEffect(() => {
+    if (!user) {
+      router.replace('/login')
+    }
+  }, [user, router])
+
+
+  if (!user) return null
+
   return (
     <>
       <Grid item xs={12} md={12} lg={12}>
