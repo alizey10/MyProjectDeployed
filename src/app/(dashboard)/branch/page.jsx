@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
-
+import { usePermissions } from '@/app/hooks/permissionContext'
 import OrganizationService from '@services/organizationService'
 import DataTable from '@/views/floor/DataTable'
 import ConfirmDialog from '@components/Dialog'
@@ -13,6 +13,7 @@ import DialogBox from '@/views/common/DialogBox'
 import BranchService from '@services/branchService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 import { StatusEnum } from '@/enum/status-enum'
+import CircularProgress from '@mui/material/CircularProgress'
 
 const PAGE_SIZE = 10
 const BranchStatus = StatusEnum
@@ -29,16 +30,16 @@ const BranchPage = () => {
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
   const [deleting, setDeleting] = useState(false)
-
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [selectedBranch, setSelectedBranch] = useState(null)
-
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
   const [activatingId, setActivatingId] = useState(null)
-
   const [organization, setOrganization] = useState([])
+  const { permissions, loading: permLoading } = usePermissions()
+
+  
 
   useEffect(() => {
     const fetchOrganization = async () => {
@@ -85,6 +86,9 @@ const BranchPage = () => {
   useEffect(() => {
     loadBranches(page, status)
   }, [page, status])
+
+  
+
 
   const handleStatusChange = newStatus => {
     setStatus(newStatus)
@@ -147,21 +151,20 @@ const BranchPage = () => {
   const handleConfirmDelete = async () => {
     setConfirmDialogOpen(false)
     setDeleting(true)
-if (selectedBranch) {
-  try {
-    const response = await BranchService.deleteBranch(selectedBranch.branchId)
+    if (selectedBranch) {
+      try {
+        const response = await BranchService.deleteBranch(selectedBranch.branchId)
 
-    if (response.status === HttpStatus.OK || response.status === HttpStatus.NoContent || response === true) {
-      toast.success('Record Deleted')
-      await loadBranches(page, status)
-    } else {
-      toast.error(getMessage(response))
+        if (response.status === HttpStatus.OK || response.status === HttpStatus.NoContent || response === true) {
+          toast.success('Record Deleted')
+          await loadBranches(page, status)
+        } else {
+          toast.error(getMessage(response))
+        }
+      } catch (error) {
+        toast.error(getMessage(error))
+      }
     }
-  } catch (error) {
-    toast.error(getMessage(error))
-  }
-}
-
 
     setDeleting(false)
     setSelectedBranch(null)
@@ -173,28 +176,28 @@ if (selectedBranch) {
   }
 
   const handleActivateClick = async branch => {
-   if (activatingId) return
-setActivatingId(branch.branchId)
+    if (activatingId) return
+    setActivatingId(branch.branchId)
 
-try {
-  const response = await BranchService.activateBranch(branch.branchId)
+    try {
+      const response = await BranchService.activateBranch(branch.branchId)
 
-  if (
-    response.status === HttpStatus.OK ||
-    response.status === HttpStatus.Created ||
-    response.status === HttpStatus.NoContent ||
-    response === true
-  ) {
-    toast.success('Branch Activated')
-    await loadBranches(page, status)
-  } else {
-    toast.error(getMessage(response))
-  }
-} catch (error) {
-  toast.error(getMessage(error))
-} finally {
-  setActivatingId(null)
-}
+      if (
+        response.status === HttpStatus.OK ||
+        response.status === HttpStatus.Created ||
+        response.status === HttpStatus.NoContent ||
+        response === true
+      ) {
+        toast.success('Branch Activated')
+        await loadBranches(page, status)
+      } else {
+        toast.error(getMessage(response))
+      }
+    } catch (error) {
+      toast.error(getMessage(error))
+    } finally {
+      setActivatingId(null)
+    }
   }
 
   const columns = [
@@ -238,6 +241,16 @@ try {
   )
 
   return (
+    <> {permLoading || loading ? (
+  
+      <div style={{ textAlign: 'center', marginTop: '100px' }}>
+        <CircularProgress size={40} />
+      </div>
+    ) :!permissions.canView ? (
+      <div style={{ textAlign: 'center', marginTop: '100px' }}>
+        <h2>🚫 You are not authorized to view this page</h2>
+      </div>
+    ) : (
     <>
       <ConfirmDialog
         open={confirmDialogOpen}
@@ -247,21 +260,20 @@ try {
         onCancel={handleCancelDelete}
       />
 
-     <DialogBox
-  key={isCreateMode ? 'add-branch' : editData?.branchId || 'edit-branch'} 
-  title={isCreateMode ? 'Add Branch' : 'Edit Branch'}
-  open={editDialogOpen}
-  onClose={() => {
-    setEditDialogOpen(false);
-    setEditData(null);
-    setIsCreateMode(false);
-  }}
-  organization={organization}
-  data={isCreateMode ? null : editData}
-  onSave={handleSaveEdit}
-  fields={fields}
-/>
-
+      <DialogBox
+        key={isCreateMode ? 'add-branch' : editData?.branchId || 'edit-branch'}
+        title={isCreateMode ? 'Add Branch' : 'Edit Branch'}
+        open={editDialogOpen}
+        onClose={() => {
+          setEditDialogOpen(false);
+          setEditData(null);
+          setIsCreateMode(false);
+        }}
+        organization={organization}
+        data={isCreateMode ? null : editData}
+        onSave={handleSaveEdit}
+        fields={fields}
+      />
 
       <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
         <Grid item>
@@ -281,7 +293,13 @@ try {
         </Grid>
 
         <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant='contained' color='success' onClick={handleAdd} startIcon={<i className='ri-add-line' />}>
+          <Button
+            variant='contained'
+            color='success'
+            onClick={handleAdd}
+            startIcon={<i className='ri-add-line' />}
+            disabled={permLoading || !permissions.canModify}
+          >
             Add Branch
           </Button>
         </Grid>
@@ -294,12 +312,17 @@ try {
         currentPage={page}
         totalPages={totalPages}
         onPageChange={setPage}
-        onEdit={handleEdit}
-        onDelete={handleDeleteClick}
-        onActivate={handleActivateClick}
+        actionProps={{
+          edit: { onClick: handleEdit, disabled: !permissions.canModify },
+          delete: { onClick: handleDeleteClick, disabled: !permissions.canDelete },
+          activate: { onClick: handleActivateClick, disabled: !permissions.canModify }
+        }}
         status={status}
         activatingId={activatingId}
+        showActions={true}  
       />
+    </>
+    )}
     </>
   )
 }

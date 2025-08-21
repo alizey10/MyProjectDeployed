@@ -17,7 +17,8 @@ import { StatusEnum } from '@/enum/status-enum'
 import FloorService from '@services/floorService';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-
+import { usePermissions } from '@/app/hooks/permissionContext'
+import CircularProgress from '@mui/material/CircularProgress'
 const PAGE_SIZE = 10
 const SensorStatus = StatusEnum
 
@@ -46,6 +47,7 @@ const SensorManagerPage = () => {
   const [floors, setFloors] = useState([]);
 const [selectedFloorId, setSelectedFloorId] = useState(null);
 const [selectedFloorName, setSelectedFloorName] = useState(null);
+  const { permissions, loading: permLoading } = usePermissions()
 
 
 const sensorId = searchParams.get('sensorId')
@@ -336,6 +338,16 @@ try {
   ]
 
   return (
+    <> {permLoading || loading ? (
+          
+              <div style={{ textAlign: 'center', marginTop: '100px' }}>
+                <CircularProgress size={40} />
+              </div>
+            ) :!permissions.canView ? (
+              <div style={{ textAlign: 'center', marginTop: '100px' }}>
+                <h2>🚫 You are not authorized to view this page</h2>
+              </div>
+            ) : (
     <>
       <ConfirmDialog
         open={confirmDialogOpen}
@@ -389,7 +401,7 @@ try {
         borderRadius: 2,
           bgcolor: '#E5E5E5',
           borderRadius: 2,
-          px: 0.7,
+          px: 3,
           py: 1.9,
           ml: 0,
            cursor: 'pointer',
@@ -432,6 +444,7 @@ try {
         color="success"
         startIcon={<i className='ri-add-line' />}
         onClick={handleAdd}
+        disabled={permLoading || !permissions.canModify}
       >
         Add Sensor
       </Button>
@@ -447,15 +460,20 @@ try {
         totalPages={totalPages}
         loading={loading || deleting}
         onPageChange={setPage}
-        onEdit={handleEdit}
-        onDelete={handleDeleteClick}
-        onActivate={handleActivateClick}
+      actionProps={{
+          edit: { onClick: handleEdit, disabled: !permissions.canModify },
+          delete: { onClick: handleDeleteClick, disabled: !permissions.canDelete },
+          activate: { onClick: handleActivateClick, disabled: !permissions.canModify }
+        }}
         onCloseRow={handleCloseRowClick}
         status={status}
           floors={floors} 
         activatingId={activatingId}
         sensorId={sensorId}  
+        showActions={true}  
       />
+    </>
+            )}
     </>
   )
 }

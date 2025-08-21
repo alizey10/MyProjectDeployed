@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import AuthService from '@/views/authservice'
 
 let globalAccessToken = null
 let globalUser = null
+let globalPermissions = null
 
 const decodeJWT = token => {
   try {
@@ -18,6 +20,8 @@ const decodeJWT = token => {
 
 export default function useAuth() {
   const router = useRouter()
+
+  const [permissions, setPermissions] = useState(globalPermissions)
   const [accessToken, setAccessTokenState] = useState(globalAccessToken)
   const [user, setUserState] = useState(globalUser)
   const [loading, setLoading] = useState(true)
@@ -36,14 +40,19 @@ export default function useAuth() {
           sessionStorage.setItem('accessToken', token)
           sessionStorage.setItem('user', JSON.stringify(decoded))
         }
+        fetchPermissions(token) 
       } else {
         globalAccessToken = null
         globalUser = null
+        globalPermissions = null
         setUserState(null)
+        setPermissions(null)
       }
     } else {
       globalUser = null
+      globalPermissions = null
       setUserState(null)
+      setPermissions(null)
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem('accessToken')
         sessionStorage.removeItem('user')
@@ -86,6 +95,7 @@ export default function useAuth() {
         globalUser = JSON.parse(storedUser)
         setAccessTokenState(storedToken)
         setUserState(globalUser)
+        fetchPermissions(storedToken)
       }
     }
     setLoading(false)
@@ -95,7 +105,7 @@ export default function useAuth() {
     setAccessToken(token)
 
     const decoded = decodeJWT(token) || {}
-
+    
     const finalUser = { ...decoded, ...userData }
 
     globalUser = finalUser
@@ -107,36 +117,52 @@ export default function useAuth() {
     }
   }
 
+  const fetchPermissions = async tokenParam => {
+    try {
+      const tokenToUse = tokenParam || accessToken
+      if (!tokenToUse) return
+
+      const authService = new AuthService()
+      const res = await authService.Get('Permissions')
+      if (res.data?.success) {
+        globalPermissions = res.data.data
+        setPermissions(res.data.data)
+       
+      }
+    } catch (err) {
+      console.error('Failed to fetch permissions', err)
+      globalPermissions = null
+      setPermissions(null)
+    }
+  }
+
   const logout = () => {
     setAccessToken(null)
     setUserState(null)
+    globalPermissions = null
+    setPermissions(null)
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('refreshToken')
+      sessionStorage.removeItem('accessToken')
+      sessionStorage.removeItem('user')
     }
     router.push('/login')
   }
 
-  const hasPermission = perm => user?.permissions?.includes(perm)
-  const isAdmin = () => user?.role === 'Admin'
   const clearAuth = () => {
-    setAccessToken(null)
-    setUserState(null)
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('refreshToken')
-    }
-    router.push('/login')
+    logout()
   }
 
   return {
     user,
     accessToken,
+    permissions,
     setAccessToken,
     login,
     logout,
     clearAuth,
     refreshAccessToken,
     loading,
-    hasPermission,
-    isAdmin
+    fetchPermissions
   }
 }

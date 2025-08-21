@@ -3,6 +3,8 @@
 import ReportServices from '../../@services/reportService'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { usePermissions } from '@/app/hooks/permissionContext'
+
 
 import {
   ResponsiveContainer,
@@ -37,6 +39,7 @@ const [showTooltip, setShowTooltip] = useState(false)
   const chartRef = useRef(null)
   const [anchorPosition, setAnchorPosition] = useState(null)
   const [selectedSensor, setSelectedSensor] = useState(null)
+    const { permissions, loading: permLoading } = usePermissions()
   useEffect(() => {
   const fetchSensorData = async () => {
     setLoading(true)
@@ -134,6 +137,19 @@ const renderLabel = ({ value }) => {
 }
 
   return (
+    <>
+     {permLoading || loading ? (
+      
+          <div style={{ textAlign: 'center', marginTop: '100px' }}>
+            <CircularProgress size={40} />
+          </div>
+        ) :!permissions.canView ? (
+          <div style={{ textAlign: 'center', marginTop: '100px' }}>
+            <h2>🚫 You are not authorized to view reports</h2>
+          </div>
+        ) : (
+
+    <>
     <Grid container spacing={4}>
      {/* Pie Chart */}
 <Grid item xs={12} md={6}>
@@ -292,6 +308,9 @@ const renderLabel = ({ value }) => {
 
 
     </Grid>
+    </>
+)}
+</>
   )
 }
 

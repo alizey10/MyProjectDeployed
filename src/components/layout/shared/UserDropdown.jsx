@@ -21,6 +21,7 @@ import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import useAuth from '@/app/hooks/useAuth'
+import CircularProgress from '@mui/material/CircularProgress'
 
 const BadgeContentSpan = styled('span')({
   width: 8,
@@ -37,6 +38,8 @@ const UserDropdown = () => {
   const anchorRef = useRef(null)
   const router = useRouter()
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
+
  
   const imgSrc = user?.avatar || undefined
 
@@ -49,9 +52,27 @@ const avatarInitial = !user?.avatar && displayName
   ? displayName[0].toUpperCase()
   : undefined;
 
+// const decodeJWT = (token) => {
+//   try {
+//     const payload = token.split('.')[1]   
+//     return JSON.parse(atob(payload))        
+//   } catch (err) {
+//     console.error('Invalid token', err)
+//     return null
+//   }
+// }
+// const tokenPayload = accessToken ? decodeJWT(accessToken) : null
+// const displayName = tokenPayload?.fullName || tokenPayload?.name || 'User'
+// const avatarInitial = !tokenPayload?.avatar && displayName
+//   ? displayName[0].toUpperCase()
+//   : tokenPayload?.avatar
+// const imgSrc = tokenPayload?.avatar || undefined
+
+
 
 
   const confirmLogout = async () => {
+      setLoggingOut(true) 
   try {
     if (accessToken) {
     
@@ -61,7 +82,7 @@ const avatarInitial = !user?.avatar && displayName
   
       const response = await authApi.logout()
 
-      console.log('Logout response:', response)
+    
     }
   } catch (err) {
     console.error('Logout failed', err)
@@ -69,6 +90,7 @@ const avatarInitial = !user?.avatar && displayName
   
     clearAuth()
     setLogoutDialogOpen(false)
+    setLoggingOut(false)
     router.push('/login') 
   }
 }
@@ -144,10 +166,12 @@ const avatarInitial = !user?.avatar && displayName
           <DialogContentText>Are you sure you want to logout?</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setLogoutDialogOpen(false)}>Cancel</Button>
-          <Button color="error" onClick={confirmLogout}>
-            Logout
-          </Button>
+          <Button onClick={() => setLogoutDialogOpen(false)} disabled={loggingOut}>
+    Cancel
+  </Button>
+  <Button color="error" onClick={confirmLogout} disabled={loggingOut}>
+    {loggingOut ? <CircularProgress size={20} /> : 'Logout'}
+  </Button>
         </DialogActions>
       </Dialog>
     </>

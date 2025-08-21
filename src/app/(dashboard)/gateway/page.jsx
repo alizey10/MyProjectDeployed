@@ -13,7 +13,8 @@ import OrganizationService from '@services/organizationService'
 import BranchService from '@services/branchService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 import { StatusEnum } from '@/enum/status-enum'
-
+import { usePermissions } from '@/app/hooks/permissionContext'
+import CircularProgress from '@mui/material/CircularProgress'
 const PAGE_SIZE = 10
 const GatewayEnum = StatusEnum
 
@@ -37,7 +38,7 @@ const GatewayManagerPage = () => {
   const [branches, setBranches] = useState([])
   const [selectedOrgId, setSelectedOrgId] = useState(null)
   const [selectedBranchId, setSelectedBranchId] = useState(null)
-
+  const { permissions, loading: permLoading } = usePermissions()
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
@@ -246,6 +247,16 @@ try {
 
 
   return (
+     <> {permLoading || loading ? (
+      
+          <div style={{ textAlign: 'center', marginTop: '100px' }}>
+            <CircularProgress size={40} />
+          </div>
+        ) :!permissions.canView ? (
+          <div style={{ textAlign: 'center', marginTop: '100px' }}>
+            <h2>🚫 You are not authorized to view this page</h2>
+          </div>
+        ) : (
     <>
       <ConfirmDialog
         open={confirmDialogOpen}
@@ -286,7 +297,8 @@ try {
         </Grid>
 
         <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant='contained' color='success' startIcon={<i className='ri-add-line' /> }onClick={handleAdd}>
+          <Button variant='contained' color='success' startIcon={<i className='ri-add-line' /> }onClick={handleAdd}
+           disabled={permLoading || !permissions.canModify}>
             Add Gateway
           </Button>
         </Grid>
@@ -299,12 +311,17 @@ try {
         totalPages={totalPages}
         loading={loading || deleting}
         onPageChange={setPage}
-        onEdit={handleEdit}
-        onDelete={handleDeleteClick}
-        onActivate={handleActivateClick}
+       actionProps={{
+          edit: { onClick: handleEdit, disabled: !permissions.canModify },
+          delete: { onClick: handleDeleteClick, disabled: !permissions.canDelete },
+          activate: { onClick: handleActivateClick, disabled: !permissions.canModify }
+        }}
         status={status}
+        showActions={true}  
         activatingId={activatingId}
       />
+    </>
+        )}
     </>
   )
 }

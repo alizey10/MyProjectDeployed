@@ -11,36 +11,36 @@ import DialogBox from '@/views/common/DialogBox'
 import OrganizationService from '@services/organizationService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 import { StatusEnum } from '@/enum/status-enum'
-
-
+import { usePermissions } from '@/app/hooks/permissionContext'
+import CircularProgress from '@mui/material/CircularProgress'
 const PAGE_SIZE = 10
 
 const OrganizationStatus = StatusEnum
 
 const OrganizationManagerPage = () => {
   const handleActivateClick = async org => {
-if (activatingId) return
-setActivatingId(org.organizationId)
+    if (activatingId) return
+    setActivatingId(org.organizationId)
 
-try {
-  const response = await OrganizationService.activateOrganization(org.organizationId)
+    try {
+      const response = await OrganizationService.activateOrganization(org.organizationId)
 
-  if (
-    response.status === HttpStatus.OK ||
-    response.status === HttpStatus.Created ||
-    response.status === HttpStatus.NoContent ||
-    response === true
-  ) {
-    toast.success('Organization Activated')
-    await loadOrganizations(page, status)
-  } else {
-    toast.error(getMessage(response))
-  }
-} catch (error) {
-  toast.error(getMessage(error))
-} finally {
-  setActivatingId(null)
-}
+      if (
+        response.status === HttpStatus.OK ||
+        response.status === HttpStatus.Created ||
+        response.status === HttpStatus.NoContent ||
+        response === true
+      ) {
+        toast.success('Organization Activated')
+        await loadOrganizations(page, status)
+      } else {
+        toast.error(getMessage(response))
+      }
+    } catch (error) {
+      toast.error(getMessage(error))
+    } finally {
+      setActivatingId(null)
+    }
   }
 
   const searchParams = useSearchParams()
@@ -61,6 +61,9 @@ try {
   const [editData, setEditData] = useState(null)
   const [isCreateMode, setIsCreateMode] = useState(false)
   const [activatingId, setActivatingId] = useState(null)
+  const { permissions, loading: permLoading } = usePermissions()
+
+
 
   useEffect(() => {
     setStatus(urlStatus)
@@ -93,6 +96,7 @@ try {
   useEffect(() => {
     loadOrganizations(page, status)
   }, [page, status])
+
 
   const handleStatusChange = newStatus => {
     setStatus(newStatus)
@@ -153,25 +157,20 @@ try {
   const handleConfirmDelete = async () => {
     setConfirmDialogOpen(false)
     setDeleting(true)
-if (selectedOrganization) {
-  try {
-    const response = await OrganizationService.deleteOrganization(selectedOrganization.organizationId)
+    if (selectedOrganization) {
+      try {
+        const response = await OrganizationService.deleteOrganization(selectedOrganization.organizationId)
 
-    if (
-      response.status === HttpStatus.OK ||
-      response.status === HttpStatus.NoContent ||
-      response === true
-    ) {
-      toast.success('Record Deleted')
-      await loadOrganizations(page, status)
-    } else {
-      toast.error(getMessage(response))
+        if (response.status === HttpStatus.OK || response.status === HttpStatus.NoContent || response === true) {
+          toast.success('Record Deleted')
+          await loadOrganizations(page, status)
+        } else {
+          toast.error(getMessage(response))
+        }
+      } catch (error) {
+        toast.error(getMessage(error))
+      }
     }
-  } catch (error) {
-    toast.error(getMessage(error))
-  }
-}
-
 
     setDeleting(false)
     setSelectedOrganization(null)
@@ -205,32 +204,38 @@ if (selectedOrganization) {
   ]
 
   return (
+     <>{permLoading || loading ? (
+       
+           <div style={{ textAlign: 'center', marginTop: '100px' }}>
+             <CircularProgress size={40} />
+           </div>
+         ) :!permissions.canView ? (
+      <div style={{ textAlign: 'center', marginTop: '100px' }}>
+        <h2>🚫 You are not authorized to view this page</h2>
+      </div>
+    ) : (
     <>
       <ConfirmDialog
         open={confirmDialogOpen}
         title='Confirm Deletion'
-  message={`Are you sure you want to delete "${selectedOrganization?.organizationName || 'this organization'}"?`}
-
+        message={`Are you sure you want to delete "${selectedOrganization?.organizationName || 'this organization'}"?`}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
       />
 
-   <DialogBox
-  title={isCreateMode ? 'Add Organization' : 'Edit Organization'}
-  open={editDialogOpen}
-  onClose={() => {
-    setEditDialogOpen(false)
-    setIsCreateMode(false)
-  }}
-  data={isCreateMode ? null : editData} 
-  onSave={handleSaveEdit}
-  fields={fields}
-  organization={orgs} 
-  isCreateMode={isCreateMode} 
-/>
-
-
-
+      <DialogBox
+        title={isCreateMode ? 'Add Organization' : 'Edit Organization'}
+        open={editDialogOpen}
+        onClose={() => {
+          setEditDialogOpen(false)
+          setIsCreateMode(false)
+        }}
+        data={isCreateMode ? null : editData}
+        onSave={handleSaveEdit}
+        fields={fields}
+        organization={orgs}
+        isCreateMode={isCreateMode}
+      />
 
       <Grid
         item
@@ -258,7 +263,13 @@ if (selectedOrganization) {
           </Button>
         </div>
 
-        <Button variant='contained' color='success' startIcon={<i className='ri-add-line' />} onClick={handleAdd}>
+        <Button
+          variant='contained'
+          color='success'
+          startIcon={<i className='ri-add-line' />}
+          onClick={handleAdd}
+          disabled={permLoading || !permissions.canModify}
+        >
           Add Organization
         </Button>
       </Grid>
@@ -270,12 +281,17 @@ if (selectedOrganization) {
         currentPage={page}
         totalPages={totalPages}
         onPageChange={setPage}
-        onEdit={handleEdit}
-        onDelete={handleDeleteClick}
-        onActivate={handleActivateClick}
+        actionProps={{
+          edit: { onClick: handleEdit, disabled: !permissions.canModify },
+          delete: { onClick: handleDeleteClick, disabled: !permissions.canDelete },
+          activate: { onClick: handleActivateClick, disabled: !permissions.canModify }
+        }}
         status={status}
         activatingId={activatingId}
+        showActions={true}  
       />
+    </>
+    )}
     </>
   )
 }

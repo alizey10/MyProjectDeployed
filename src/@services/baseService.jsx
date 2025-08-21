@@ -24,7 +24,7 @@ export default class BaseService {
       error => Promise.reject(error)
     )
 
-   
+
     this.client.interceptors.response.use(
       response => response,
       async error => {
@@ -50,7 +50,17 @@ export default class BaseService {
             originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`
             return this.client(originalRequest)
           } catch (refreshError) {
-            console.error('Refresh token expired. Please login again.', refreshError)
+           console.error('Refresh token expired. Please login again.', refreshError)
+
+         
+            sessionStorage.removeItem('accessToken')
+            sessionStorage.removeItem('refreshToken')
+
+         
+            if (typeof window !== 'undefined') {
+              window.location.href = '/login' 
+            }
+
             return Promise.reject(refreshError)
           }
         }
@@ -82,7 +92,18 @@ export default class BaseService {
 
   async Post(action, body) {
     const headers = await this.assembleHeaders()
-    return this.client.post(this.assembleEndpoint(action), body, { headers })
+    const response = await this.client.post(this.assembleEndpoint(action), body, { headers })
+
+    if (response.data?.data?.expiresAt) {
+      const expiresAt = new Date(response.data.data.expiresAt)
+      const now = new Date()
+      const msToExpire = expiresAt - now
+      if (msToExpire < 60000) {
+        this.refreshAccessToken?.() 
+      }
+    }
+
+    return response
   }
 
   async Put(action, body) {

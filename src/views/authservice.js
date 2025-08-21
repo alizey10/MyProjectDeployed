@@ -1,11 +1,25 @@
 import BaseService from "@/@services/baseService";
 import { HttpStatus } from "@/utils/getStatusCode";
+import { PermissionsProvider } from "@/app/hooks/permissionContext";
 export default class AuthService extends BaseService {
   constructor() {
     super();
     this.controllerName = "Auth";
     this.userData = null;
   }
+async GetPermissions() {
+  try {
+    const res = await this.Get("Permissions");
+
+    if (res.status === HttpStatus.OK && res.data?.data) {
+      return { success: true, data: res.data.data };
+    }
+    return { success: false, data: {} };
+  } catch (err) {
+    console.error("Failed to fetch permissions:", err);
+    return { success: false, data: {} };
+  }
+}
 
   async login(email, password) {
     try {

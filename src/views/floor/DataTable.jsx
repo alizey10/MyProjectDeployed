@@ -8,8 +8,6 @@ import Pagination from '@mui/material/Pagination'
 import CircularProgress from '@mui/material/CircularProgress'
 import Box from '@mui/material/Box'
 
-
-
 import tableStyles from '@core/styles/table.module.css'
 
 const DataTable = ({
@@ -19,16 +17,15 @@ const DataTable = ({
   totalPages = 1,
   loading = false,
   onPageChange = () => {},
-  onEdit = () => {},
-  onDelete = () => {},
-  onActivate = () => {},
+  actionProps = {
+    edit: { onClick: () => {}, disabled: false },
+    delete: { onClick: () => {}, disabled: false },
+    activate: { onClick: () => {}, disabled: false },
+  },
   status = 'active',
-  activatingId = null  
+  activatingId = null,
+  showActions = true 
 }) => {
-
-
-  console.log('Current status:', status)
-
   return (
     <Card>
       <div className='overflow-x-auto relative'>
@@ -43,7 +40,7 @@ const DataTable = ({
                 {columns.map((column, index) => (
                   <th key={index}>{column.label}</th>
                 ))}
-                <th>Actions</th> 
+                {showActions && <th>Actions</th>}  
               </tr>
             </thead>
             <tbody>
@@ -55,68 +52,75 @@ const DataTable = ({
                         <Chip
                           variant='tonal'
                           color='primary'
-                          label={new Date(item[column.field]).toLocaleDateString('en-US', {
-                            month: '2-digit',
-                            day: '2-digit',
-                            year: 'numeric'
-                          })}
+                          label={new Date(item[column.field]).toLocaleDateString(
+                            'en-US',
+                            {
+                              month: '2-digit',
+                              day: '2-digit',
+                              year: 'numeric'
+                            }
+                          )}
                           size='small'
                         />
                       ) : (
                         <Typography>{item[column.field]}</Typography>
                       )}
                     </td>
-                    
                   ))}
-                
-                 <td>
-  <Box sx={{ display: 'flex', gap: 1 }}>
-    {status === 'active' ? (
-      <>
-        <Button
-          variant='outlined'
-          color='primary'
-          size='small'
-          onClick={() => onEdit(item)}
-        >
-          Edit
-        </Button>
-        <Button
-          variant='contained'
-          color='error'
-          size='small'
-          onClick={() => onDelete(item)}
-        >
-          Delete
-        </Button>
-      </>
-    ) : (
-     <Button
-  variant='contained'
-  size='small'
-  sx={{
-    backgroundColor: 'orange',
-    color: '#fff',
-    '&:hover': {
-      backgroundColor: '#ff9800'
-    }
-  }}
-  onClick={() => onActivate(item)}
-  disabled={activatingId === item.organizationId}  
->
-  {activatingId === item.organizationId ? (
-    <CircularProgress size={20} sx={{ color: '#fff' }} />
-  ) : (
-    'Activate'
-  )}
-</Button>
-    )}
-  </Box>
-</td>
 
+                  {showActions && (  
+                    <td>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        {status === 'active' ? (
+                          <>
+                            <Button
+                              variant='outlined'
+                              color='primary'
+                              size='small'
+                              onClick={() => actionProps.edit.onClick(item)}
+                              disabled={actionProps.edit.disabled}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant='contained'
+                              color='error'
+                              size='small'
+                              onClick={() => actionProps.delete.onClick(item)}
+                              disabled={actionProps.delete.disabled}
+                            >
+                              Delete
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            variant='contained'
+                            size='small'
+                            sx={{
+                              backgroundColor: 'orange',
+                              color: '#fff',
+                              '&:hover': {
+                                backgroundColor: '#ff9800'
+                              }
+                            }}
+                            onClick={() => actionProps.activate.onClick(item)}
+                            disabled={
+                              actionProps.activate.disabled ||
+                              activatingId === item.organizationId
+                            }
+                          >
+                            {activatingId === item.organizationId ? (
+                              <CircularProgress size={20} sx={{ color: '#fff' }} />
+                            ) : (
+                              'Activate'
+                            )}
+                          </Button>
+                        )}
+                      </Box>
+                    </td>
+                  )}
                 </tr>
               ))}
-              
             </tbody>
           </table>
         )}

@@ -16,9 +16,11 @@ const DataTable = ({
   currentPage = 1,
   totalPages = 1,
   loading = false,
-  onPageChange = () => {},
-  onEdit = () => {},
-  onDelete = () => {},
+   actionProps = {            
+    edit: { onClick: () => {}, disabled: false },
+    delete: { onClick: () => {}, disabled: false },
+    activate: { onClick: () => {}, disabled: false },
+  },
  
     sensorId = null,
 }) => {
@@ -69,7 +71,8 @@ const DataTable = ({
           size='small'
           variant='outlined'
             color='primary'
-          onClick={() => onEdit(item)}
+         onClick={() => actionProps.edit.onClick(item)}
+  disabled={actionProps.edit.disabled}
         >
           Edit
         </Button>
@@ -78,7 +81,8 @@ const DataTable = ({
           size='small'
           variant='contained'
           color='error'
-          onClick={() => onDelete(item)}
+        onClick={() => actionProps.delete.onClick(item)}
+  disabled={actionProps.delete.disabled}
         >
           Delete
         </Button>

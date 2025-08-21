@@ -10,6 +10,8 @@ import DataTable from '@/views/floor/DataTable'
 import DialogBox from '@/views/common/DialogBox'
 import floorService from '@/@services/floorService'
 import { getStatusCode, getMessage, HttpStatus } from '@/utils/getStatusCode'
+import { usePermissions } from '@/app/hooks/permissionContext'
+import CircularProgress from '@mui/material/CircularProgress'
 
 const PAGE_SIZE = 10
 
@@ -19,7 +21,7 @@ const FloorPage = () => {
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const [floor, setFloor] = useState([])
-
+  const { permissions, loading: permLoading } = usePermissions()
   const handleAdd = () => {
     setOpen(true)
   }
@@ -85,7 +87,17 @@ const FloorPage = () => {
 
   const fields = [{ label: 'Floor Name', name: 'floorName', placeholder: 'First Floor', icon: '🏢', required: true }]
 
-  return (
+  return ( <> {permLoading || loading ? (
+            
+                <div style={{ textAlign: 'center', marginTop: '100px' }}>
+                  <CircularProgress size={40} />
+                </div>
+              ) :!permissions.canView ? (
+                <div style={{ textAlign: 'center', marginTop: '100px' }}>
+                  <h2>🚫 You are not authorized to view this page</h2>
+                </div>
+              ) : (
+      
     <>
       <DialogBox
         title={'Add Floor'}
@@ -106,6 +118,7 @@ const FloorPage = () => {
             sx={{ mt: '0px', ml: '5px' }}
             startIcon={<i className='ri-add-line' />}
             onClick={handleAdd}
+              disabled={permLoading || !permissions.canModify}
           >
             Floor
           </Button>
@@ -118,9 +131,12 @@ const FloorPage = () => {
             totalPages={totalPages}
             loading={loading}
             onPageChange={newPage => setPage(newPage)}
+            showActions={false} 
           />
         </Grid>
       </Grid>
+    </>
+              )}
     </>
   )
 }

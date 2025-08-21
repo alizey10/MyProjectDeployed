@@ -2,7 +2,7 @@
 
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-
+import { PermissionsProvider } from '../hooks/permissionContext'
 // Layout Imports
 import LayoutWrapper from '../../@layouts/LayoutWrapper'
 import VerticalLayout from '../../@layouts/VerticalLayout'
@@ -22,6 +22,7 @@ const Layout = ({ children }) => {
 
   return (
     <Providers direction={direction}>
+       <PermissionsProvider>
       <AuthGuard>
         <LayoutWrapper
           verticalLayout={
@@ -36,6 +37,7 @@ const Layout = ({ children }) => {
           }
         />
       </AuthGuard>
+      </PermissionsProvider>
     </Providers>
   )
 }
