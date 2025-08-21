@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 let globalAccessToken = null
 let globalUser = null
 
-const decodeJWT = (token) => {
+const decodeJWT = token => {
   try {
     const payload = token.split('.')[1]
     return JSON.parse(atob(payload))
@@ -21,9 +21,9 @@ export default function useAuth() {
   const [accessToken, setAccessTokenState] = useState(globalAccessToken)
   const [user, setUserState] = useState(globalUser)
   const [loading, setLoading] = useState(true)
-const REFRESH_URL = process.env.NEXT_PUBLIC_REFRESH_URL
+  const REFRESH_URL = process.env.NEXT_PUBLIC_REFRESH_URL
 
-  const setAccessToken = (token) => {
+  const setAccessToken = token => {
     globalAccessToken = token
     setAccessTokenState(token)
 
@@ -51,18 +51,17 @@ const REFRESH_URL = process.env.NEXT_PUBLIC_REFRESH_URL
     }
   }
 
-
   const refreshAccessToken = async () => {
     try {
       if (typeof window === 'undefined') return
       const refreshToken = sessionStorage.getItem('refreshToken')
       if (!refreshToken) throw new Error('No refresh token available')
 
-    const res = await fetch(REFRESH_URL, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ refreshToken }),
-})
+      const res = await fetch(REFRESH_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken })
+      })
 
       if (!res.ok) throw new Error('Refresh token failed')
 
@@ -80,7 +79,6 @@ const REFRESH_URL = process.env.NEXT_PUBLIC_REFRESH_URL
 
   useEffect(() => {
     if (!accessToken && typeof window !== 'undefined') {
- 
       const storedToken = sessionStorage.getItem('accessToken')
       const storedUser = sessionStorage.getItem('user')
       if (storedToken && storedUser) {
@@ -95,9 +93,14 @@ const REFRESH_URL = process.env.NEXT_PUBLIC_REFRESH_URL
 
   const login = (token, refreshToken, userData) => {
     setAccessToken(token)
-    const finalUser = { ...decodeJWT(token), ...userData }
+
+    const decoded = decodeJWT(token) || {}
+
+    const finalUser = { ...decoded, ...userData }
+
     globalUser = finalUser
     setUserState(finalUser)
+
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('user', JSON.stringify(finalUser))
       sessionStorage.setItem('refreshToken', refreshToken)
@@ -113,16 +116,16 @@ const REFRESH_URL = process.env.NEXT_PUBLIC_REFRESH_URL
     router.push('/login')
   }
 
-  const hasPermission = (perm) => user?.permissions?.includes(perm)
+  const hasPermission = perm => user?.permissions?.includes(perm)
   const isAdmin = () => user?.role === 'Admin'
-const clearAuth = () => {
-  setAccessToken(null)
-  setUserState(null)
-  if (typeof window !== 'undefined') {
-    sessionStorage.removeItem('refreshToken')
+  const clearAuth = () => {
+    setAccessToken(null)
+    setUserState(null)
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('refreshToken')
+    }
+    router.push('/login')
   }
-  router.push('/login') 
-}
 
   return {
     user,
@@ -130,10 +133,10 @@ const clearAuth = () => {
     setAccessToken,
     login,
     logout,
-     clearAuth,
+    clearAuth,
     refreshAccessToken,
     loading,
     hasPermission,
-    isAdmin,
+    isAdmin
   }
 }

@@ -87,7 +87,7 @@ const target = join(__dirname, 'generated-icons.css');
     .join('\n');
 
   await fs.writeFile(target, cssContent, 'utf8');
-  console.log(`Saved CSS to ${target}!`);
+
 })().catch(console.error);
 
 

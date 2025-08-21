@@ -1,28 +1,30 @@
 'use client'
-import { useState } from "react"
+import { useState, useEffect } from 'react'
 
 export function useSessionStorage(key, initialValue) {
-  const [storedValue, setStoredValue] = useState(() => {
-    try {
-      const item = typeof window !== "undefined" ? sessionStorage.getItem(key) : null
-      return item ? JSON.parse(item) : initialValue
-    } catch (error) {
-      console.error("Error reading sessionStorage:", error)
-      return initialValue
-    }
-  })
+  const [value, setValue] = useState(initialValue)
 
-  const setValue = (value) => {
+  useEffect(() => {
     try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value
-      setStoredValue(valueToStore)
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem(key, JSON.stringify(valueToStore))
+      const item = sessionStorage.getItem(key)
+      if (item !== null) {
+        setValue(item)
       }
     } catch (error) {
-      console.error("Error setting sessionStorage:", error)
+      console.error('Error reading sessionStorage:', error)
+    }
+  }, [key])
+
+  const setStoredValue = val => {
+    try {
+      const valueToStore = val instanceof Function ? val(value) : val
+      setValue(valueToStore)
+
+      sessionStorage.setItem(key, valueToStore)
+    } catch (error) {
+      console.error('Error setting sessionStorage:', error)
     }
   }
 
-  return [storedValue, setValue]
+  return [value, setStoredValue]
 }

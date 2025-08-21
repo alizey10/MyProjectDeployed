@@ -37,39 +37,42 @@ const UserDropdown = () => {
   const anchorRef = useRef(null)
   const router = useRouter()
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
-  console.log('User object from useAuth():', user)
+ 
   const imgSrc = user?.avatar || undefined
-const userLoaded = user && (user.firstName || user.email);
 
-const displayName = userLoaded
-  ? user.firstName
-      ? `${user.firstName} ${user.lastName || ''}`.trim()
-      : user.email
-  : ''; 
+       const displayName = user?.fullName 
+  || user?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] 
+  || 'User';
 
-const avatarInitial = !user?.avatar && userLoaded
-  ? user.firstName
-      ? user.firstName[0].toUpperCase()
-      : user.email[0].toUpperCase()
+
+const avatarInitial = !user?.avatar && displayName
+  ? displayName[0].toUpperCase()
   : undefined;
 
 
 
-
-
-
   const confirmLogout = async () => {
-    try {
-      if (accessToken) {
-        const api = new (await import('@/@services/baseService')).default(accessToken, refreshToken)
-        await api.Post('Auth/Logout')
-      }
-    } catch (err) {
-      console.error('Logout failed', err)
-    } finally {
-      clearAuth()
+  try {
+    if (accessToken) {
+    
+      const { default: AuthService } = await import('@/views/authservice')
+      const authApi = new AuthService()
+
+  
+      const response = await authApi.logout()
+
+      console.log('Logout response:', response)
     }
+  } catch (err) {
+    console.error('Logout failed', err)
+  } finally {
+  
+    clearAuth()
+    setLogoutDialogOpen(false)
+    router.push('/login') 
   }
+}
+
 
   return (
     <>
