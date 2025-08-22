@@ -28,37 +28,59 @@ export default function useAuth() {
   const [user, setUserState] = useState(globalUser)
   const [loading, setLoading] = useState(true)
 
+  let refreshTimeout = null
+
+  const clearSession = () => {
+    globalAccessToken = null
+    globalUser = null
+    globalPermissions = null
+    setUserState(null)
+    setPermissions(null)
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('accessToken')
+      sessionStorage.removeItem('user')
+      sessionStorage.removeItem('refreshToken')
+      sessionStorage.removeItem('expiresAt')
+    }
+    if (refreshTimeout) clearTimeout(refreshTimeout)
+  }
+
   const setAccessToken = token => {
     globalAccessToken = token
     setAccessTokenState(token)
 
-    if (token) {
-      const decoded = decodeJWT(token)
-      if (decoded) {
-        globalUser = decoded
-        setUserState(decoded)
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem('accessToken', token)
-          sessionStorage.setItem('user', JSON.stringify(decoded))
-        }
-        fetchPermissions(token)
-      } else {
-        globalAccessToken = null
-        globalUser = null
-        globalPermissions = null
-        setUserState(null)
-        setPermissions(null)
-      }
-    } else {
-      globalUser = null
-      globalPermissions = null
-      setUserState(null)
-      setPermissions(null)
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('accessToken')
-        sessionStorage.removeItem('user')
-      }
+    if (!token) return clearSession()
+
+    const decoded = decodeJWT(token)
+    if (!decoded) return clearSession()
+
+    globalUser = decoded
+    setUserState(decoded)
+
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('accessToken', token)
+      sessionStorage.setItem('user', JSON.stringify(decoded))
     }
+
+    fetchPermissions(token)
+    scheduleRefresh()
+  }
+
+  const scheduleRefresh = () => {
+    if (typeof window === 'undefined') return
+
+    const expiresAt = sessionStorage.getItem('expiresAt')
+    if (!expiresAt) return
+
+    const timeLeft = new Date(expiresAt) - new Date()
+    const refreshTime = Math.max(timeLeft - 15000, 0) 
+
+    if (refreshTimeout) clearTimeout(refreshTimeout)
+    refreshTimeout = setTimeout(async () => {
+      const newToken = await baseService.refreshToken()
+      if (newToken) setAccessToken(newToken)
+      else logout() 
+    }, refreshTime)
   }
 
   const login = async (email, password) => {
@@ -103,32 +125,9 @@ export default function useAuth() {
     }
   }
 
-  const refreshAccessToken = async () => {
-    try {
-      const newAccessToken = await baseService.refreshToken()
-      setAccessToken(newAccessToken)
-    } catch (err) {
-      console.error('Refresh failed', err)
-      clearAuth()
-    }
-  }
-
   const logout = () => {
-    setAccessToken(null)
-    setUserState(null)
-    globalPermissions = null
-    setPermissions(null)
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('refreshToken')
-      sessionStorage.removeItem('accessToken')
-      sessionStorage.removeItem('user')
-      sessionStorage.removeItem('expiresAt')
-    }
+    clearSession()
     router.push('/login')
-  }
-
-  const clearAuth = () => {
-    logout()
   }
 
   useEffect(() => {
@@ -136,15 +135,20 @@ export default function useAuth() {
 
     const storedToken = sessionStorage.getItem('accessToken')
     const storedUser = sessionStorage.getItem('user')
+
     if (storedToken && storedUser) {
       globalAccessToken = storedToken
       globalUser = JSON.parse(storedUser)
       setAccessTokenState(storedToken)
       setUserState(globalUser)
       fetchPermissions(storedToken)
+      scheduleRefresh()
     }
 
     setLoading(false)
+    return () => {
+      if (refreshTimeout) clearTimeout(refreshTimeout)
+    }
   }, [])
 
   return {
@@ -154,8 +158,6 @@ export default function useAuth() {
     setAccessToken,
     login,
     logout,
-    clearAuth,
-    refreshAccessToken,
     loading,
     fetchPermissions
   }
