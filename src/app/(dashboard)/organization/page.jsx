@@ -13,6 +13,7 @@ import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 import { StatusEnum } from '@/enum/status-enum'
 import { usePermissions } from '@/app/hooks/permissionContext'
 import CircularProgress from '@mui/material/CircularProgress'
+import Tooltip from '@mui/material/Tooltip'
 const PAGE_SIZE = 10
 
 const OrganizationStatus = StatusEnum
@@ -63,8 +64,6 @@ const OrganizationManagerPage = () => {
   const [activatingId, setActivatingId] = useState(null)
   const { permissions, loading: permLoading } = usePermissions()
 
-
-
   useEffect(() => {
     setStatus(urlStatus)
     setPage(1)
@@ -96,7 +95,6 @@ const OrganizationManagerPage = () => {
   useEffect(() => {
     loadOrganizations(page, status)
   }, [page, status])
-
 
   const handleStatusChange = newStatus => {
     setStatus(newStatus)
@@ -204,94 +202,102 @@ const OrganizationManagerPage = () => {
   ]
 
   return (
-     <>{permLoading || loading ? (
-       
-           <div style={{ textAlign: 'center', marginTop: '100px' }}>
-             <CircularProgress size={40} />
-           </div>
-         ) :!permissions.canView ? (
-      <div style={{ textAlign: 'center', marginTop: '100px' }}>
-        <h2>🚫 You are not authorized to view this page</h2>
-      </div>
-    ) : (
     <>
-      <ConfirmDialog
-        open={confirmDialogOpen}
-        title='Confirm Deletion'
-        message={`Are you sure you want to delete "${selectedOrganization?.organizationName || 'this organization'}"?`}
-        onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
-      />
-
-      <DialogBox
-        title={isCreateMode ? 'Add Organization' : 'Edit Organization'}
-        open={editDialogOpen}
-        onClose={() => {
-          setEditDialogOpen(false)
-          setIsCreateMode(false)
-        }}
-        data={isCreateMode ? null : editData}
-        onSave={handleSaveEdit}
-        fields={fields}
-        organization={orgs}
-        isCreateMode={isCreateMode}
-      />
-
-      <Grid
-        item
-        xs={12}
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 2
-        }}
-      >
-        <div>
-          <Button
-            sx={{ mr: 2 }}
-            variant={status === OrganizationStatus.ACTIVE ? 'contained' : 'outlined'}
-            onClick={() => handleStatusChange(OrganizationStatus.ACTIVE)}
-          >
-            Active
-          </Button>
-          <Button
-            variant={status === OrganizationStatus.INACTIVE ? 'contained' : 'outlined'}
-            onClick={() => handleStatusChange(OrganizationStatus.INACTIVE)}
-          >
-            Inactive
-          </Button>
+      {permLoading || loading ? (
+        <div style={{ textAlign: 'center', marginTop: '100px' }}>
+          <CircularProgress size={40} />
         </div>
+      ) : !permissions.canView ? (
+        <div style={{ textAlign: 'center', marginTop: '100px' }}>
+          <h2>🚫 You are not authorized to view this page</h2>
+        </div>
+      ) : (
+        <>
+          <ConfirmDialog
+            open={confirmDialogOpen}
+            title='Confirm Deletion'
+            message={`Are you sure you want to delete "${selectedOrganization?.organizationName || 'this organization'}"?`}
+            onConfirm={handleConfirmDelete}
+            onCancel={handleCancelDelete}
+          />
 
-        <Button
-          variant='contained'
-          color='success'
-          startIcon={<i className='ri-add-line' />}
-          onClick={handleAdd}
-          disabled={permLoading || !permissions.canModify}
-        >
-          Add Organization
-        </Button>
-      </Grid>
+          <DialogBox
+            title={isCreateMode ? 'Add Organization' : 'Edit Organization'}
+            open={editDialogOpen}
+            onClose={() => {
+              setEditDialogOpen(false)
+              setIsCreateMode(false)
+            }}
+            data={isCreateMode ? null : editData}
+            onSave={handleSaveEdit}
+            fields={fields}
+            organization={orgs}
+            isCreateMode={isCreateMode}
+          />
 
-      <DataTable
-        data={orgs}
-        columns={columns}
-        loading={loading}
-        currentPage={page}
-        totalPages={totalPages}
-        onPageChange={setPage}
-        actionProps={{
-          edit: { onClick: handleEdit, disabled: !permissions.canModify },
-          delete: { onClick: handleDeleteClick, disabled: !permissions.canDelete },
-          activate: { onClick: handleActivateClick, disabled: !permissions.canModify }
-        }}
-        status={status}
-        activatingId={activatingId}
-        showActions={true}  
-      />
-    </>
-    )}
+          <Grid
+            item
+            xs={12}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 2
+            }}
+          >
+            <div>
+              <Button
+                sx={{ mr: 2 }}
+                variant={status === OrganizationStatus.ACTIVE ? 'contained' : 'outlined'}
+                onClick={() => handleStatusChange(OrganizationStatus.ACTIVE)}
+              >
+                Active
+              </Button>
+              <Button
+                variant={status === OrganizationStatus.INACTIVE ? 'contained' : 'outlined'}
+                onClick={() => handleStatusChange(OrganizationStatus.INACTIVE)}
+              >
+                Inactive
+              </Button>
+            </div>
+
+            <Tooltip
+              title={!permissions.canModify ? 'You are not authorized to add organizations' : ''}
+              arrow
+              disableHoverListener={permissions.canModify}
+            >
+              <span>
+                <Button
+                  variant='contained'
+                  color='success'
+                  startIcon={<i className='ri-add-line' />}
+                  onClick={handleAdd}
+                  disabled={permLoading || !permissions.canModify}
+                >
+                  Add Organization
+                </Button>
+              </span>
+            </Tooltip>
+          </Grid>
+
+          <DataTable
+            data={orgs}
+            columns={columns}
+            loading={loading}
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            actionProps={{
+              edit: { onClick: handleEdit, disabled: !permissions.canModify },
+              delete: { onClick: handleDeleteClick, disabled: !permissions.canDelete },
+              activate: { onClick: handleActivateClick, disabled: !permissions.canModify }
+            }}
+            status={status}
+            activatingId={activatingId}
+            showActions={true}
+          />
+        </>
+      )}
     </>
   )
 }

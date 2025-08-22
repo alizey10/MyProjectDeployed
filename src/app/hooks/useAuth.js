@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import BaseService from '@/@services/baseService'
 import AuthService from '@/views/authservice'
 
 let globalAccessToken = null
@@ -20,12 +21,12 @@ const decodeJWT = token => {
 
 export default function useAuth() {
   const router = useRouter()
+  const baseService = new BaseService()
 
   const [permissions, setPermissions] = useState(globalPermissions)
   const [accessToken, setAccessTokenState] = useState(globalAccessToken)
   const [user, setUserState] = useState(globalUser)
   const [loading, setLoading] = useState(true)
-  const REFRESH_URL = process.env.NEXT_PUBLIC_REFRESH_URL
 
   const setAccessToken = token => {
     globalAccessToken = token
@@ -40,7 +41,7 @@ export default function useAuth() {
           sessionStorage.setItem('accessToken', token)
           sessionStorage.setItem('user', JSON.stringify(decoded))
         }
-        fetchPermissions(token) 
+        fetchPermissions(token)
       } else {
         globalAccessToken = null
         globalUser = null
@@ -60,60 +61,27 @@ export default function useAuth() {
     }
   }
 
-  const refreshAccessToken = async () => {
+  const login = async (email, password) => {
     try {
-      if (typeof window === 'undefined') return
-      const refreshToken = sessionStorage.getItem('refreshToken')
-      if (!refreshToken) throw new Error('No refresh token available')
-
-      const res = await fetch(REFRESH_URL, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_HEALTH_AND_SAFETY_API_ADDRESS}/Auth/Login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken })
+        body: JSON.stringify({ email, password })
       })
 
-      if (!res.ok) throw new Error('Refresh token failed')
-
       const data = await res.json()
-      if (data?.data?.accessToken) {
-        setAccessToken(data.data.accessToken)
-      } else {
-        throw new Error('No access token returned')
-      }
-    } catch (err) {
-      console.error(err)
-      logout()
-    }
-  }
+      if (!res.ok || !data?.data?.accessToken) throw new Error(data?.message || 'Login failed')
 
-  useEffect(() => {
-    if (!accessToken && typeof window !== 'undefined') {
-      const storedToken = sessionStorage.getItem('accessToken')
-      const storedUser = sessionStorage.getItem('user')
-      if (storedToken && storedUser) {
-        globalAccessToken = storedToken
-        globalUser = JSON.parse(storedUser)
-        setAccessTokenState(storedToken)
-        setUserState(globalUser)
-        fetchPermissions(storedToken)
-      }
-    }
-    setLoading(false)
-  }, [])
-
-  const login = (token, refreshToken, userData) => {
-    setAccessToken(token)
-
-    const decoded = decodeJWT(token) || {}
-    
-    const finalUser = { ...decoded, ...userData }
-
-    globalUser = finalUser
-    setUserState(finalUser)
-
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('user', JSON.stringify(finalUser))
+      const { accessToken, refreshToken, expiresAt } = data.data
+      sessionStorage.setItem('accessToken', accessToken)
       sessionStorage.setItem('refreshToken', refreshToken)
+      sessionStorage.setItem('expiresAt', expiresAt)
+
+      setAccessToken(accessToken)
+      return true
+    } catch (err) {
+      console.error('Login failed', err)
+      return false
     }
   }
 
@@ -127,12 +95,21 @@ export default function useAuth() {
       if (res.data?.success) {
         globalPermissions = res.data.data
         setPermissions(res.data.data)
-       
       }
     } catch (err) {
       console.error('Failed to fetch permissions', err)
       globalPermissions = null
       setPermissions(null)
+    }
+  }
+
+  const refreshAccessToken = async () => {
+    try {
+      const newAccessToken = await baseService.refreshToken()
+      setAccessToken(newAccessToken)
+    } catch (err) {
+      console.error('Refresh failed', err)
+      clearAuth()
     }
   }
 
@@ -145,6 +122,7 @@ export default function useAuth() {
       sessionStorage.removeItem('refreshToken')
       sessionStorage.removeItem('accessToken')
       sessionStorage.removeItem('user')
+      sessionStorage.removeItem('expiresAt')
     }
     router.push('/login')
   }
@@ -152,6 +130,22 @@ export default function useAuth() {
   const clearAuth = () => {
     logout()
   }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const storedToken = sessionStorage.getItem('accessToken')
+    const storedUser = sessionStorage.getItem('user')
+    if (storedToken && storedUser) {
+      globalAccessToken = storedToken
+      globalUser = JSON.parse(storedUser)
+      setAccessTokenState(storedToken)
+      setUserState(globalUser)
+      fetchPermissions(storedToken)
+    }
+
+    setLoading(false)
+  }, [])
 
   return {
     user,

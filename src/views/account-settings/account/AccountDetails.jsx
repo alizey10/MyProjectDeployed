@@ -16,14 +16,12 @@ import Chip from '@mui/material/Chip'
 import BaseService from '@/@services/baseService'
 import useAuth from '@/app/hooks/useAuth'
 
-
 function useSessionStorage(key, initialValue) {
   const [storedValue, setStoredValue] = useState(() => {
     try {
-      const item = typeof window !== "undefined" ? sessionStorage.getItem(key) : null
+      const item = typeof window !== 'undefined' ? sessionStorage.getItem(key) : null
       return item ? JSON.parse(item) : initialValue
     } catch (error) {
-
       return initialValue
     }
   })
@@ -32,11 +30,11 @@ function useSessionStorage(key, initialValue) {
     try {
       const valueToStore = value instanceof Function ? value(storedValue) : value
       setStoredValue(valueToStore)
-      if (typeof window !== "undefined") {
+      if (typeof window !== 'undefined') {
         sessionStorage.setItem(key, JSON.stringify(valueToStore))
       }
     } catch (error) {
-      console.error("Error setting sessionStorage:", error)
+      console.error('Error setting sessionStorage:', error)
     }
   }
 
@@ -49,7 +47,7 @@ const AccountDetails = () => {
   const router = useRouter()
   const { accessToken, user } = useAuth()
   const jwtService = new BaseService(accessToken)
-  jwtService.controllerName = "Auth"
+  jwtService.controllerName = 'Auth'
 
   const [formData, setFormData] = useSessionStorage('accountForm', {
     firstName: '',
@@ -127,8 +125,17 @@ const AccountDetails = () => {
 
   const handleReset = () => {
     setFormData({
-      firstName: '', lastName: '', email: '', organization: '', phoneNumber: '',
-      address: '', state: '', zipCode: '', country: '', timezone: '', currency: ''
+      firstName: '',
+      lastName: '',
+      email: '',
+      organization: '',
+      phoneNumber: '',
+      address: '',
+      state: '',
+      zipCode: '',
+      country: '',
+      timezone: '',
+      currency: ''
     })
     setLanguage([])
     setImgSrc('/images/avatars/1.png')
@@ -142,45 +149,31 @@ const AccountDetails = () => {
     const userToSave = { ...formData, language, avatar: imgSrc }
 
     try {
-  
       router.push('/')
-    } catch (error) {
-     
-    }
+    } catch (error) {}
   }
   return (
-    <Card className="shadow-lg rounded-2xl p-4">
-      <CardContent className="border-b pb-6 mb-6">
-        <div className="flex max-sm:flex-col items-center gap-6">
-          <img
-            height={100}
-            width={100}
-            className="rounded-full shadow-md"
-            src={imgSrc}
-            alt="Profile"
-          />
-          <div className="flex flex-grow flex-col gap-3">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button component="label" size="small" variant="contained">
+    <Card className='shadow-lg rounded-2xl p-4'>
+      <CardContent className='border-b pb-6 mb-6'>
+         <div className='flex max-sm:flex-col items-center gap-6'>
+          <img height={100} width={100} className='rounded-full shadow-md' src={imgSrc} alt='Profile' />
+          <div className='flex flex-grow flex-col gap-3'>
+            <div className='flex flex-col sm:flex-row gap-3'>
+              <Button component='label' size='small' variant='contained'>
                 Upload New Photo
                 <input
                   hidden
-                  type="file"
-                  accept="image/png, image/jpeg"
+                  type='file'
+                  accept='image/png, image/jpeg'
                   value={fileInput}
                   onChange={handleFileChange}
                 />
               </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                color="error"
-                onClick={() => setImgSrc('/images/avatars/1.png')}
-              >
+              <Button size='small' variant='outlined' color='error' onClick={() => setImgSrc('/images/avatars/1.png')}>
                 Reset
               </Button>
             </div>
-            <Typography variant="body2" className="text-gray-500">
+            <Typography variant='body2' className='text-gray-500'>
               Allowed JPG, GIF or PNG. Max size of 800K
             </Typography>
           </div>
@@ -214,15 +207,12 @@ const AccountDetails = () => {
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <InputLabel>Country</InputLabel>
-                <Select
-                  value={formData.country}
-                  onChange={e => handleFormChange('country', e.target.value)}
-                >
-                  <MenuItem value="">Select Country</MenuItem>
-                  <MenuItem value="USA">USA</MenuItem>
-                  <MenuItem value="UK">UK</MenuItem>
-                  <MenuItem value="Australia">Australia</MenuItem>
-                  <MenuItem value="Germany">Germany</MenuItem>
+                <Select value={formData.country} onChange={e => handleFormChange('country', e.target.value)}>
+                  <MenuItem value=''>Select Country</MenuItem>
+                  <MenuItem value='USA'>USA</MenuItem>
+                  <MenuItem value='UK'>UK</MenuItem>
+                  <MenuItem value='Australia'>Australia</MenuItem>
+                  <MenuItem value='Germany'>Germany</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -235,14 +225,9 @@ const AccountDetails = () => {
                   value={language}
                   onChange={handleLanguageChange}
                   renderValue={selected => (
-                    <div className="flex flex-wrap gap-2">
+                    <div className='flex flex-wrap gap-2'>
                       {selected.map(value => (
-                        <Chip
-                          key={value}
-                          label={value}
-                          size="small"
-                          onDelete={() => handleDeleteLang(value)}
-                        />
+                        <Chip key={value} label={value} size='small' onDelete={() => handleDeleteLang(value)} />
                       ))}
                     </div>
                   )}
@@ -259,25 +244,22 @@ const AccountDetails = () => {
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <InputLabel>TimeZone</InputLabel>
-                <Select
-                  value={formData.timezone}
-                  onChange={e => handleFormChange('timezone', e.target.value)}
-                >
-                  <MenuItem value="gmt-10">(GMT-10:00) Hawaii</MenuItem>
-                  <MenuItem value="gmt-09">(GMT-09:00) Alaska</MenuItem>
-                  <MenuItem value="gmt-08">(GMT-08:00) Pacific Time (US & Canada)</MenuItem>
-                  <MenuItem value="gmt-08-baja">(GMT-08:00) Tijuana, Baja California</MenuItem>
-                  <MenuItem value="gmt-07">(GMT-07:00) Chihuahua, La Paz, Mazatlan</MenuItem>
-                  <MenuItem value="gmt-07-mt">(GMT-07:00) Mountain Time (US & Canada)</MenuItem>
-                  <MenuItem value="gmt-06">(GMT-06:00) Central America</MenuItem>
-                  <MenuItem value="gmt-06-ct">(GMT-06:00) Central Time (US & Canada)</MenuItem>
-                  <MenuItem value="gmt-06-mc">(GMT-06:00) Guadalajara, Mexico City, Monterrey</MenuItem>
-                  <MenuItem value="gmt-06-sk">(GMT-06:00) Saskatchewan</MenuItem>
-                  <MenuItem value="gmt-05">(GMT-05:00) Bogota, Lima, Quito, Rio Branco</MenuItem>
-                  <MenuItem value="gmt-05-et">(GMT-05:00) Eastern Time (US & Canada)</MenuItem>
-                  <MenuItem value="gmt-05-ind">(GMT-05:00) Indiana (East)</MenuItem>
-                  <MenuItem value="gmt-04">(GMT-04:00) Atlantic Time (Canada)</MenuItem>
-                  <MenuItem value="gmt-04-clp">(GMT-04:00) Caracas, La Paz</MenuItem>
+                <Select value={formData.timezone} onChange={e => handleFormChange('timezone', e.target.value)}>
+                  <MenuItem value='gmt-10'>(GMT-10:00) Hawaii</MenuItem>
+                  <MenuItem value='gmt-09'>(GMT-09:00) Alaska</MenuItem>
+                  <MenuItem value='gmt-08'>(GMT-08:00) Pacific Time (US & Canada)</MenuItem>
+                  <MenuItem value='gmt-08-baja'>(GMT-08:00) Tijuana, Baja California</MenuItem>
+                  <MenuItem value='gmt-07'>(GMT-07:00) Chihuahua, La Paz, Mazatlan</MenuItem>
+                  <MenuItem value='gmt-07-mt'>(GMT-07:00) Mountain Time (US & Canada)</MenuItem>
+                  <MenuItem value='gmt-06'>(GMT-06:00) Central America</MenuItem>
+                  <MenuItem value='gmt-06-ct'>(GMT-06:00) Central Time (US & Canada)</MenuItem>
+                  <MenuItem value='gmt-06-mc'>(GMT-06:00) Guadalajara, Mexico City, Monterrey</MenuItem>
+                  <MenuItem value='gmt-06-sk'>(GMT-06:00) Saskatchewan</MenuItem>
+                  <MenuItem value='gmt-05'>(GMT-05:00) Bogota, Lima, Quito, Rio Branco</MenuItem>
+                  <MenuItem value='gmt-05-et'>(GMT-05:00) Eastern Time (US & Canada)</MenuItem>
+                  <MenuItem value='gmt-05-ind'>(GMT-05:00) Indiana (East)</MenuItem>
+                  <MenuItem value='gmt-04'>(GMT-04:00) Atlantic Time (Canada)</MenuItem>
+                  <MenuItem value='gmt-04-clp'>(GMT-04:00) Caracas, La Paz</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -285,24 +267,21 @@ const AccountDetails = () => {
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <InputLabel>Currency</InputLabel>
-                <Select
-                  value={formData.currency}
-                  onChange={e => handleFormChange('currency', e.target.value)}
-                >
-                  <MenuItem value="">Select Currency</MenuItem>
-                  <MenuItem value="USD">USD</MenuItem>
-                  <MenuItem value="EUR">EUR</MenuItem>
-                  <MenuItem value="Pound">Pound</MenuItem>
-                  <MenuItem value="Bitcoin">Bitcoin</MenuItem>
+                <Select value={formData.currency} onChange={e => handleFormChange('currency', e.target.value)}>
+                  <MenuItem value=''>Select Currency</MenuItem>
+                  <MenuItem value='USD'>USD</MenuItem>
+                  <MenuItem value='EUR'>EUR</MenuItem>
+                  <MenuItem value='Pound'>Pound</MenuItem>
+                  <MenuItem value='Bitcoin'>Bitcoin</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} className="flex gap-4 justify-end mt-4">
-              <Button variant="contained" type="button" onClick={handleSave}>
+            <Grid item xs={12} className='flex gap-4 justify-end mt-4'>
+              <Button variant='contained' type='button' onClick={handleSave}>
                 Save Changes
               </Button>
-              <Button variant="outlined" type="button" color="secondary" onClick={handleReset}>
+              <Button variant='outlined' type='button' color='secondary' onClick={handleReset}>
                 Reset
               </Button>
             </Grid>

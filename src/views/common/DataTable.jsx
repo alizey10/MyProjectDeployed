@@ -7,7 +7,7 @@ import Button from '@mui/material/Button'
 import Pagination from '@mui/material/Pagination'
 import CircularProgress from '@mui/material/CircularProgress'
 import Box from '@mui/material/Box'
-
+import Tooltip from '@mui/material/Tooltip'
 import tableStyles from '@core/styles/table.module.css'
 
 const DataTable = ({
@@ -16,13 +16,13 @@ const DataTable = ({
   currentPage = 1,
   totalPages = 1,
   loading = false,
-   actionProps = {            
+  actionProps = {
     edit: { onClick: () => {}, disabled: false },
     delete: { onClick: () => {}, disabled: false },
-    activate: { onClick: () => {}, disabled: false },
+    activate: { onClick: () => {}, disabled: false }
   },
- 
-    sensorId = null,
+  onPageChange = () => {},
+  sensorId = null
 }) => {
   return (
     <Card>
@@ -62,38 +62,48 @@ const DataTable = ({
                       )}
                     </td>
                   ))}
-                <td>
-  <div className='flex gap-2 items-center justify-between'>
-    {!sensorId && (
-      <div className='flex gap-2'>
-   
-        <Button
-          size='small'
-          variant='outlined'
-            color='primary'
-         onClick={() => actionProps.edit.onClick(item)}
-  disabled={actionProps.edit.disabled}
-        >
-          Edit
-        </Button>
-
-        <Button
-          size='small'
-          variant='contained'
-          color='error'
-        onClick={() => actionProps.delete.onClick(item)}
-  disabled={actionProps.delete.disabled}
-        >
-          Delete
-        </Button>
-      </div>
-    )}
-
-    
-  </div>
-</td>
-
-
+                  <td>
+                    <div className='flex gap-2 items-center justify-between'>
+                      {!sensorId && (
+                        <div className='flex gap-2'>
+                          <Tooltip
+                            title={actionProps.edit.disabled ? 'You are not authorized to edit' : ''}
+                            arrow
+                            disableHoverListener={!actionProps.edit.disabled}
+                          >
+                            <span>
+                              <Button
+                                variant='outlined'
+                                color='primary'
+                                size='small'
+                                onClick={() => actionProps.edit.onClick(item)}
+                                disabled={actionProps.edit.disabled}
+                              >
+                                Edit
+                              </Button>
+                            </span>
+                          </Tooltip>
+                          <Tooltip
+                            title={actionProps.delete.disabled ? 'You are not authorized to delete' : ''}
+                            arrow
+                            disableHoverListener={!actionProps.delete.disabled}
+                          >
+                            <span>
+                              <Button
+                                variant='contained'
+                                color='error'
+                                size='small'
+                                onClick={() => actionProps.delete.onClick(item)}
+                                disabled={actionProps.delete.disabled}
+                              >
+                                Delete
+                              </Button>
+                            </span>
+                          </Tooltip>
+                        </div>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
