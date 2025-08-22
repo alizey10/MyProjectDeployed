@@ -43,21 +43,24 @@ export default function useAuth() {
         }
         fetchPermissions(token)
       } else {
-        globalAccessToken = null
-        globalUser = null
-        globalPermissions = null
-        setUserState(null)
-        setPermissions(null)
+        clearSession()
       }
     } else {
-      globalUser = null
-      globalPermissions = null
-      setUserState(null)
-      setPermissions(null)
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('accessToken')
-        sessionStorage.removeItem('user')
-      }
+      clearSession()
+    }
+  }
+
+  const clearSession = () => {
+    globalAccessToken = null
+    globalUser = null
+    globalPermissions = null
+    setUserState(null)
+    setPermissions(null)
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('accessToken')
+      sessionStorage.removeItem('user')
+      sessionStorage.removeItem('refreshToken')
+      sessionStorage.removeItem('expiresAt')
     }
   }
 
@@ -106,29 +109,21 @@ export default function useAuth() {
   const refreshAccessToken = async () => {
     try {
       const newAccessToken = await baseService.refreshToken()
-      setAccessToken(newAccessToken)
+      if (newAccessToken) {
+        setAccessToken(newAccessToken)
+      } else {
+        console.warn(' Refresh failed, clearing session')
+        clearSession()
+      }
     } catch (err) {
       console.error('Refresh failed', err)
-      clearAuth()
+      clearSession()
     }
   }
 
   const logout = () => {
-    setAccessToken(null)
-    setUserState(null)
-    globalPermissions = null
-    setPermissions(null)
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('refreshToken')
-      sessionStorage.removeItem('accessToken')
-      sessionStorage.removeItem('user')
-      sessionStorage.removeItem('expiresAt')
-    }
+    clearSession()
     router.push('/login')
-  }
-
-  const clearAuth = () => {
-    logout()
   }
 
   useEffect(() => {
@@ -136,6 +131,7 @@ export default function useAuth() {
 
     const storedToken = sessionStorage.getItem('accessToken')
     const storedUser = sessionStorage.getItem('user')
+
     if (storedToken && storedUser) {
       globalAccessToken = storedToken
       globalUser = JSON.parse(storedUser)
@@ -144,7 +140,19 @@ export default function useAuth() {
       fetchPermissions(storedToken)
     }
 
+    const interval = setInterval(async () => {
+      const expiresAt = sessionStorage.getItem('expiresAt')
+      if (!expiresAt) return
+
+      const timeLeft = new Date(expiresAt) - new Date()
+      if (timeLeft < 15000) {
+       
+        await refreshAccessToken()
+      }
+    }, 10000)
+
     setLoading(false)
+    return () => clearInterval(interval)
   }, [])
 
   return {
@@ -154,7 +162,6 @@ export default function useAuth() {
     setAccessToken,
     login,
     logout,
-    clearAuth,
     refreshAccessToken,
     loading,
     fetchPermissions
