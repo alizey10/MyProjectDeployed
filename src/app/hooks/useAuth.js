@@ -156,6 +156,7 @@ export default function useAuth() {
   }, [])
 
   return {
+    
     user,
     accessToken,
     permissions,
