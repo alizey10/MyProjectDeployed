@@ -17,15 +17,9 @@ module.exports = {
         allowArrayStart: true
       }
     ],
-    // Turned off globally
     'padding-line-between-statements': 'off',
     'newline-before-return': 'off',
-    'import/newline-after-import': [
-      'error',
-      {
-        count: 1
-      }
-    ]
+    'import/newline-after-import': 'off'
   },
   settings: {
     react: {

@@ -20,6 +20,7 @@ import Typography from '@mui/material/Typography'
 import { usePermissions } from '@/app/hooks/permissionContext'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
+
 const PAGE_SIZE = 10
 const SensorStatus = StatusEnum
 
