@@ -3,11 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import BaseService from '@/@services/baseService'
-import AuthService from '@/views/authservice'
 
 let globalAccessToken = null
 let globalUser = null
-let globalPermissions = null
 
 const decodeJWT = token => {
   try {
@@ -23,7 +21,6 @@ export default function useAuth() {
   const router = useRouter()
   const baseService = new BaseService()
 
-  const [permissions, setPermissions] = useState(globalPermissions)
   const [accessToken, setAccessTokenState] = useState(globalAccessToken)
   const [user, setUserState] = useState(globalUser)
   const [loading, setLoading] = useState(true)
@@ -33,9 +30,7 @@ export default function useAuth() {
   const clearSession = () => {
     globalAccessToken = null
     globalUser = null
-    globalPermissions = null
     setUserState(null)
-    setPermissions(null)
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('accessToken')
       sessionStorage.removeItem('user')
@@ -62,7 +57,6 @@ export default function useAuth() {
       sessionStorage.setItem('user', JSON.stringify(decoded))
     }
 
-    fetchPermissions(token)
     scheduleRefresh()
   }
 
@@ -73,13 +67,13 @@ export default function useAuth() {
     if (!expiresAt) return
 
     const timeLeft = new Date(expiresAt) - new Date()
-    const refreshTime = Math.max(timeLeft - 15000, 0) 
+    const refreshTime = Math.max(timeLeft - 15000, 0)
 
     if (refreshTimeout) clearTimeout(refreshTimeout)
     refreshTimeout = setTimeout(async () => {
       const newToken = await baseService.refreshToken()
       if (newToken) setAccessToken(newToken)
-      else logout() 
+      else logout()
     }, refreshTime)
   }
 
@@ -107,24 +101,6 @@ export default function useAuth() {
     }
   }
 
-  const fetchPermissions = async tokenParam => {
-    try {
-      const tokenToUse = tokenParam || accessToken
-      if (!tokenToUse) return
-
-      const authService = new AuthService()
-      const res = await authService.Get('Permissions')
-      if (res.data?.success) {
-        globalPermissions = res.data.data
-        setPermissions(res.data.data)
-      }
-    } catch (err) {
-      console.error('Failed to fetch permissions', err)
-      globalPermissions = null
-      setPermissions(null)
-    }
-  }
-
   const logout = () => {
     clearSession()
     router.push('/login')
@@ -141,7 +117,6 @@ export default function useAuth() {
       globalUser = JSON.parse(storedUser)
       setAccessTokenState(storedToken)
       setUserState(globalUser)
-      fetchPermissions(storedToken)
       scheduleRefresh()
     }
 
@@ -151,26 +126,23 @@ export default function useAuth() {
 
       const timeLeft = new Date(expiresAt) - new Date()
       if (timeLeft < 15000) {
-       
-        await refreshAccessToken()
+        await baseService.refreshToken()
       }
     }, 10000)
 
     setLoading(false)
     return () => {
       if (refreshTimeout) clearTimeout(refreshTimeout)
+      clearInterval(interval)
     }
   }, [])
 
   return {
-    
     user,
     accessToken,
-    permissions,
     setAccessToken,
     login,
     logout,
-    loading,
-    fetchPermissions
+    loading
   }
 }

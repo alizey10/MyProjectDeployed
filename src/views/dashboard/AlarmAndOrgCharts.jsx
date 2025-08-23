@@ -1,9 +1,8 @@
 'use client'
-import ReportServices from '../../@services/reportService'
+import reportService from '@/@services/reportService'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePermissions } from '@/app/hooks/permissionContext'
-
 import {
   ResponsiveContainer,
   LineChart,
@@ -24,7 +23,7 @@ const COLORS = ['#4CAF50', '#F44336', '#2196F3', '#FF9800', '#9C27B0', '#795548'
 const EntityType = { 0: 'Organizations', 1: 'Branches', 2: 'Gateways', 3: 'Sensors' }
 const StatusEnum = { ACTIVE: 'active', INACTIVE: 'inactive' }
 
-const AlarmAndOrgCharts = ({ entityCounts }) => {
+const AlarmAndOrgCharts = ({ entityCounts, sensorData, permissions }) => {
   const [groupedData, setGroupedData] = useState({})
   const [pieData, setPieData] = useState([])
   const router = useRouter()
@@ -34,43 +33,31 @@ const AlarmAndOrgCharts = ({ entityCounts }) => {
   const chartRef = useRef(null)
   const [anchorPosition, setAnchorPosition] = useState(null)
   const [selectedSensor, setSelectedSensor] = useState(null)
-  const { permissions, loading: permLoading } = usePermissions()
+  const { loading: permLoading } = usePermissions()
   useEffect(() => {
-    const fetchSensorData = async () => {
-      setLoading(true)
-      try {
-        const res = await ReportServices.getSensorSummary({
-          OrganizationId: '',
-          OrgCountry: '',
-          BranchId: '',
-          FloorSectionId: ''
-        })
-        const sensorList = res?.data?.data || []
-
-        const grouped = {}
-        sensorList.forEach(item => {
-          const dateObj = new Date(item.serverTime)
-          const day = !isNaN(dateObj.getTime()) ? dateObj.toLocaleDateString('en-GB') : null
-          if (!day) return
-
-          if (!grouped[item.sensorId]) grouped[item.sensorId] = []
-          grouped[item.sensorId].push({
-            day,
-            temperature: Number(item.currentTemperature) || 0,
-            sensorData: item
-          })
-        })
-
-        setGroupedData(grouped)
-      } catch (err) {
-        console.error('Error fetching sensor summary:', err)
-      } finally {
-        setLoading(false)
-      }
+    if (entityCounts && sensorData && permissions) {
+      setLoading(false)
     }
+  }, [entityCounts, sensorData, permissions])
 
-    fetchSensorData()
-  }, [])
+  useEffect(() => {
+    if (!sensorData || !Array.isArray(sensorData)) return
+    const grouped = {}
+    sensorData.forEach(item => {
+      const dateObj = new Date(item.serverTime)
+      const day = !isNaN(dateObj.getTime()) ? dateObj.toLocaleDateString('en-GB') : null
+      if (!day) return
+
+      if (!grouped[item.sensorId]) grouped[item.sensorId] = []
+      grouped[item.sensorId].push({
+        day,
+        temperature: Number(item.currentTemperature) || 0,
+        sensorData: item
+      })
+    })
+    setGroupedData(grouped)
+  }, [sensorData])
+
   useEffect(() => {
     if (!entityCounts || !Array.isArray(entityCounts)) return
     const formatted = []
@@ -171,34 +158,34 @@ const AlarmAndOrgCharts = ({ entityCounts }) => {
                   Overview
                 </Typography>
                 <Box sx={{ height: 387 }}>
-                  {loading ? (
+                   {loading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                       <CircularProgress size={40} />
                     </Box>
                   ) : (
-                    <ResponsiveContainer width='100%' height='100%'>
-                      <PieChart>
-                        <Pie
-                          data={pieData}
-                          cx='50%'
-                          cy='50%'
-                          innerRadius={60}
-                          outerRadius={100}
-                          paddingAngle={5}
-                          dataKey='value'
-                          labelLine={false}
-                          label={renderLabel}
-                          onClick={data => handleSliceClick(data.name)}
-                        >
-                          {pieData.map((entry, index) => (
-                            <Cell
-                              key={`cell-${index}`}
-                              fill={COLORS[index % COLORS.length]}
-                              style={{ cursor: 'pointer' }}
-                            />
-                          ))}
-                        </Pie>
-                        <Tooltip
+                  <ResponsiveContainer width='100%' height='100%'>
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        cx='50%'
+                        cy='50%'
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={5}
+                        dataKey='value'
+                        labelLine={false}
+                        label={renderLabel}
+                        onClick={data => handleSliceClick(data.name)}
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                            style={{ cursor: 'pointer' }}
+                          />
+                        ))}
+                      </Pie>
+                       <Tooltip
                           content={({ active, payload }) => {
                             if (!active || !payload || !payload.length) return null
                             const data = payload[0].payload
@@ -216,9 +203,9 @@ const AlarmAndOrgCharts = ({ entityCounts }) => {
                           }}
                         />
 
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
                   )}
                 </Box>
               </Paper>
@@ -230,47 +217,47 @@ const AlarmAndOrgCharts = ({ entityCounts }) => {
                 <Typography variant='h6' mb={2}>
                   Alarm Metrics
                 </Typography>
-                <Box>
+                 <Box>
                   <Box sx={{ minWidth: 500 }}>
-                    <ResponsiveContainer width='100%' height={300}>
-                      <LineChart
-                        data={Object.values(groupedData)
-                          .flat()
-                          .sort((a, b) => new Date(a.day) - new Date(b.day))}
+                <ResponsiveContainer width='100%' height={300}>
+                  <LineChart
+                    data={Object.values(groupedData)
+                      .flat()
+                      .sort((a, b) => new Date(a.day) - new Date(b.day))}
                         width={600}
-                      >
-                        <CartesianGrid stroke='#ccc' strokeDasharray='3 3' />
-                        <XAxis
-                          dataKey='day'
-                          interval='preserveStartEnd'
-                          tickFormatter={(value, index) => (index % 5 === 0 ? value : '')}
-                          angle={-45}
-                          textAnchor='end'
-                          height={80}
-                        />
-                        <YAxis domain={['auto', 'auto']} />
-
+                  >
+                    <CartesianGrid stroke='#ccc' strokeDasharray='3 3' />
+                    <XAxis
+                      dataKey='day'
+                      interval='preserveStartEnd'
+                       tickFormatter={(value, index) => (index % 5 === 0 ? value : '')}
+                      angle={-45}
+                      textAnchor='end'
+                      height={80}
+                    />
+                    <YAxis domain={['auto', 'auto']} />
+                    
                         <Tooltip
                           contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc' }}
                           labelStyle={{ fontWeight: 'bold' }}
                         />
-                        <Line
-                          type='monotone'
-                          dataKey='temperature'
-                          stroke='#4CAF50'
-                          strokeWidth={2.5}
-                          dot={false}
-                          activeDot={{
-                            style: { cursor: 'pointer' },
-                            r: 6,
-                            onClick: (e, payload) => {
-                              handleLineClick(payload.payload.sensorData)
-                            }
-                          }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </Box>
+                    <Line
+                      type='monotone'
+                      dataKey='temperature'
+                      stroke='#4CAF50'
+                      strokeWidth={2.5}
+                      dot={false}
+                      activeDot={{
+                        style: { cursor: 'pointer' },
+                        r: 6,
+                        onClick: (e, payload) => {
+                          handleLineClick(payload.payload.sensorData)
+                        }
+                      }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+                 </Box>
                 </Box>
 
                 <Box mt={1}>
@@ -280,42 +267,42 @@ const AlarmAndOrgCharts = ({ entityCounts }) => {
                   <Typography variant='caption'>(All alarms time based)</Typography>
                 </Box>
               </Paper>
-            </Grid>
+          </Grid>
 
-            {/* Popover */}
-            <Popover
-              id={id}
-              open={open}
-              anchorReference='anchorPosition'
-              anchorPosition={anchorPosition}
-              onClose={handleClose}
-            >
-              {selectedSensor && (
-                <Box
+          {/* Popover */}
+          <Popover
+            id={id}
+            open={open}
+            anchorReference='anchorPosition'
+            anchorPosition={anchorPosition}
+            onClose={handleClose}
+          >
+            {selectedSensor && (
+             <Box
                   sx={{ p: 2, maxWidth: 250 }}
                   onMouseEnter={() => setShowTooltip(true)}
                   onMouseLeave={() => setShowTooltip(false)}
                 >
-                  <Typography variant='subtitle2' fontWeight='bold'>
-                    Sensor Name: {selectedSensor.sensorName}
-                  </Typography>
+                <Typography variant='subtitle2' fontWeight='bold'>
+                  Sensor Name: {selectedSensor.sensorName}
+                </Typography>
 
-                  <MuiTooltip title='Click on Sensor ID to see more details' arrow open={showTooltip}>
-                    <Typography
-                      variant='body2'
-                      onClick={() => router.push(`/sensor?sensorId=${selectedSensor.sensorId}`)}
-                      sx={{ cursor: 'pointer' }}
-                    >
-                      Sensor ID: {selectedSensor.sensorId}
-                    </Typography>
-                  </MuiTooltip>
+                 <MuiTooltip title='Click on Sensor ID to see more details' arrow open={showTooltip}>
+                <Typography
+                  variant='body2'
+                  onClick={() => router.push(`/sensor?sensorId=${selectedSensor.sensorId}`)}
+                   sx={{ cursor: 'pointer' }}
+                >
+                  Sensor ID: {selectedSensor.sensorId}
+                </Typography>
+                </MuiTooltip>
 
-                  <Typography variant='body2'>Gateway Id: {selectedSensor.gatewayId}</Typography>
-                  <Typography variant='body2'>Current Temp: {selectedSensor.currentTemperature}°C</Typography>
-                  <Typography variant='body2'>Min Temp: {selectedSensor.minTemperature}°C</Typography>
-                  <Typography variant='body2'>Max Temp: {selectedSensor.maxTemperature}°C</Typography>
+                <Typography variant='body2'>Gateway Id: {selectedSensor.gatewayId}</Typography>
+                <Typography variant='body2'>Current Temp: {selectedSensor.currentTemperature}°C</Typography>
+                <Typography variant='body2'>Min Temp: {selectedSensor.minTemperature}°C</Typography>
+                <Typography variant='body2'>Max Temp: {selectedSensor.maxTemperature}°C</Typography>
 
-                  {(selectedSensor.currentTemperature < selectedSensor.minTemperature ||
+                 {(selectedSensor.currentTemperature < selectedSensor.minTemperature ||
                     selectedSensor.currentTemperature > selectedSensor.maxTemperature) && (
                     <Typography variant='body2' sx={{ color: 'red', fontWeight: 'bold', mt: 1 }}>
                       🚨 Active Alarm
@@ -325,10 +312,10 @@ const AlarmAndOrgCharts = ({ entityCounts }) => {
                   <Typography variant='caption' display='block' mt={1}>
                     {new Date(selectedSensor.serverTime).toLocaleString()}
                   </Typography>
-                </Box>
-              )}
-            </Popover>
-          </Grid>
+              </Box>
+            )}
+          </Popover>
+           </Grid>
         </>
       )}
     </>

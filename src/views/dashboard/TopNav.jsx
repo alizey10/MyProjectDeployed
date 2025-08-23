@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-
+import { useEffect, useState, useRef } from 'react'
 import {
   InputLabel,
   MenuItem,
@@ -46,6 +45,9 @@ const TopNav = ({ onFiltersChange }) => {
   const branchId = watch('branch')
   const floorSectionId = watch('floorSectionId')
 
+  // ✅ StrictMode guard
+  const fetchedRef = useRef(false)
+
   // Fetch Organizations and Floors
   useEffect(() => {
     const fetchData = async () => {
@@ -54,6 +56,7 @@ const TopNav = ({ onFiltersChange }) => {
         const orgRes = await OrganizationService.getOrganizations(0, 0)
         setOrganizations(orgRes?.data?.data || [])
         if (!orgRes?.data.success) toast.error(orgRes?.data.message)
+
         const floorRes = await FloorService.getFloor(0, 0)
         if (!floorRes?.data.success) toast.error(floorRes?.data.message)
         setFloorSections(floorRes?.data?.data || [])
@@ -85,11 +88,13 @@ const TopNav = ({ onFiltersChange }) => {
 
     loadBranches()
   }, [organizationId])
-  
 
-  // Call EntityCounts API on any field change
+  // ✅ Single effect for both EntityCounts + SensorSummary
   useEffect(() => {
-    const fetchEntityCountsAndSensorSummary = async () => {
+    if (fetchedRef.current) return
+    fetchedRef.current = true
+
+    const fetchData = async () => {
       setLoading(true)
       try {
         const [entityCountsResponse, sensorSummaryResponse] = await Promise.all([
@@ -103,7 +108,8 @@ const TopNav = ({ onFiltersChange }) => {
             OrganizationId: organizationId,
             OrgCountry: country,
             BranchId: branchId,
-            FloorSectionId: floorSectionId
+            FloorSectionId: floorSectionId,
+            ...(startDate && endDate ? { StartDate: startDate, EndDate: endDate } : {})
           })
         ])
 
@@ -113,52 +119,20 @@ const TopNav = ({ onFiltersChange }) => {
             country,
             branchId,
             floorSectionId,
+            startDate,
+            endDate,
             entityCounts: entityCountsResponse.data?.data,
             sensorData: sensorSummaryResponse.data?.data
           })
         }
       } catch (err) {
-        console.error('Error fetching entity counts or sensor summary:', err)
+        console.error('Error fetching data:', err)
       }
       setLoading(false)
     }
 
-    fetchEntityCountsAndSensorSummary()
-  }, [organizationId, country, branchId, floorSectionId])
-
-  // Add effect for StartDate/EndDate changes (only for sensor summary)
-  useEffect(() => {
-    let checkValidity = !!startDate && !!endDate
-    if (!checkValidity) return
-    const fetchSensorSummary = async () => {
-      setLoading(true)
-      try {
-        const sensorSummaryResponse = await ReportServices.getSensorSummary({
-          OrganizationId: organizationId,
-          OrgCountry: country,
-          BranchId: branchId,
-          FloorSectionId: floorSectionId,
-          StartDate: startDate || undefined,
-          EndDate: endDate || undefined
-        })
-        if (onFiltersChange) {
-          onFiltersChange({
-            organizationId,
-            country,
-            branchId,
-            floorSectionId,
-            startDate,
-            endDate,
-            sensorData: sensorSummaryResponse.data?.data
-          })
-        }
-      } catch (err) {
-        console.error('Error fetching sensor summary:', err)
-      }
-      setLoading(false)
-    }
-    fetchSensorSummary()
-  }, [startDate, endDate])
+    fetchData()
+  }, [organizationId, country, branchId, floorSectionId, startDate, endDate, onFiltersChange])
 
   return (
     <Box position='relative'>

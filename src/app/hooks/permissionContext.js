@@ -1,7 +1,6 @@
-
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react'
 import useAuth from '@/app/hooks/useAuth'
 import AuthService from '@/views/authservice'
 
@@ -17,7 +16,7 @@ const PermissionsContext = createContext({
 })
 
 export const PermissionsProvider = ({ children }) => {
-  const { accessToken, logout } = useAuth()
+  const { accessToken } = useAuth()
   const [permissions, setPermissions] = useState({
     canView: false,
     canModify: false,
@@ -26,12 +25,22 @@ export const PermissionsProvider = ({ children }) => {
   })
   const [loading, setLoading] = useState(true)
 
-  const fetchPermissions = async () => {
-    if (!accessToken) return
+  const authService = useMemo(() => new AuthService(), [])
+
+  const fetchPermissions = useCallback(async () => {
+    if (!accessToken) {
+      setPermissions({
+        canView: false,
+        canModify: false,
+        canDelete: false,
+        canViewReports: false
+      })
+      setLoading(false)
+      return
+    }
 
     setLoading(true)
     try {
-      const authService = new AuthService()
       const response = await authService.GetPermissions()
       if (response?.success && response.data) {
         setPermissions({
@@ -56,15 +65,15 @@ export const PermissionsProvider = ({ children }) => {
         canDelete: false,
         canViewReports: false
       })
-     
+      
     } finally {
       setLoading(false)
     }
-  }
+  }, [accessToken, authService])
 
   useEffect(() => {
     fetchPermissions()
-  }, [accessToken])
+  }, [fetchPermissions])
 
   return (
     <PermissionsContext.Provider value={{ permissions, loading, refreshPermissions: fetchPermissions }}>

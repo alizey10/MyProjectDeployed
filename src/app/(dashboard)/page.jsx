@@ -1,6 +1,5 @@
 'use client'
-
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import useAuth from '../hooks/useAuth'
 import Grid from '@mui/material/Grid'
 import TopNav from '../../views/dashboard/TopNav'
@@ -10,23 +9,20 @@ import { useRouter } from 'next/navigation'
 
 const DashboardAnalytics = () => {
   const router = useRouter()
-  const [entityCount, setEnityCount] = useState([])
-  const  {user} = useAuth()   
-    const { permissions } = usePermissions() 
+  const [entityCount, setEntityCount] = useState([])
+  const [sensorData, setSensorData] = useState([])
+  const { user } = useAuth()
+  const { permissions } = usePermissions()
 
   const filteredChanges = data => {
-    setEnityCount(data?.entityCounts)
+    setEntityCount(data?.entityCounts || [])
+    setSensorData(data?.sensorData || [])
   }
 
-
-  useEffect(() => {
-    if (!user) {
-      router.replace('/login')
-    }
-  }, [user, router])
-
-
-  if (!user) return null
+  if (!user) {
+    router.replace('/login')
+    return null
+  }
 
   return (
     <>
@@ -34,7 +30,7 @@ const DashboardAnalytics = () => {
         <TopNav onFiltersChange={filteredChanges} />
       </Grid>
       <Grid item xs={12} md={12} lg={12}>
-        <AlarmAndOrgCharts entityCounts={entityCount}  permissions={permissions}/>
+        <AlarmAndOrgCharts entityCounts={entityCount}permissions={permissions} sensorData={sensorData} />
       </Grid>
     </>
   )
