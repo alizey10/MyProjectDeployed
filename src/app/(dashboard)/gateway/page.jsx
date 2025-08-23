@@ -15,7 +15,7 @@ import { HttpStatus, getMessage } from '@/utils/getStatusCode'
 import { StatusEnum } from '@/enum/status-enum'
 import { usePermissions } from '@/app/hooks/permissionContext'
 import CircularProgress from '@mui/material/CircularProgress'
-
+import Tooltip from '@mui/material/Tooltip'
 const PAGE_SIZE = 10
 const GatewayEnum = StatusEnum
 
@@ -302,15 +302,23 @@ const GatewayManagerPage = () => {
             </Grid>
 
             <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Button
-                variant='contained'
-                color='success'
-                startIcon={<i className='ri-add-line' />}
-                onClick={handleAdd}
-                disabled={permLoading || !permissions.canModify}
+              <Tooltip
+                title={!permissions.canModify ? 'You are not authorized to add gateways' : ''}
+                arrow
+                disableHoverListener={permissions.canModify}
               >
-                Add Gateway
-              </Button>
+                <span>
+                  <Button
+                    variant='contained'
+                    color='success'
+                    startIcon={<i className='ri-add-line' />}
+                    onClick={handleAdd}
+                    disabled={permLoading || !permissions.canModify}
+                  >
+                    Add Gateway
+                  </Button>
+                </span>
+              </Tooltip>
             </Grid>
           </Grid>
 

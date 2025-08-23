@@ -9,58 +9,70 @@ export default class BaseService {
     this.client = axios.create({
       baseURL: process.env.NEXT_PUBLIC_HEALTH_AND_SAFETY_API_ADDRESS,
       timeout: 60000
+      
     })
 
+ 
+    this.client.interceptors.request.use(async config => {
+      const token = sessionStorage.getItem('accessToken')
+      const expiresAt = sessionStorage.getItem('expiresAt')
 
-    this.client.interceptors.request.use(
-      config => {
+      if (token && expiresAt) {
+        const now = new Date()
+        const expiryDate = new Date(expiresAt)
+        const timeLeft = expiryDate - now
+      
 
-        const token = typeof window !== 'undefined' ? sessionStorage.getItem('accessToken') : null
-        if (token) {
+       
+        if (timeLeft < 15000) {
+          const newToken = await this.refreshToken()
+          config.headers['Authorization'] = `Bearer ${newToken || token}`
+        } else {
           config.headers['Authorization'] = `Bearer ${token}`
         }
-        return config
-      },
-      error => Promise.reject(error)
-    )
+      }
 
+      return config
+    })
 
+  
     this.client.interceptors.response.use(
       response => response,
       async error => {
         const originalRequest = error.config
-        const refreshToken = typeof window !== 'undefined' ? sessionStorage.getItem('refreshToken') : null
 
-        if (error.response?.status === HttpStatus.Unauthorized && refreshToken && !originalRequest._retry) {
+        if (error.response?.status === HttpStatus.Unauthorized && !originalRequest._retry) {
           originalRequest._retry = true
           try {
-            const res = await axios.post(
-              `${process.env.NEXT_PUBLIC_HEALTH_AND_SAFETY_API_ADDRESS}/Auth/Refresh`,
-              { refreshToken }
-            )
+            const refreshToken = sessionStorage.getItem('refreshToken')
+            if (!refreshToken) throw new Error('No refresh token available')
 
-            if (!res?.data?.success) throw new Error('Token refresh failed')
+            const res = await fetch(`${process.env.NEXT_PUBLIC_HEALTH_AND_SAFETY_API_ADDRESS}/Auth/Refresh`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`
+              },
+              body: JSON.stringify({ refreshToken })
+            })
 
-            const newAccessToken = res.data.data.accessToken
-            const newRefreshToken = res.data.data.refreshToken || refreshToken
+            const data = await res.json()
+            if (!data?.success) throw new Error('Token refresh failed')
+
+            const newAccessToken = data.data.accessToken
+            const newRefreshToken = data.data.refreshToken || refreshToken
+            const newExpiry = data.data.expiresAt 
 
             sessionStorage.setItem('accessToken', newAccessToken)
             sessionStorage.setItem('refreshToken', newRefreshToken)
+            sessionStorage.setItem('expiresAt', newExpiry)
+
 
             originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`
             return this.client(originalRequest)
           } catch (refreshError) {
-           console.error('Refresh token expired. Please login again.', refreshError)
-
-         
-            sessionStorage.removeItem('accessToken')
-            sessionStorage.removeItem('refreshToken')
-
-         
-            if (typeof window !== 'undefined') {
-              window.location.href = '/login' 
-            }
-
+          
+            sessionStorage.clear()
             return Promise.reject(refreshError)
           }
         }
@@ -70,6 +82,30 @@ export default class BaseService {
     )
   }
 
+  async refreshToken() {
+    try {
+      const refreshToken = sessionStorage.getItem('refreshToken')
+      if (!refreshToken) throw new Error('No refresh token available')
+
+      const headers = await this.assembleHeaders()
+      const res = await this.client.post('/Auth/Refresh', { refreshToken }, { headers })
+
+      if (!res?.data?.success) throw new Error('Token refresh failed')
+
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken, expiresAt } = res.data.data
+
+      sessionStorage.setItem('accessToken', newAccessToken)
+      sessionStorage.setItem('refreshToken', newRefreshToken || refreshToken)
+      sessionStorage.setItem('expiresAt', expiresAt)
+
+
+
+      return newAccessToken
+    } catch (err) {
+      console.error(' Silent refresh failed, continuing...', err)
+      return null
+    }
+  }
 
   async assembleHeaders() {
     const headers = { ...this.baseHeaders }
@@ -92,18 +128,7 @@ export default class BaseService {
 
   async Post(action, body) {
     const headers = await this.assembleHeaders()
-    const response = await this.client.post(this.assembleEndpoint(action), body, { headers })
-
-    if (response.data?.data?.expiresAt) {
-      const expiresAt = new Date(response.data.data.expiresAt)
-      const now = new Date()
-      const msToExpire = expiresAt - now
-      if (msToExpire < 60000) {
-        this.refreshAccessToken?.() 
-      }
-    }
-
-    return response
+    return this.client.post(this.assembleEndpoint(action), body, { headers })
   }
 
   async Put(action, body) {

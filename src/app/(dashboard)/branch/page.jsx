@@ -14,6 +14,7 @@ import BranchService from '@services/branchService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 import { StatusEnum } from '@/enum/status-enum'
 import CircularProgress from '@mui/material/CircularProgress'
+import Tooltip from '@mui/material/Tooltip'
 
 const PAGE_SIZE = 10
 const BranchStatus = StatusEnum
@@ -38,8 +39,6 @@ const BranchPage = () => {
   const [activatingId, setActivatingId] = useState(null)
   const [organization, setOrganization] = useState([])
   const { permissions, loading: permLoading } = usePermissions()
-
-  
 
   useEffect(() => {
     const fetchOrganization = async () => {
@@ -86,9 +85,6 @@ const BranchPage = () => {
   useEffect(() => {
     loadBranches(page, status)
   }, [page, status])
-
-  
-
 
   const handleStatusChange = newStatus => {
     setStatus(newStatus)
@@ -241,88 +237,97 @@ const BranchPage = () => {
   )
 
   return (
-    <> {permLoading || loading ? (
-  
-      <div style={{ textAlign: 'center', marginTop: '100px' }}>
-        <CircularProgress size={40} />
-      </div>
-    ) :!permissions.canView ? (
-      <div style={{ textAlign: 'center', marginTop: '100px' }}>
-        <h2>🚫 You are not authorized to view this page</h2>
-      </div>
-    ) : (
     <>
-      <ConfirmDialog
-        open={confirmDialogOpen}
-        title='Confirm Deletion'
-        message={`Are you sure you want to delete "${selectedBranch?.branchName}"?`}
-        onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
-      />
+      {' '}
+      {permLoading || loading ? (
+        <div style={{ textAlign: 'center', marginTop: '100px' }}>
+          <CircularProgress size={40} />
+        </div>
+      ) : !permissions.canView ? (
+        <div style={{ textAlign: 'center', marginTop: '100px' }}>
+          <h2>🚫 You are not authorized to view this page</h2>
+        </div>
+      ) : (
+        <>
+          <ConfirmDialog
+            open={confirmDialogOpen}
+            title='Confirm Deletion'
+            message={`Are you sure you want to delete "${selectedBranch?.branchName}"?`}
+            onConfirm={handleConfirmDelete}
+            onCancel={handleCancelDelete}
+          />
 
-      <DialogBox
-        key={isCreateMode ? 'add-branch' : editData?.branchId || 'edit-branch'}
-        title={isCreateMode ? 'Add Branch' : 'Edit Branch'}
-        open={editDialogOpen}
-        onClose={() => {
-          setEditDialogOpen(false);
-          setEditData(null);
-          setIsCreateMode(false);
-        }}
-        organization={organization}
-        data={isCreateMode ? null : editData}
-        onSave={handleSaveEdit}
-        fields={fields}
-      />
+          <DialogBox
+            key={isCreateMode ? 'add-branch' : editData?.branchId || 'edit-branch'}
+            title={isCreateMode ? 'Add Branch' : 'Edit Branch'}
+            open={editDialogOpen}
+            onClose={() => {
+              setEditDialogOpen(false)
+              setEditData(null)
+              setIsCreateMode(false)
+            }}
+            organization={organization}
+            data={isCreateMode ? null : editData}
+            onSave={handleSaveEdit}
+            fields={fields}
+          />
 
-      <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
-        <Grid item>
-          <Button
-            variant={status === BranchStatus.ACTIVE ? 'contained' : 'outlined'}
-            onClick={() => handleStatusChange(BranchStatus.ACTIVE)}
-            sx={{ mr: 2 }}
-          >
-            Active
-          </Button>
-          <Button
-            variant={status === BranchStatus.INACTIVE ? 'contained' : 'outlined'}
-            onClick={() => handleStatusChange(BranchStatus.INACTIVE)}
-          >
-            Inactive
-          </Button>
-        </Grid>
+          <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
+            <Grid item>
+              <Button
+                variant={status === BranchStatus.ACTIVE ? 'contained' : 'outlined'}
+                onClick={() => handleStatusChange(BranchStatus.ACTIVE)}
+                sx={{ mr: 2 }}
+              >
+                Active
+              </Button>
+              <Button
+                variant={status === BranchStatus.INACTIVE ? 'contained' : 'outlined'}
+                onClick={() => handleStatusChange(BranchStatus.INACTIVE)}
+              >
+                Inactive
+              </Button>
+            </Grid>
 
-        <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            variant='contained'
-            color='success'
-            onClick={handleAdd}
-            startIcon={<i className='ri-add-line' />}
-            disabled={permLoading || !permissions.canModify}
-          >
-            Add Branch
-          </Button>
-        </Grid>
-      </Grid>
+            <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Tooltip
+                title={!permissions.canModify ? 'You are not authorized to add branches' : ''}
+                arrow
+                disableHoverListener={permissions.canModify}
+              >
+                <span>
+                  <Button
+                    variant='contained'
+                    color='success'
+                    startIcon={<i className='ri-add-line' />}
+                    onClick={handleAdd}
+                    disabled={permLoading || !permissions.canModify}
+                  >
+                    Add Branch
+                  </Button>
+                </span>
+              </Tooltip>
+            </Grid>
+          </Grid>
 
-      <DataTable
-        data={branches}
-        columns={columns}
-        loading={loading || deleting}
-        currentPage={page}
-        totalPages={totalPages}
-        onPageChange={setPage}
-        actionProps={{
-          edit: { onClick: handleEdit, disabled: !permissions.canModify },
-          delete: { onClick: handleDeleteClick, disabled: !permissions.canDelete },
-          activate: { onClick: handleActivateClick, disabled: !permissions.canModify }
-        }}
-        status={status}
-        activatingId={activatingId}
-        showActions={true}  
-      />
-    </>
-    )}
+          <DataTable
+            data={branches}
+            columns={columns}
+            loading={loading || deleting}
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            actionProps={{
+              edit: { onClick: handleEdit, disabled: !permissions.canModify },
+              delete: { onClick: handleDeleteClick, disabled: !permissions.canDelete },
+              activate: { onClick: handleActivateClick, disabled: !permissions.canModify }
+            }}
+            status={status}
+            activatingId={activatingId}
+            showActions={true}
+          />
+        </>
+      )}
     </>
   )
 }

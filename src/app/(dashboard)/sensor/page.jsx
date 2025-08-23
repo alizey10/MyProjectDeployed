@@ -19,6 +19,7 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import { usePermissions } from '@/app/hooks/permissionContext'
 import CircularProgress from '@mui/material/CircularProgress'
+import Tooltip from '@mui/material/Tooltip'
 
 const PAGE_SIZE = 10
 const SensorStatus = StatusEnum
@@ -429,15 +430,23 @@ const SensorManagerPage = () => {
 
             <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               {!sensorId && (
-                <Button
-                  variant='contained'
-                  color='success'
-                  startIcon={<i className='ri-add-line' />}
-                  onClick={handleAdd}
-                  disabled={permLoading || !permissions.canModify}
+                <Tooltip
+                  title={!permissions.canModify ? 'You are not authorized to add sensors' : ''}
+                  arrow
+                  disableHoverListener={permissions.canModify}
                 >
-                  Add Sensor
-                </Button>
+                  <span>
+                    <Button
+                      variant='contained'
+                      color='success'
+                      startIcon={<i className='ri-add-line' />}
+                      onClick={handleAdd}
+                      disabled={permLoading || !permissions.canModify}
+                    >
+                      Add Sensor
+                    </Button>
+                  </span>
+                </Tooltip>
               )}
             </Grid>
           </Grid>

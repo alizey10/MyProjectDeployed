@@ -5,13 +5,14 @@ import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 
 import Grid from '@mui/material/Grid'
-import Button from '@mui/material/Button' 
+import Button from '@mui/material/Button'
 import DataTable from '@/views/floor/DataTable'
 import DialogBox from '@/views/common/DialogBox'
 import floorService from '@/@services/floorService'
 import { getStatusCode, getMessage, HttpStatus } from '@/utils/getStatusCode'
 import { usePermissions } from '@/app/hooks/permissionContext'
 import CircularProgress from '@mui/material/CircularProgress'
+import Tooltip from '@mui/material/Tooltip'
 
 const PAGE_SIZE = 10
 
@@ -49,7 +50,6 @@ const FloorPage = () => {
 
       if (success) {
         await loadFloor(page)
-        
       }
     }
   }
@@ -82,61 +82,67 @@ const FloorPage = () => {
     loadFloor(page)
   }, [page])
 
-
   const columns = [{ label: 'Floor Name', field: 'floorSectionName' }]
 
   const fields = [{ label: 'Floor Name', name: 'floorName', placeholder: 'First Floor', icon: '🏢', required: true }]
 
-  return ( <> {permLoading || loading ? (
-            
-                <div style={{ textAlign: 'center', marginTop: '100px' }}>
-                  <CircularProgress size={40} />
-                </div>
-              ) :!permissions.canView ? (
-                <div style={{ textAlign: 'center', marginTop: '100px' }}>
-                  <h2>🚫 You are not authorized to view this page</h2>
-                </div>
-              ) : (
-      
+  return (
     <>
-      <DialogBox
-        title={'Add Floor'}
-        open={open}
-        onClose={() => {
-          setOpen(false)
-        }}
-        onSave={handleSaveEdit}
-        fields={fields}
-        
-      />
-
-      <Grid container spacing={6}>
-        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-          <Button
-            variant='contained'
-            color='success'
-            sx={{ mt: '0px', ml: '5px' }}
-            startIcon={<i className='ri-add-line' />}
-            onClick={handleAdd}
-              disabled={permLoading || !permissions.canModify}
-          >
-            Floor
-          </Button>
-        </Grid>
-        <Grid item xs={12}>
-          <DataTable
-            columns={columns}
-            data={floor}
-            currentPage={page}
-            totalPages={totalPages}
-            loading={loading}
-            onPageChange={newPage => setPage(newPage)}
-            showActions={false} 
+      {' '}
+      {permLoading || loading ? (
+        <div style={{ textAlign: 'center', marginTop: '100px' }}>
+          <CircularProgress size={40} />
+        </div>
+      ) : !permissions.canView ? (
+        <div style={{ textAlign: 'center', marginTop: '100px' }}>
+          <h2>🚫 You are not authorized to view this page</h2>
+        </div>
+      ) : (
+        <>
+          <DialogBox
+            title={'Add Floor'}
+            open={open}
+            onClose={() => {
+              setOpen(false)
+            }}
+            onSave={handleSaveEdit}
+            fields={fields}
           />
-        </Grid>
-      </Grid>
-    </>
-              )}
+
+          <Grid container spacing={6}>
+            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+              <Tooltip
+                title={!permissions.canModify ? 'You are not authorized to add floors' : ''}
+                arrow
+                disableHoverListener={permissions.canModify}
+              >
+                <span>
+                  <Button
+                    variant='contained'
+                    color='success'
+                    startIcon={<i className='ri-add-line' />}
+                    onClick={handleAdd}
+                    disabled={permLoading || !permissions.canModify}
+                  >
+                    Add Floor
+                  </Button>
+                </span>
+              </Tooltip>
+            </Grid>
+            <Grid item xs={12}>
+              <DataTable
+                columns={columns}
+                data={floor}
+                currentPage={page}
+                totalPages={totalPages}
+                loading={loading}
+                onPageChange={newPage => setPage(newPage)}
+                showActions={false}
+              />
+            </Grid>
+          </Grid>
+        </>
+      )}
     </>
   )
 }
