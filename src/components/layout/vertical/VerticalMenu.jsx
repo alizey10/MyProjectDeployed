@@ -96,6 +96,14 @@ const VerticalMenu = ({ scrollMenu }) => {
         >
           Floor Manager
         </MenuItem>
+         <MenuItem
+           icon={<i className='ri-user-line'></i>}
+          href={`/user`}
+
+          // suffix={<Chip label='new' size='small' color='primary' variant='tonal' />}
+        >
+          User Manager
+        </MenuItem>
       </Menu>
     </ScrollWrapper>
   )
