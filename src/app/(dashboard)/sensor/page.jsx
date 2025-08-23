@@ -14,11 +14,12 @@ import BranchService from '@services/branchService'
 import GatewayService from '@services/gatewayService'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 import { StatusEnum } from '@/enum/status-enum'
-import FloorService from '@services/floorService';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
+import FloorService from '@services/floorService'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
 import { usePermissions } from '@/app/hooks/permissionContext'
 import CircularProgress from '@mui/material/CircularProgress'
+
 const PAGE_SIZE = 10
 const SensorStatus = StatusEnum
 
@@ -44,38 +45,33 @@ const SensorManagerPage = () => {
   const [selectedOrgId, setSelectedOrgId] = useState(null)
   const [selectedBranchId, setSelectedBranchId] = useState(null)
   const [selectedGatewayId, setSelectedGatewayId] = useState(null)
-  const [floors, setFloors] = useState([]);
-const [selectedFloorId, setSelectedFloorId] = useState(null);
-const [selectedFloorName, setSelectedFloorName] = useState(null);
+  const [floors, setFloors] = useState([])
+  const [selectedFloorId, setSelectedFloorId] = useState(null)
+  const [selectedFloorName, setSelectedFloorName] = useState(null)
   const { permissions, loading: permLoading } = usePermissions()
 
+  const sensorId = searchParams.get('sensorId')
 
-const sensorId = searchParams.get('sensorId')
-
-useEffect(() => {
-  const fetchData = async () => {
-    if (sensorId) {
-      try {
-        const res = await SensorService.getSensorById(sensorId)
-        const list = res?.data?.data || []   
-        const match = list.find(item => String(item.sensorId) === String(sensorId))
-        if (match) {
-          setSensors([{ ...match, totalRecord: 1 }])
-          setTotalPages(1)
+  useEffect(() => {
+    const fetchData = async () => {
+      if (sensorId) {
+        try {
+          const res = await SensorService.getSensorById(sensorId)
+          const list = res?.data?.data || []
+          const match = list.find(item => String(item.sensorId) === String(sensorId))
+          if (match) {
+            setSensors([{ ...match, totalRecord: 1 }])
+            setTotalPages(1)
+          }
+        } catch (err) {
+          toast.error('Failed to load sensor')
         }
-      } catch(err) {
-        toast.error("Failed to load sensor")
+        return
       }
-      return
+      loadSensors(page, status)
     }
-    loadSensors(page, status)
-  }
-  fetchData()
-}, [sensorId, page, status])
-
-
-
-
+    fetchData()
+  }, [sensorId, page, status])
 
   useEffect(() => {
     const fetchOrganizations = async () => {
@@ -89,7 +85,6 @@ useEffect(() => {
     }
     fetchOrganizations()
   }, [])
-
 
   useEffect(() => {
     if (!selectedOrgId) {
@@ -112,42 +107,42 @@ useEffect(() => {
     fetchBranches()
   }, [selectedOrgId])
 
-useEffect(() => {
-  if (!selectedBranchId) {
-    setGateways([])
-    setSelectedGatewayId(null)
-    return
-  }
-  const fetchGateways = async () => {
-    try {
-      const res = await GatewayService.getGatewaysByBranch(selectedBranchId)
-      const gws = res?.data?.data || []
-      setGateways(gws)
-      setSelectedGatewayId(null)
-    } catch (error) {
-      toast.error('Failed to load gateways')
+  useEffect(() => {
+    if (!selectedBranchId) {
       setGateways([])
       setSelectedGatewayId(null)
+      return
     }
-  }
-  fetchGateways()
-}, [selectedBranchId])
-useEffect(() => {
-  const fetchFloors = async () => {
-    try {
-      const res = await FloorService.getFloor(1, 1000, false);
-      const floorsData = res?.data?.data || [];
-      setFloors(floorsData);
-      setSelectedFloorId(null);
-    } catch (error) {
-      toast.error('Failed to load floors');
-      setFloors([]);
-      setSelectedFloorId(null);
+    const fetchGateways = async () => {
+      try {
+        const res = await GatewayService.getGatewaysByBranch(selectedBranchId)
+        const gws = res?.data?.data || []
+        setGateways(gws)
+        setSelectedGatewayId(null)
+      } catch (error) {
+        toast.error('Failed to load gateways')
+        setGateways([])
+        setSelectedGatewayId(null)
+      }
     }
-  };
+    fetchGateways()
+  }, [selectedBranchId])
+  useEffect(() => {
+    const fetchFloors = async () => {
+      try {
+        const res = await FloorService.getFloor(1, 1000, false)
+        const floorsData = res?.data?.data || []
+        setFloors(floorsData)
+        setSelectedFloorId(null)
+      } catch (error) {
+        toast.error('Failed to load floors')
+        setFloors([])
+        setSelectedFloorId(null)
+      }
+    }
 
-  if (editDialogOpen) fetchFloors();
-}, [editDialogOpen]);
+    if (editDialogOpen) fetchFloors()
+  }, [editDialogOpen])
 
   const loadSensors = async (currentPage, currentStatus) => {
     setLoading(true)
@@ -175,7 +170,6 @@ useEffect(() => {
     }
   }
 
-  
   const handleStatusChange = newStatus => {
     setStatus(newStatus)
     setPage(1)
@@ -189,8 +183,8 @@ useEffect(() => {
     setSelectedGatewayId(sensor.gatewayId)
     setIsCreateMode(false)
     setEditDialogOpen(true)
-      setSelectedFloorId(sensor.floorSectionId);
-    setSelectedFloorName(sensor.floorSectionName);
+    setSelectedFloorId(sensor.floorSectionId)
+    setSelectedFloorName(sensor.floorSectionName)
   }
 
   const handleAdd = () => {
@@ -204,21 +198,21 @@ useEffect(() => {
     setEditDialogOpen(true)
   }
 
-const handleSaveEdit = async updatedData => {
-  const payload = {
-    sensorId: updatedData.sensorId,
-    sensorName: updatedData.sensorName,
-    organizationId: updatedData.organizationId,
-    branchId: updatedData.branchId,
-    gatewayId: updatedData.gatewayId,
-  floorSectionId: updatedData.floorId || null,
-  floorSectionName: updatedData.floorSectionName || '',
+  const handleSaveEdit = async updatedData => {
+    const payload = {
+      sensorId: updatedData.sensorId,
+      sensorName: updatedData.sensorName,
+      organizationId: updatedData.organizationId,
+      branchId: updatedData.branchId,
+      gatewayId: updatedData.gatewayId,
+      floorSectionId: updatedData.floorId || null,
+      floorSectionName: updatedData.floorSectionName || '',
 
-    linkedDevice: updatedData.linkedDevice,
-    minTemperature: updatedData.minTemperature,
-    maxTemperature: updatedData.maxTemperature,
-    alertType: updatedData.alertType
-  }
+      linkedDevice: updatedData.linkedDevice,
+      minTemperature: updatedData.minTemperature,
+      maxTemperature: updatedData.maxTemperature,
+      alertType: updatedData.alertType
+    }
 
     try {
       const result = isCreateMode
@@ -247,34 +241,32 @@ const handleSaveEdit = async updatedData => {
     setConfirmDialogOpen(true)
   }
 
-  const handleCloseRowClick = (sensor) => {
-
-  router.push('/sensor?status=' + status); 
-}
+  const handleCloseRowClick = sensor => {
+    router.push('/sensor?status=' + status)
+  }
 
   const handleConfirmDelete = async () => {
     setConfirmDialogOpen(false)
     setDeleting(true)
-if (selectedSensor) {
-  try {
-    const response = await SensorService.deleteSensor(selectedSensor.sensorId)
+    if (selectedSensor) {
+      try {
+        const response = await SensorService.deleteSensor(selectedSensor.sensorId)
 
-    if (
-      response.status === HttpStatus.OK ||
-      response.status === HttpStatus.Created ||
-      response.status === HttpStatus.NoContent ||
-      response === true
-    ) {
-      toast.success('Record Deleted')
-      await loadSensors(page, status)
-    } else {
-      toast.error(getMessage(response))
+        if (
+          response.status === HttpStatus.OK ||
+          response.status === HttpStatus.Created ||
+          response.status === HttpStatus.NoContent ||
+          response === true
+        ) {
+          toast.success('Record Deleted')
+          await loadSensors(page, status)
+        } else {
+          toast.error(getMessage(response))
+        }
+      } catch (error) {
+        toast.error(getMessage(error))
+      }
     }
-  } catch (error) {
-    toast.error(getMessage(error))
-  }
-}
-
 
     setDeleting(false)
     setSelectedSensor(null)
@@ -286,50 +278,49 @@ if (selectedSensor) {
   }
 
   const handleActivateClick = async sensor => {
-   if (activatingId) return
-setActivatingId(sensor.sensorId)
+    if (activatingId) return
+    setActivatingId(sensor.sensorId)
 
-try {
-  const response = await SensorService.activateSensor(sensor.sensorId)
+    try {
+      const response = await SensorService.activateSensor(sensor.sensorId)
 
-  if (
-    response.status === HttpStatus.OK ||
-    response.status === HttpStatus.Created ||
-    response.status === HttpStatus.NoContent ||
-    response === true
-  ) {
-    toast.success('Sensor Activated')
-    await loadSensors(page, status)
-  } else {
-    toast.error(getMessage(response))
-  }
-} catch (error) {
-  toast.error(getMessage(error))
-} finally {
-  setActivatingId(null)
-}
+      if (
+        response.status === HttpStatus.OK ||
+        response.status === HttpStatus.Created ||
+        response.status === HttpStatus.NoContent ||
+        response === true
+      ) {
+        toast.success('Sensor Activated')
+        await loadSensors(page, status)
+      } else {
+        toast.error(getMessage(response))
+      }
+    } catch (error) {
+      toast.error(getMessage(error))
+    } finally {
+      setActivatingId(null)
+    }
   }
 
   const columns = [
     { label: 'Sensor Id', field: 'sensorId' },
     { label: 'Sensor Name', field: 'sensorName' },
-        { label: 'Floor Section Id', field: 'floorSectionId' },
+    { label: 'Floor Section Id', field: 'floorSectionId' },
     { label: 'Linked Device', field: 'linkedDevice' },
     { label: 'Min Temperature', field: 'minTemperature' },
     { label: 'Max Temperature', field: 'maxTemperature' },
     { label: 'Alert Type', field: 'alertType' },
     { label: 'Created', field: 'dateCreated' },
     { label: 'Organization Id', field: 'organizationId' },
-     { label: 'Organization', field: 'organizationName' },
+    { label: 'Organization', field: 'organizationName' },
     { label: 'Branch Id', field: 'branchId' },
-      { label: 'Branch', field: 'branchName' },
+    { label: 'Branch', field: 'branchName' },
     { label: 'Gateway Id', field: 'gatewayId' },
-    { label: 'Gateway', field: 'gatewayName' },
-
+    { label: 'Gateway', field: 'gatewayName' }
   ]
 
   const fields = [
- { label: 'Sensor Name', name: 'sensorName', placeholder: 'Temperature Sensor', icon: '📡', required: true },
+    { label: 'Sensor Name', name: 'sensorName', placeholder: 'Temperature Sensor', icon: '📡', required: true },
     { label: 'Sensor Id', name: 'sensorId', placeholder: 'Unique Sensor ID', icon: '🆔', required: true },
     { label: 'Linked Device', name: 'linkedDevice', placeholder: 'Device Name', icon: '🔗', required: true },
     { label: 'Min Temperature', name: 'minTemperature', placeholder: '0', icon: '🌡️' },
@@ -338,142 +329,140 @@ try {
   ]
 
   return (
-    <> {permLoading || loading ? (
-          
-              <div style={{ textAlign: 'center', marginTop: '100px' }}>
-                <CircularProgress size={40} />
-              </div>
-            ) :!permissions.canView ? (
-              <div style={{ textAlign: 'center', marginTop: '100px' }}>
-                <h2>🚫 You are not authorized to view this page</h2>
-              </div>
-            ) : (
     <>
-      <ConfirmDialog
-        open={confirmDialogOpen}
-        title="Confirm Deletion"
-        message={`Are you sure you want to delete "${selectedSensor?.sensorName}"?`}
-        onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
-      />
+      {' '}
+      {permLoading || loading ? (
+        <div style={{ textAlign: 'center', marginTop: '100px' }}>
+          <CircularProgress size={40} />
+        </div>
+      ) : !permissions.canView ? (
+        <div style={{ textAlign: 'center', marginTop: '100px' }}>
+          <h2>🚫 You are not authorized to view this page</h2>
+        </div>
+      ) : (
+        <>
+          <ConfirmDialog
+            open={confirmDialogOpen}
+            title='Confirm Deletion'
+            message={`Are you sure you want to delete "${selectedSensor?.sensorName}"?`}
+            onConfirm={handleConfirmDelete}
+            onCancel={handleCancelDelete}
+          />
 
-      <DialogBox
-        open={editDialogOpen}
-        title={isCreateMode ? 'Add Sensor' : 'Edit Sensor'}
-        onClose={() => setEditDialogOpen(false)}
-        organization={organization}
-        branches={branches}
-        gateways={gateways}
-        data={editData}
-         onSave={handleSaveEdit} 
-        fields={fields}
-          floors={floors} 
-    
-      />
+          <DialogBox
+            open={editDialogOpen}
+            title={isCreateMode ? 'Add Sensor' : 'Edit Sensor'}
+            onClose={() => setEditDialogOpen(false)}
+            organization={organization}
+            branches={branches}
+            gateways={gateways}
+            data={editData}
+            onSave={handleSaveEdit}
+            fields={fields}
+            floors={floors}
+          />
 
-      <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
-        <Grid item>
-          <Button
-            variant={status === SensorStatus.ACTIVE ? 'contained' : 'outlined'}
-            color="primary"
-            sx={{ mr: 2 }}
-            onClick={() => handleStatusChange(SensorStatus.ACTIVE)}
-          >
-            Active
-          </Button>
-          <Button
-            variant={status === SensorStatus.INACTIVE ? 'contained' : 'outlined'}
-            color="primary"
-            onClick={() => handleStatusChange(SensorStatus.INACTIVE)}
-          >
-            Inactive
-          </Button>
-        </Grid>
+          <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
+            <Grid item>
+              <Button
+                variant={status === SensorStatus.ACTIVE ? 'contained' : 'outlined'}
+                color='primary'
+                sx={{ mr: 2 }}
+                onClick={() => handleStatusChange(SensorStatus.ACTIVE)}
+              >
+                Active
+              </Button>
+              <Button
+                variant={status === SensorStatus.INACTIVE ? 'contained' : 'outlined'}
+                color='primary'
+                onClick={() => handleStatusChange(SensorStatus.INACTIVE)}
+              >
+                Inactive
+              </Button>
+            </Grid>
 
-  {/* Breadcrumb / Tab */}
-  {sensorId && (
-    <Grid item>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          bgcolor: '#e0e0e0', 
-        borderRadius: 2,
-          bgcolor: '#E5E5E5',
-          borderRadius: 2,
-          px: 3,
-          py: 1.9,
-          ml: 0,
-           cursor: 'pointer',
-        '&:hover': {
-          bgcolor: '#d5d5d5',
-        },
-        }}
-        onClick={() => router.push(`/sensor?status=${status}`)}
-      >
-        <Typography variant='body2' sx={{ mr: 1 }}>
-          Sensor ID: {sensorId}
-        </Typography>
-        <Button
-          size='small'
-          onClick={() => router.push(`/sensor?status=${status}`)}
-          sx={{
-            minWidth: 0,
-            p: 0,
-           
-            fontWeight: 'bold',
-              color: '#666',
-            ml: 1,
-           
-          '&:hover': {
-            backgroundColor: '#bbb',
-          },
-            
-          }}
-        >
-          ✖
-        </Button>
-      </Box>
-    </Grid>
-  )}
+            {/* Breadcrumb / Tab */}
+            {sensorId && (
+              <Grid item>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    bgcolor: '#e0e0e0',
+                    borderRadius: 2,
+                    bgcolor: '#E5E5E5',
+                    borderRadius: 2,
+                    px: 3,
+                    py: 1.9,
+                    ml: 0,
+                    cursor: 'pointer',
+                    '&:hover': {
+                      bgcolor: '#d5d5d5'
+                    }
+                  }}
+                  onClick={() => router.push(`/sensor?status=${status}`)}
+                >
+                  <Typography variant='body2' sx={{ mr: 1 }}>
+                    Sensor ID: {sensorId}
+                  </Typography>
+                  <Button
+                    size='small'
+                    onClick={() => router.push(`/sensor?status=${status}`)}
+                    sx={{
+                      minWidth: 0,
+                      p: 0,
 
-  <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-    {!sensorId && (
-      <Button
-        variant="contained"
-        color="success"
-        startIcon={<i className='ri-add-line' />}
-        onClick={handleAdd}
-        disabled={permLoading || !permissions.canModify}
-      >
-        Add Sensor
-      </Button>
-    )}
-  </Grid>
+                      fontWeight: 'bold',
+                      color: '#666',
+                      ml: 1,
 
-      </Grid>
-
-      <DataTable
-        columns={columns}
-        data={sensors}
-        currentPage={page}
-        totalPages={totalPages}
-        loading={loading || deleting}
-        onPageChange={setPage}
-      actionProps={{
-          edit: { onClick: handleEdit, disabled: !permissions.canModify },
-          delete: { onClick: handleDeleteClick, disabled: !permissions.canDelete },
-          activate: { onClick: handleActivateClick, disabled: !permissions.canModify }
-        }}
-        onCloseRow={handleCloseRowClick}
-        status={status}
-          floors={floors} 
-        activatingId={activatingId}
-        sensorId={sensorId}  
-        showActions={true}  
-      />
-    </>
+                      '&:hover': {
+                        backgroundColor: '#bbb'
+                      }
+                    }}
+                  >
+                    ✖
+                  </Button>
+                </Box>
+              </Grid>
             )}
+
+            <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              {!sensorId && (
+                <Button
+                  variant='contained'
+                  color='success'
+                  startIcon={<i className='ri-add-line' />}
+                  onClick={handleAdd}
+                  disabled={permLoading || !permissions.canModify}
+                >
+                  Add Sensor
+                </Button>
+              )}
+            </Grid>
+          </Grid>
+
+          <DataTable
+            columns={columns}
+            data={sensors}
+            currentPage={page}
+            totalPages={totalPages}
+            loading={loading || deleting}
+            onPageChange={setPage}
+            actionProps={{
+              edit: { onClick: handleEdit, disabled: !permissions.canModify },
+              delete: { onClick: handleDeleteClick, disabled: !permissions.canDelete },
+              activate: { onClick: handleActivateClick, disabled: !permissions.canModify }
+            }}
+            onCloseRow={handleCloseRowClick}
+            status={status}
+            floors={floors}
+            activatingId={activatingId}
+            sensorId={sensorId}
+            showActions={true}
+          />
+        </>
+      )}
     </>
   )
 }

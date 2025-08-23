@@ -11,10 +11,11 @@ import DialogBox from '@/views/gateway/DialogBox'
 import GatewayService from '@services/gatewayService'
 import OrganizationService from '@services/organizationService'
 import BranchService from '@services/branchService'
-import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
+import { HttpStatus, getMessage } from '@/utils/getStatusCode'
 import { StatusEnum } from '@/enum/status-enum'
 import { usePermissions } from '@/app/hooks/permissionContext'
 import CircularProgress from '@mui/material/CircularProgress'
+
 const PAGE_SIZE = 10
 const GatewayEnum = StatusEnum
 
@@ -129,39 +130,39 @@ const GatewayManagerPage = () => {
 
   const handleSaveEdit = async updatedData => {
     const payload = {
-    gatewayName: updatedData.gatewayName,
-    gatewayId: updatedData.gatewayId,
-    organizationId: updatedData.organizationId,
-    branchId: updatedData.branchId
-  }
-
-  try {
-    if (isCreateMode) {
-      const result = await GatewayService.createGateway(payload)
-      if (result?.status === HttpStatus.Created) {
-        toast.success('Record Saved')
-        setIsCreateMode(false)
-        setEditDialogOpen(false)
-        await loadGateways(page)
-        return
-      } else {
-        toast.error(getMessage(result))
-      }
-    } else {
-      const result = await GatewayService.updateGateway(editData.gatewayId, payload)
-      if (result?.status === HttpStatus.OK) {
-        toast.success('Record Updated')
-        setEditDialogOpen(false)
-        await loadGateways(page)
-        return
-      } else {
-    toast.error(getMessage(result))
-      }
+      gatewayName: updatedData.gatewayName,
+      gatewayId: updatedData.gatewayId,
+      organizationId: updatedData.organizationId,
+      branchId: updatedData.branchId
     }
-  } catch (error) {
-    console.error("Full API error:", error)
-toast.error(getMessage(error))
-  }
+
+    try {
+      if (isCreateMode) {
+        const result = await GatewayService.createGateway(payload)
+        if (result?.status === HttpStatus.Created) {
+          toast.success('Record Saved')
+          setIsCreateMode(false)
+          setEditDialogOpen(false)
+          await loadGateways(page)
+          return
+        } else {
+          toast.error(getMessage(result))
+        }
+      } else {
+        const result = await GatewayService.updateGateway(editData.gatewayId, payload)
+        if (result?.status === HttpStatus.OK) {
+          toast.success('Record Updated')
+          setEditDialogOpen(false)
+          await loadGateways(page)
+          return
+        } else {
+          toast.error(getMessage(result))
+        }
+      }
+    } catch (error) {
+      console.error('Full API error:', error)
+      toast.error(getMessage(error))
+    }
   }
 
   const handleDeleteClick = gateway => {
@@ -172,24 +173,23 @@ toast.error(getMessage(error))
   const handleConfirmDelete = async () => {
     setConfirmDialogOpen(false)
     setDeleting(true)
-if (selectedGateway) {
-  try {
-    const response = await GatewayService.deleteGateway(selectedGateway.gatewayId)
+    if (selectedGateway) {
+      try {
+        const response = await GatewayService.deleteGateway(selectedGateway.gatewayId)
 
-    if (response.status === HttpStatus.OK || response.status === HttpStatus.NoContent || response === true) {
-      toast.success('Record Deleted')
-      await loadGateways(page, status)
-    } else {
-      toast.error(getMessage(response))
+        if (response.status === HttpStatus.OK || response.status === HttpStatus.NoContent || response === true) {
+          toast.success('Record Deleted')
+          await loadGateways(page, status)
+        } else {
+          toast.error(getMessage(response))
+        }
+      } catch (error) {
+        toast.error(getMessage(error))
+      }
     }
-  } catch (error) {
-    toast.error(getMessage(error))
-  }
-}
 
-
-setDeleting(false)
-setSelectedGateway(null)
+    setDeleting(false)
+    setSelectedGateway(null)
   }
 
   const handleCancelDelete = () => {
@@ -198,23 +198,28 @@ setSelectedGateway(null)
   }
 
   const handleActivateClick = async gateway => {
-if (activatingId) return
-setActivatingId(gateway.gatewayId)
+    if (activatingId) return
+    setActivatingId(gateway.gatewayId)
 
-try {
-  const response = await GatewayService.activateGateway(gateway.gatewayId)
+    try {
+      const response = await GatewayService.activateGateway(gateway.gatewayId)
 
-  if (response.status === HttpStatus.OK || response.status === HttpStatus.Created || response.status === HttpStatus.NoContent || response === true) {
-    toast.success('Gateway Activated')
-    await loadGateways(page, status)
-  } else {
-    toast.error(getMessage(response))
-  }
-} catch (error) {
-  toast.error(getMessage(error))
-} finally {
-  setActivatingId(null)
-}
+      if (
+        response.status === HttpStatus.OK ||
+        response.status === HttpStatus.Created ||
+        response.status === HttpStatus.NoContent ||
+        response === true
+      ) {
+        toast.success('Gateway Activated')
+        await loadGateways(page, status)
+      } else {
+        toast.error(getMessage(response))
+      }
+    } catch (error) {
+      toast.error(getMessage(error))
+    } finally {
+      setActivatingId(null)
+    }
   }
 
   const columns = [
@@ -231,7 +236,7 @@ try {
       label: 'Gateway Id',
       name: 'gatewayId',
       placeholder: 'Gateway Id',
-       icon: '🌏',
+      icon: '🌏',
       required: true,
       value: editData?.gatewayId || ''
     },
@@ -240,88 +245,93 @@ try {
       name: 'gatewayName',
       placeholder: 'Gateway Name',
       required: true,
-       icon: '🌏',
+      icon: '🌏',
       value: editData?.gatewayName || ''
     }
   ]
 
-
   return (
-     <> {permLoading || loading ? (
-      
-          <div style={{ textAlign: 'center', marginTop: '100px' }}>
-            <CircularProgress size={40} />
-          </div>
-        ) :!permissions.canView ? (
-          <div style={{ textAlign: 'center', marginTop: '100px' }}>
-            <h2>🚫 You are not authorized to view this page</h2>
-          </div>
-        ) : (
     <>
-      <ConfirmDialog
-        open={confirmDialogOpen}
-        title='Confirm Deletion'
-        message={`Are you sure you want to delete "${selectedGateway?.gatewayName}"?`}
-        onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
-      />
+      {' '}
+      {permLoading || loading ? (
+        <div style={{ textAlign: 'center', marginTop: '100px' }}>
+          <CircularProgress size={40} />
+        </div>
+      ) : !permissions.canView ? (
+        <div style={{ textAlign: 'center', marginTop: '100px' }}>
+          <h2>🚫 You are not authorized to view this page</h2>
+        </div>
+      ) : (
+        <>
+          <ConfirmDialog
+            open={confirmDialogOpen}
+            title='Confirm Deletion'
+            message={`Are you sure you want to delete "${selectedGateway?.gatewayName}"?`}
+            onConfirm={handleConfirmDelete}
+            onCancel={handleCancelDelete}
+          />
 
-      <DialogBox
-        open={editDialogOpen}
-        title={isCreateMode ? 'Add Gateway' : 'Edit Gateway'}
-        onClose={() => setEditDialogOpen(false)}
-        organization={organization}
-        branches={branches}
-        data={editData}
-        onSave={handleSaveEdit}
-        fields={fields}
-      />
+          <DialogBox
+            open={editDialogOpen}
+            title={isCreateMode ? 'Add Gateway' : 'Edit Gateway'}
+            onClose={() => setEditDialogOpen(false)}
+            organization={organization}
+            branches={branches}
+            data={editData}
+            onSave={handleSaveEdit}
+            fields={fields}
+          />
 
-      <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
-        <Grid item>
-          <Button
-            variant={status === GatewayEnum.ACTIVE ? 'contained' : 'outlined'}
-            color='primary'
-            sx={{ mr: 2 }}
-            onClick={() => handleStatusChange(GatewayEnum.ACTIVE)}
-          >
-            Active
-          </Button>
-          <Button
-            variant={status === GatewayEnum.INACTIVE ? 'contained' : 'outlined'}
-            color='primary'
-            onClick={() => handleStatusChange(GatewayEnum.INACTIVE)}
-          >
-            Inactive
-          </Button>
-        </Grid>
+          <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
+            <Grid item>
+              <Button
+                variant={status === GatewayEnum.ACTIVE ? 'contained' : 'outlined'}
+                color='primary'
+                sx={{ mr: 2 }}
+                onClick={() => handleStatusChange(GatewayEnum.ACTIVE)}
+              >
+                Active
+              </Button>
+              <Button
+                variant={status === GatewayEnum.INACTIVE ? 'contained' : 'outlined'}
+                color='primary'
+                onClick={() => handleStatusChange(GatewayEnum.INACTIVE)}
+              >
+                Inactive
+              </Button>
+            </Grid>
 
-        <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant='contained' color='success' startIcon={<i className='ri-add-line' /> }onClick={handleAdd}
-           disabled={permLoading || !permissions.canModify}>
-            Add Gateway
-          </Button>
-        </Grid>
-      </Grid>
+            <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                variant='contained'
+                color='success'
+                startIcon={<i className='ri-add-line' />}
+                onClick={handleAdd}
+                disabled={permLoading || !permissions.canModify}
+              >
+                Add Gateway
+              </Button>
+            </Grid>
+          </Grid>
 
-      <DataTable
-        columns={columns}
-        data={gateways}
-        currentPage={page}
-        totalPages={totalPages}
-        loading={loading || deleting}
-        onPageChange={setPage}
-       actionProps={{
-          edit: { onClick: handleEdit, disabled: !permissions.canModify },
-          delete: { onClick: handleDeleteClick, disabled: !permissions.canDelete },
-          activate: { onClick: handleActivateClick, disabled: !permissions.canModify }
-        }}
-        status={status}
-        showActions={true}  
-        activatingId={activatingId}
-      />
-    </>
-        )}
+          <DataTable
+            columns={columns}
+            data={gateways}
+            currentPage={page}
+            totalPages={totalPages}
+            loading={loading || deleting}
+            onPageChange={setPage}
+            actionProps={{
+              edit: { onClick: handleEdit, disabled: !permissions.canModify },
+              delete: { onClick: handleDeleteClick, disabled: !permissions.canDelete },
+              activate: { onClick: handleActivateClick, disabled: !permissions.canModify }
+            }}
+            status={status}
+            showActions={true}
+            activatingId={activatingId}
+          />
+        </>
+      )}
     </>
   )
 }
