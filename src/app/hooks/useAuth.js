@@ -145,6 +145,17 @@ export default function useAuth() {
       scheduleRefresh()
     }
 
+    const interval = setInterval(async () => {
+      const expiresAt = sessionStorage.getItem('expiresAt')
+      if (!expiresAt) return
+
+      const timeLeft = new Date(expiresAt) - new Date()
+      if (timeLeft < 15000) {
+       
+        await refreshAccessToken()
+      }
+    }, 10000)
+
     setLoading(false)
     return () => {
       if (refreshTimeout) clearTimeout(refreshTimeout)
@@ -152,6 +163,7 @@ export default function useAuth() {
   }, [])
 
   return {
+    
     user,
     accessToken,
     permissions,

@@ -4,3 +4,35 @@ pm2 delete hubui
 pm2 start node_modules/next/dist/bin/next --name hubui -- start
 pm2 ls
 pm2 log
+
+--web.config
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <system.webServer>
+    <rewrite>
+      <rules>
+        <rule name="ReverseProxyInboundRule1" stopProcessing="true">
+          <match url="(.*)" />
+          <conditions>
+            <add input="{CACHE_URL}" pattern="^(.*)$" />
+          </conditions>
+          <action type="Rewrite" url="http://localhost:3000/{R:1}" />
+        </rule>
+      </rules>
+    </rewrite>
+  </system.webServer>
+</configuration>
+
+
+--server.js
+const next = require('next');
+const http = require('http');
+
+const app = next({ dev: false });
+const handle = app.getRequestHandler();
+
+app.prepare().then(() => {
+  http.createServer((req, res) => {
+    handle(req, res);
+  }).listen(process.env.PORT || 3000);
+});

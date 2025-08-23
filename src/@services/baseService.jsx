@@ -9,6 +9,7 @@ export default class BaseService {
     this.client = axios.create({
       baseURL: process.env.NEXT_PUBLIC_HEALTH_AND_SAFETY_API_ADDRESS,
       timeout: 60000
+      
     })
 
 
@@ -78,6 +79,8 @@ export default class BaseService {
       sessionStorage.setItem('accessToken', newAccessToken)
       sessionStorage.setItem('refreshToken', newRefreshToken || refreshToken)
       sessionStorage.setItem('expiresAt', expiresAt)
+
+
 
       return newAccessToken
     } catch {

@@ -14,8 +14,8 @@ import { StatusEnum } from '@/enum/status-enum'
 import { usePermissions } from '@/app/hooks/permissionContext'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
-const PAGE_SIZE = 10
 
+const PAGE_SIZE = 10
 const OrganizationStatus = StatusEnum
 
 const OrganizationManagerPage = () => {
