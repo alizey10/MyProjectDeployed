@@ -9,7 +9,6 @@ export default class BaseService {
     this.client = axios.create({
       baseURL: process.env.NEXT_PUBLIC_HEALTH_AND_SAFETY_API_ADDRESS,
       timeout: 60000
-      
     })
 
 
@@ -19,7 +18,6 @@ export default class BaseService {
       return config
     })
 
- 
     this.client.interceptors.response.use(
       response => response,
       async error => {
@@ -44,11 +42,14 @@ export default class BaseService {
 
             const { accessToken: newAccessToken, refreshToken: newRefreshToken, expiresAt } = data.data
 
+         
             sessionStorage.setItem('accessToken', newAccessToken)
             sessionStorage.setItem('refreshToken', newRefreshToken || refreshToken)
             sessionStorage.setItem('expiresAt', expiresAt)
 
-            originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`
+            const currentToken = sessionStorage.getItem('accessToken')
+            originalRequest.headers['Authorization'] = `Bearer ${currentToken}`
+
             return this.client(originalRequest)
           } catch (refreshError) {
             sessionStorage.clear()
@@ -68,23 +69,16 @@ export default class BaseService {
       const headers = await this.assembleHeaders()
       const res = await this.client.post('/Auth/Refresh', { refreshToken }, { headers })
 
-      if (!res?.data?.success){
+      if (!res?.data?.success) return null
 
-        return null
-      
-
-       }    const { accessToken: newAccessToken, refreshToken: newRefreshToken, expiresAt } = res.data.data
-
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken, expiresAt } = res.data.data
 
       sessionStorage.setItem('accessToken', newAccessToken)
       sessionStorage.setItem('refreshToken', newRefreshToken || refreshToken)
       sessionStorage.setItem('expiresAt', expiresAt)
 
-      
-
       return newAccessToken
     } catch {
-
       return null
     }
   }

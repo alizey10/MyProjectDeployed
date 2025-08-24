@@ -6,6 +6,8 @@ import BaseService from '@/@services/baseService'
 
 let globalAccessToken = null
 let globalUser = null
+let isRefreshing = false
+let refreshQueue = []
 
 const decodeJWT = token => {
   try {
@@ -92,15 +94,33 @@ export default function useAuth() {
   }
 
   const refreshAccessToken = async () => {
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        refreshQueue.push({ resolve, reject })
+      })
+    }
+
+    isRefreshing = true
     try {
       const newAccessToken = await baseService.refreshToken()
       if (newAccessToken) {
         setAccessToken(newAccessToken)
+        refreshQueue.forEach(p => p.resolve(newAccessToken))
+        refreshQueue = []
+        return newAccessToken
       } else {
         clearSession()
+        refreshQueue.forEach(p => p.reject(null))
+        refreshQueue = []
+        return null
       }
     } catch (err) {
       clearSession()
+      refreshQueue.forEach(p => p.reject(err))
+      refreshQueue = []
+      return null
+    } finally {
+      isRefreshing = false
     }
   }
 
