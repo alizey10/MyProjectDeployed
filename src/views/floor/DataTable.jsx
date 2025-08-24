@@ -71,6 +71,7 @@ const DataTable = ({
                       <Box sx={{ display: 'flex', gap: 1 }}>
                         {status === 'active' ? (
                           <>
+                           {actionProps.edit && (
                             <Tooltip
                               title={actionProps.edit.disabled ? 'You are not authorized to edit' : ''}
                               arrow
@@ -88,6 +89,7 @@ const DataTable = ({
                                 </Button>
                               </span>
                             </Tooltip>
+                        )}
 
                             <Tooltip
                               title={actionProps.delete.disabled ? 'You are not authorized to delete' : ''}

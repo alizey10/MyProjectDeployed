@@ -33,7 +33,7 @@ const BadgeContentSpan = styled('span')({
 })
 
 const UserDropdown = () => {
-  const { user, accessToken, refreshToken, clearAuth } = useAuth()
+  const { user, accessToken} = useAuth()
   const [open, setOpen] = useState(false)
   const anchorRef = useRef(null)
   const router = useRouter()
@@ -74,7 +74,7 @@ const UserDropdown = () => {
     } catch (err) {
       console.error('Logout failed', err)
     } finally {
-      clearAuth()
+    
       setLogoutDialogOpen(false)
       setLoggingOut(false)
       router.push('/login')

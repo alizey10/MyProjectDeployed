@@ -56,34 +56,23 @@ export default class AuthService extends BaseService {
     }
   }
 
-  async logout() {
-    try {
-      const response = await this.Post('Logout', {})
+async logout() {
+  try {
+    const response = await this.Post('Logout', {}) 
 
-      this.accessToken = null
-      this.refreshToken = null
-      sessionStorage.removeItem('accessToken')
-      sessionStorage.removeItem('refreshToken')
+    
+    this.accessToken = null
+    this.refreshToken = null
+    sessionStorage.clear()
 
-      return {
-        success: true,
-        message: response.data?.message || 'Logged out successfully',
-        data: response.data?.data || null,
-        status: response.status
-      }
-    } catch (error) {
-      console.error('Logout error:', error)
-
-      this.accessToken = null
-      this.refreshToken = null
-      sessionStorage.removeItem('accessToken')
-      sessionStorage.removeItem('refreshToken')
-
-      return {
+    return { success: true, message: response.data?.message || 'Logged out', status: response.status }
+  } catch (error) {
+    console.error('Logout error:', error)
+    sessionStorage.clear()
+      return { 
         success: false,
-        message: error?.response?.data?.message || 'Logout failed',
-        status: error?.response?.status || 500
-      }
-    }
+       message: error?.response?.data?.message || 'Logout failed', 
+       status: error?.response?.status || 500 }
   }
+}
 }

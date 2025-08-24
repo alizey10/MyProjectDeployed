@@ -17,7 +17,7 @@ import StyledVerticalNavExpandIcon from '@menu/styles/vertical/StyledVerticalNav
 // Style Imports
 import menuItemStyles from '@core/styles/vertical/menuItemStyles'
 import menuSectionStyles from '@core/styles/vertical/menuSectionStyles'
-
+import useAuth from '@/app/hooks/useAuth'
 const RenderExpandIcon = ({ open, transitionDuration }) => (
   <StyledVerticalNavExpandIcon open={open} transitionDuration={transitionDuration}>
     <i className='ri-arrow-right-s-line' />
@@ -29,6 +29,7 @@ const VerticalMenu = ({ scrollMenu }) => {
   const theme = useTheme()
   const { isBreakpointReached, transitionDuration } = useVerticalNav()
   const ScrollWrapper = isBreakpointReached ? 'div' : PerfectScrollbar
+  const { role } = useAuth()
 
   return (
     // eslint-disable-next-line lines-around-comment
@@ -96,14 +97,11 @@ const VerticalMenu = ({ scrollMenu }) => {
         >
           Floor Manager
         </MenuItem>
-         <MenuItem
-           icon={<i className='ri-user-line'></i>}
-          href={`/user`}
-
-          // suffix={<Chip label='new' size='small' color='primary' variant='tonal' />}
-        >
-          User Manager
-        </MenuItem>
+         {role === 'Admin' && (
+  <MenuItem icon={<i className='ri-user-line'></i>} href='/user'>
+    User Manager
+  </MenuItem>
+)}
       </Menu>
     </ScrollWrapper>
   )

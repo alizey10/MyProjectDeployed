@@ -25,7 +25,32 @@ export default function useAuth() {
   const [user, setUserState] = useState(globalUser)
   const [loading, setLoading] = useState(true)
 
-  let refreshTimeout = null
+  const setAccessToken = token => {
+    globalAccessToken = token
+    setAccessTokenState(token)
+
+    if (token) {
+      const decoded = decodeJWT(token)
+      if (decoded) {
+        globalUser = decoded
+        setUserState(decoded)
+
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('accessToken', token)
+          sessionStorage.setItem('user', JSON.stringify(decoded))
+          
+          const expiresAt = decoded.exp
+            ? new Date(decoded.exp * 1000).toISOString()
+            : null
+          if (expiresAt) sessionStorage.setItem('expiresAt', expiresAt)
+        }
+      } else {
+        clearSession()
+      }
+    } else {
+      clearSession()
+    }
+  }
 
   const clearSession = () => {
     globalAccessToken = null
@@ -37,44 +62,6 @@ export default function useAuth() {
       sessionStorage.removeItem('refreshToken')
       sessionStorage.removeItem('expiresAt')
     }
-    if (refreshTimeout) clearTimeout(refreshTimeout)
-  }
-
-  const setAccessToken = token => {
-    globalAccessToken = token
-    setAccessTokenState(token)
-
-    if (!token) return clearSession()
-
-    const decoded = decodeJWT(token)
-    if (!decoded) return clearSession()
-
-    globalUser = decoded
-    setUserState(decoded)
-
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('accessToken', token)
-      sessionStorage.setItem('user', JSON.stringify(decoded))
-    }
-
-    scheduleRefresh()
-  }
-
-  const scheduleRefresh = () => {
-    if (typeof window === 'undefined') return
-
-    const expiresAt = sessionStorage.getItem('expiresAt')
-    if (!expiresAt) return
-
-    const timeLeft = new Date(expiresAt) - new Date()
-    const refreshTime = Math.max(timeLeft - 15000, 0)
-
-    if (refreshTimeout) clearTimeout(refreshTimeout)
-    refreshTimeout = setTimeout(async () => {
-      const newToken = await baseService.refreshToken()
-      if (newToken) setAccessToken(newToken)
-      else logout()
-    }, refreshTime)
   }
 
   const login = async (email, password) => {
@@ -88,16 +75,32 @@ export default function useAuth() {
       const data = await res.json()
       if (!res.ok || !data?.data?.accessToken) throw new Error(data?.message || 'Login failed')
 
-      const { accessToken, refreshToken, expiresAt } = data.data
+      const { accessToken, refreshToken } = data.data
       sessionStorage.setItem('accessToken', accessToken)
       sessionStorage.setItem('refreshToken', refreshToken)
-      sessionStorage.setItem('expiresAt', expiresAt)
+
+      const decoded = decodeJWT(accessToken)
+      const expiresAt = decoded?.exp ? new Date(decoded.exp * 1000).toISOString() : null
+      if (expiresAt) sessionStorage.setItem('expiresAt', expiresAt)
 
       setAccessToken(accessToken)
       return true
     } catch (err) {
       console.error('Login failed', err)
       return false
+    }
+  }
+
+  const refreshAccessToken = async () => {
+    try {
+      const newAccessToken = await baseService.refreshToken()
+      if (newAccessToken) {
+        setAccessToken(newAccessToken)
+      } else {
+        clearSession()
+      }
+    } catch (err) {
+      clearSession()
     }
   }
 
@@ -117,7 +120,6 @@ export default function useAuth() {
       globalUser = JSON.parse(storedUser)
       setAccessTokenState(storedToken)
       setUserState(globalUser)
-      scheduleRefresh()
     }
 
     const interval = setInterval(async () => {
@@ -126,15 +128,12 @@ export default function useAuth() {
 
       const timeLeft = new Date(expiresAt) - new Date()
       if (timeLeft < 15000) {
-        await baseService.refreshToken()
+        await refreshAccessToken()
       }
     }, 10000)
 
     setLoading(false)
-    return () => {
-      if (refreshTimeout) clearTimeout(refreshTimeout)
-      clearInterval(interval)
-    }
+    return () => clearInterval(interval)
   }, [])
 
   return {
@@ -143,6 +142,8 @@ export default function useAuth() {
     setAccessToken,
     login,
     logout,
-    loading
+    refreshAccessToken,
+    loading,
+    role: user?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || null
   }
 }

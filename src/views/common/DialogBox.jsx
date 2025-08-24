@@ -1,5 +1,5 @@
 'use client'
-
+import IconButton from '@mui/material/IconButton'
 import { useEffect, useState } from 'react'
 import {
   TextField,
@@ -33,6 +33,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization = 
   const [isLoading, setIsLoading] = useState(false)
   const [warning, setWarning] = useState({ field: '', message: '' })
   const formValues = watch()
+  const [isPasswordShown, setIsPasswordShown] = useState(false)
 
   useEffect(() => {
     if (open) {
@@ -154,23 +155,71 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization = 
               )
             )}
 
-            {fields
-              .filter(field => field.name !== 'organizationId')
-              .map((field, index) => (
-                <Grid item xs={12} md={6} key={index}>
-                  <TextField
-                    fullWidth
-                    label={field.label}
-                    placeholder={field.placeholder}
-                    {...register(field.name, getValidationRules(field))}
-                    InputProps={{
-                      startAdornment: field.icon ? <InputAdornment position='start'>{field.icon}</InputAdornment> : null
-                    }}
-                    error={!!errors[field.name]}
-                    helperText={errors[field.name]?.message}
-                  />
-                </Grid>
-              ))}
+         {fields
+  .filter(field => field.name !== 'organizationId')
+  .map((field, index) => (
+    <Grid item xs={12} md={6} key={index}>
+      {field.type === 'select' ? (
+        <TextField
+          select
+          fullWidth
+          label={field.label}
+          value={formValues[field.name] || ''}
+          {...register(field.name, getValidationRules(field))}
+          onChange={e => setValue(field.name, e.target.value)}
+          InputProps={{
+            startAdornment: field.icon ? <InputAdornment position='start'>{field.icon}</InputAdornment> : null
+          }}
+          error={!!errors[field.name]}
+          helperText={errors[field.name]?.message}
+        >
+          {field.options?.map(option => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
+      ) : field.name === 'password' ? ( 
+        <TextField
+          fullWidth
+          type={isPasswordShown ? 'text' : 'password'}
+          label={field.label}
+          placeholder={field.placeholder}
+          {...register(field.name, getValidationRules(field))}
+          InputProps={{
+            startAdornment: field.icon ? <InputAdornment position='start'>{field.icon}</InputAdornment> : null,
+            endAdornment: (
+              <InputAdornment position='end'>
+                <IconButton
+                  size='small'
+                  edge='end'
+                  onClick={() => setIsPasswordShown(prev => !prev)}
+                  onMouseDown={e => e.preventDefault()}
+                >
+                  <i className={isPasswordShown ? 'ri-eye-off-line' : 'ri-eye-line'} />
+                </IconButton>
+              </InputAdornment>
+            )
+          }}
+          error={!!errors[field.name]}
+          helperText={errors[field.name]?.message}
+        />
+      ) : (
+        <TextField
+          fullWidth
+          type={field.type || 'text'}
+          label={field.label}
+          placeholder={field.placeholder}
+          {...register(field.name, getValidationRules(field))}
+          InputProps={{
+            startAdornment: field.icon ? <InputAdornment position='start'>{field.icon}</InputAdornment> : null
+          }}
+          error={!!errors[field.name]}
+          helperText={errors[field.name]?.message}
+        />
+      )}
+    </Grid>
+))}
           </Grid>
         </form>
       </DialogContent>

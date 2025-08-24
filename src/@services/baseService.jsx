@@ -19,7 +19,7 @@ export default class BaseService {
       return config
     })
 
-  
+ 
     this.client.interceptors.response.use(
       response => response,
       async error => {
@@ -64,27 +64,27 @@ export default class BaseService {
     try {
       const refreshToken = sessionStorage.getItem('refreshToken')
       if (!refreshToken) return null
- 
+
       const headers = await this.assembleHeaders()
       const res = await this.client.post('/Auth/Refresh', { refreshToken }, { headers })
 
-      if (!res?.data?.success){ 
-      
-        return null
-        
+      if (!res?.data?.success){
 
-          }    const { accessToken: newAccessToken, refreshToken: newRefreshToken, expiresAt } = res.data.data
-        
+        return null
+      
+
+       }    const { accessToken: newAccessToken, refreshToken: newRefreshToken, expiresAt } = res.data.data
+
 
       sessionStorage.setItem('accessToken', newAccessToken)
       sessionStorage.setItem('refreshToken', newRefreshToken || refreshToken)
       sessionStorage.setItem('expiresAt', expiresAt)
 
-
+      
 
       return newAccessToken
     } catch {
-         
+
       return null
     }
   }
