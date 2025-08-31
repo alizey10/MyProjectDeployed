@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
@@ -188,25 +188,22 @@ const UserManagerPage = () => {
     { label: 'Date Created', field: 'dateCreated' }
   ]
 
-  const fields = useMemo(
-    () => [
-      { label: 'Full Name', name: 'fullName', placeholder: 'John Doe', icon: '👤', required: true },
-      { label: 'Email', name: 'email', placeholder: 'test@gmail.com', icon: '📧', required: true },
-      { label: 'Password', name: 'password', placeholder: '******', type: 'password', icon: '🔑', required: true },
-      {
-        label: 'Role',
-        name: 'role',
-        type: 'select',
-        required: true,
-        icon: '⚙️',
-        options: [
-          { label: 'User', value: 0 },
-          { label: 'Admin', value: 1 }
-        ]
-      }
-    ],
-    []
-  )
+  const fields = [
+    { label: 'Full Name', name: 'fullName', placeholder: 'John Doe', icon: '👤', required: true },
+    { label: 'Email', name: 'email', placeholder: 'test@gmail.com', icon: '📧', required: true },
+    { label: 'Password', name: 'password', placeholder: '******', type: 'password', icon: '🔑', required: true },
+    {
+      label: 'Role',
+      name: 'role',
+      type: 'select',
+      required: true,
+      icon: '⚙️',
+      options: [
+        { label: 'User', value: 0 },
+        { label: 'Admin', value: 1 }
+      ]
+    }
+  ]
 
   return (
     <>
