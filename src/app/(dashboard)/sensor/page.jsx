@@ -20,6 +20,7 @@ import Typography from '@mui/material/Typography'
 import { usePermissions } from '@/app/hooks/permissionContext'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
+import Chip from '@mui/material/Chip'
 
 const PAGE_SIZE = 10
 const SensorStatus = StatusEnum
@@ -385,46 +386,13 @@ const SensorManagerPage = () => {
             {/* Breadcrumb / Tab */}
             {sensorId && (
               <Grid item>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    bgcolor: '#e0e0e0',
-                    borderRadius: 2,
-                    bgcolor: '#E5E5E5',
-                    borderRadius: 2,
-                    px: 3,
-                    py: 1.9,
-                    ml: 0,
-                    cursor: 'pointer',
-                    '&:hover': {
-                      bgcolor: '#d5d5d5'
-                    }
-                  }}
-                  onClick={() => router.push(`/sensor?status=${status}`)}
-                >
-                  <Typography variant='body2' sx={{ mr: 1 }}>
-                    Sensor ID: {sensorId}
-                  </Typography>
-                  <Button
-                    size='small'
-                    onClick={() => router.push(`/sensor?status=${status}`)}
-                    sx={{
-                      minWidth: 0,
-                      p: 0,
-
-                      fontWeight: 'bold',
-                      color: '#666',
-                      ml: 1,
-
-                      '&:hover': {
-                        backgroundColor: '#bbb'
-                      }
-                    }}
-                  >
-                    ✖
-                  </Button>
-                </Box>
+                <Chip
+                  label={`Sensor ID: ${sensorId}`}
+                  onDelete={() => router.push(`/sensor?status=${status}`)}
+                  color='default'
+                  variant='outlined'
+                  sx={{ fontWeight: 'bold', px: 1.5 }}
+                />
               </Grid>
             )}
 
