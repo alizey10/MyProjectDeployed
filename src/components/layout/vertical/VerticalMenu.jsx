@@ -89,19 +89,21 @@ const VerticalMenu = ({ scrollMenu }) => {
         >
           Sensor Manager
         </MenuItem>
-        <MenuItem
-          icon={<i className='ri-building-2-line'></i>}
-          href={`/floor`}
+        {role === 'Admin' && (
+          <>
+            <MenuItem
+              icon={<i className='ri-building-2-line'></i>}
+              href={`/floor`}
 
-          // suffix={<Chip label='new' size='small' color='primary' variant='tonal' />}
-        >
-          Floor Manager
-        </MenuItem>
-         {role === 'Admin' && (
-  <MenuItem icon={<i className='ri-user-line'></i>} href='/user'>
-    User Manager
-  </MenuItem>
-)}
+              // suffix={<Chip label='new' size='small' color='primary' variant='tonal' />}
+            >
+              Floor Manager
+            </MenuItem>
+            <MenuItem icon={<i className='ri-user-line'></i>} href='/user'>
+              User Manager
+            </MenuItem>
+          </>
+        )}
       </Menu>
     </ScrollWrapper>
   )
