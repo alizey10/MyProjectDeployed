@@ -69,28 +69,30 @@ const OrganizationManagerPage = () => {
     setPage(1)
   }, [urlStatus])
 
-  const loadOrganizations = async (currentPage, statusParam) => {
-    setLoading(true)
-    try {
-      const isInactive = statusParam === OrganizationStatus.INACTIVE
-      const response = await OrganizationService.getOrganizations(currentPage, PAGE_SIZE, isInactive)
+ const loadOrganizations = async (currentPage, statusParam) => {
+  setLoading(true)
+  try {
+    const isInactive = statusParam === OrganizationStatus.INACTIVE
+    const response = await OrganizationService.getOrganizations(currentPage, PAGE_SIZE, isInactive)
 
-      if (!response.data?.success) {
-        toast.error(getMessage(response))
-        return
-      }
-
-      const data = response.data?.data || []
-      setOrgs(data)
-
-      const totalRecords = data[0]?.totalRecord || 0
-      setTotalPages(Math.ceil(totalRecords / PAGE_SIZE))
-    } catch (error) {
-      toast.error(getMessage(error))
-    } finally {
-      setLoading(false)
+    if (!response.data?.success || !response.data?.data?.length) {
+      setOrgs([])
+     toast.info(getMessage(response))
+      setTotalPages(1)
+      return
     }
+
+    const data = response.data.data
+    setOrgs(data)
+
+    const totalRecords = data[0]?.totalRecord || 0
+    setTotalPages(Math.ceil(totalRecords / PAGE_SIZE))
+  } catch (error) {
+    toast.error(getMessage(error))
+  } finally {
+    setLoading(false)
   }
+}
 
   useEffect(() => {
     loadOrganizations(page, status)
@@ -280,22 +282,28 @@ const OrganizationManagerPage = () => {
             </Tooltip>
           </Grid>
 
-          <DataTable
-            data={orgs}
-            columns={columns}
-            loading={loading}
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            actionProps={{
-              edit: { onClick: handleEdit, disabled: !permissions.canModify },
-              delete: { onClick: handleDeleteClick, disabled: !permissions.canDelete },
-              activate: { onClick: handleActivateClick, disabled: !permissions.canModify }
-            }}
-            status={status}
-            activatingId={activatingId}
-            showActions={true}
-          />
+    {!loading && orgs.length === 0 ? (
+      <div style={{ textAlign: 'center', marginTop: '100px' }}>
+        <h3>🚫  No Organization is assigned to you. Please contact Administrator</h3>
+      </div>
+    ) : (
+         <DataTable
+  data={selectedOrganization ? selectedOrganization.branches : orgs}
+  columns={columns}
+  loading={loading}
+  currentPage={page}
+  totalPages={totalPages}
+  onPageChange={setPage}
+  actionProps={{
+    edit: { onClick: handleEdit, disabled: !permissions.canModify },
+    delete: { onClick: handleDeleteClick, disabled: !permissions.canDelete },
+    activate: { onClick: handleActivateClick, disabled: !permissions.canModify }
+  }}
+  status={status}
+  activatingId={activatingId}
+  showActions={true}
+/>
+    )}
         </>
       )}
     </>

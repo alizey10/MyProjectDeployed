@@ -310,22 +310,28 @@ const BranchPage = () => {
             </Grid>
           </Grid>
 
-          <DataTable
-            data={branches}
-            columns={columns}
-            loading={loading || deleting}
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            actionProps={{
-              edit: { onClick: handleEdit, disabled: !permissions.canModify },
-              delete: { onClick: handleDeleteClick, disabled: !permissions.canDelete },
-              activate: { onClick: handleActivateClick, disabled: !permissions.canModify }
-            }}
-            status={status}
-            activatingId={activatingId}
-            showActions={true}
-          />
+          {!loading && branches.length === 0 ? (
+  <div style={{ textAlign: 'center', marginTop: '100px' }}>
+    <h3>🚫  No Branch is assigned to your Organization. Please contact Administrator</h3>
+  </div>
+) : (
+  <DataTable
+    data={branches}
+    columns={columns}
+    loading={loading || deleting}
+    currentPage={page}
+    totalPages={totalPages}
+    onPageChange={setPage}
+    actionProps={{
+      edit: { onClick: handleEdit, disabled: !permissions.canModify },
+      delete: { onClick: handleDeleteClick, disabled: !permissions.canDelete },
+      activate: { onClick: handleActivateClick, disabled: !permissions.canModify }
+    }}
+    status={status}
+    activatingId={activatingId}
+    showActions={true}
+  />
+)}
         </>
       )}
     </>

@@ -31,6 +31,11 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization, b
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [branchError, setBranchError] = useState('')
   const [isPasswordShown, setIsPasswordShown] = useState(false)
+  const [users, setUsers] = useState([])
+
+  const handleSave = payload => {
+    setUsers(prev => [...prev, payload])
+  }
 
   const {
     control,
@@ -38,6 +43,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization, b
     handleSubmit,
     reset,
     setValue,
+    setError,
     watch,
     formState: { errors, isValid }
   } = useForm({
@@ -123,9 +129,12 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization, b
         return
       }
 
-      const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{6,12}$/
+      const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{12,16}$/
       if (formData.password && !passwordRegex.test(formData.password)) {
-        toast.error('Password must be 6-12 chars, include 1 uppercase, 1 number & 1 special char.')
+        setError('password', {
+          type: 'manual',
+          message: 'Password must be 12-16 chars, include 1 uppercase, 1 number & 1 special char.'
+        })
         setIsSubmitting(false)
         return
       }
@@ -176,28 +185,28 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization, b
       fullWidth
       maxWidth='md'
     >
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent sx={{ position: 'relative' }}>
-        {(isLoading || isSubmitting) && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              backgroundColor: 'rgba(255,255,255,0.7)',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              zIndex: 10
-            }}
-          >
-            <CircularProgress />
-          </Box>
-        )}
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <DialogTitle>{title}</DialogTitle>
+        <DialogContent sx={{ position: 'relative' }}>
+          {(isLoading || isSubmitting) && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                backgroundColor: 'rgba(255,255,255,0.7)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 10
+              }}
+            >
+              <CircularProgress />
+            </Box>
+          )}
 
-        <form onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={3}>
             {fields.map((f, idx) => (
               <Grid item xs={12} md={6} key={idx}>
@@ -323,6 +332,7 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization, b
                                     color='primary'
                                     variant='outlined'
                                     onDelete={() => handleIndividualSelect(id)}
+                                    onMouseDown={e => e.stopPropagation()}
                                   />
                                 ) : null
                               })}
@@ -362,25 +372,25 @@ const DialogBox = ({ open, title, onClose, data, onSave, fields, organization, b
               </>
             )}
           </Grid>
-
-          <Box sx={{ mt: 3 }}>
-            <Button type='submit' variant='contained' disabled={!isValid || isSubmitting}>
-              {isSubmitting ? <CircularProgress size={20} color='inherit' /> : 'Save'}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+            <Button type='submit' variant='contained' disabled={!isValid || isSubmitting} sx={{ width: 90 }}>
+              {isSubmitting ? <CircularProgress color='inherit' /> : 'Save'}
+            </Button>
+            <Button
+              onClick={() => {
+                reset()
+                onClose()
+              }}
+              color='secondary'
+              variant='outlined'
+            >
+              Cancel
             </Button>
           </Box>
-        </form>
-      </DialogContent>
-      <DialogActions sx={{ p: 2 }}>
-        <Button
-          onClick={() => {
-            reset()
-            onClose()
-          }}
-          color='secondary'
-        >
-          Cancel
-        </Button>
-      </DialogActions>
+        </DialogActions>
+      </form>
     </Dialog>
   )
 }

@@ -18,31 +18,32 @@ export default class BaseService {
     })
 
     this.client.interceptors.response.use(
-      response => response,
-      async error => {
-        const originalRequest = error.config
+  response => response,
+  async error => {
+    const originalRequest = error.config
 
-        if (error.response?.status === HttpStatus.Unauthorized && !originalRequest._retry) {
-          originalRequest._retry = true
-          try {
-            const newAccessToken = await this.refreshToken()
-            if (!newAccessToken) throw new Error('Token refresh failed')
-
-            originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`
-            return this.client(originalRequest)
-          } catch (refreshError) {
-            sessionStorage.clear()
-            return Promise.reject(refreshError)
-          }
-        }
-
-        if (error.response?.status >= 500) {
-          console.error('Server error:', error.response)
-        }
-
-        return Promise.reject(error)
+    if (error.response?.status === HttpStatus.Unauthorized && !originalRequest._retry) {
+      originalRequest._retry = true
+      try {
+        const newAccessToken = await this.refreshToken()
+        if (!newAccessToken) throw error 
+        originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`
+        return this.client(originalRequest)
+      } catch (refreshError) {
+        sessionStorage.clear()
+        return Promise.reject(refreshError)
       }
-    )
+    }
+   
+    if (error.response?.status >= 500) {
+      console.error('Server error:', error.response)
+    }
+
+ 
+    const backendMessage = error.response?.data?.message || error.message || 'Something went wrong'
+    return Promise.reject({ ...error, backendMessage })
+  }
+)
   }
 
   async refreshToken() {

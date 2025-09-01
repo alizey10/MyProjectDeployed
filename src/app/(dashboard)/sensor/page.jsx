@@ -419,25 +419,31 @@ const SensorManagerPage = () => {
             </Grid>
           </Grid>
 
-          <DataTable
-            columns={columns}
-            data={sensors}
-            currentPage={page}
-            totalPages={totalPages}
-            loading={loading || deleting}
-            onPageChange={setPage}
-            actionProps={{
-              edit: { onClick: handleEdit, disabled: !permissions.canModify },
-              delete: { onClick: handleDeleteClick, disabled: !permissions.canDelete },
-              activate: { onClick: handleActivateClick, disabled: !permissions.canModify }
-            }}
-            onCloseRow={handleCloseRowClick}
-            status={status}
-            floors={floors}
-            activatingId={activatingId}
-            sensorId={sensorId}
-            showActions={true}
-          />
+         {!loading && sensors.length === 0 ? (
+  <div style={{ textAlign: 'center', marginTop: '100px' }}>
+    <h3>🚫  No Sensor is assigned to your Gateway. Please contact Administrator</h3>
+  </div>
+) : (
+  <DataTable
+    columns={columns}
+    data={sensors}
+    currentPage={page}
+    totalPages={totalPages}
+    loading={loading || deleting}
+    onPageChange={setPage}
+    actionProps={{
+      edit: { onClick: handleEdit, disabled: !permissions.canModify },
+      delete: { onClick: handleDeleteClick, disabled: !permissions.canDelete },
+      activate: { onClick: handleActivateClick, disabled: !permissions.canModify }
+    }}
+    onCloseRow={handleCloseRowClick}
+    status={status}
+    floors={floors}
+    activatingId={activatingId}
+    sensorId={sensorId}
+    showActions={true}
+  />
+)}
         </>
       )}
     </>
