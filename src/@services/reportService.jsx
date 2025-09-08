@@ -35,12 +35,12 @@ class ReportServices extends BaseService {
    * @param {date} params.EndDate
    * @returns {Promise<any>}
    */
-  async getSensorSummary(params) {
-    const cleanParams = Object.fromEntries(
-      Object.entries(params).map(([key, value]) => [key, value === undefined ? '' : value])
-    )
-    return await this.Get('SensorSummary', cleanParams)
-  }
+async getSensorSummary(params) {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, value]) => value !== undefined && value !== null && value !== '')
+  )
+  return await this.Get('SensorSummary', cleanParams)
+}
 }
 
 export default new ReportServices()

@@ -419,7 +419,7 @@ const SensorManagerPage = () => {
             </Grid>
           </Grid>
 
-         {!loading && sensors.length === 0 ? (
+        {!loading && sensors.length === 0 && !sensorId ? (
   <div style={{ textAlign: 'center', marginTop: '100px' }}>
     <h3>🚫  No Sensor is assigned to your Gateway. Please contact Administrator</h3>
   </div>

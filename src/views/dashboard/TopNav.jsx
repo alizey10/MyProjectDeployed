@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import {
   InputLabel,
   MenuItem,
@@ -45,9 +45,6 @@ const TopNav = ({ onFiltersChange }) => {
   const branchId = watch('branch')
   const floorSectionId = watch('floorSectionId')
 
-  // ✅ StrictMode guard
-  const fetchedRef = useRef(false)
-
   // Fetch Organizations and Floors
   useEffect(() => {
     const fetchData = async () => {
@@ -89,12 +86,8 @@ const TopNav = ({ onFiltersChange }) => {
     loadBranches()
   }, [organizationId])
 
-  // ✅ Single effect for both EntityCounts + SensorSummary
   useEffect(() => {
-    if (fetchedRef.current) return
-    fetchedRef.current = true
-
-    const fetchData = async () => {
+    const fetchEntityCountsAndSensorSummary = async () => {
       setLoading(true)
       try {
         const [entityCountsResponse, sensorSummaryResponse] = await Promise.all([
@@ -108,8 +101,7 @@ const TopNav = ({ onFiltersChange }) => {
             OrganizationId: organizationId,
             OrgCountry: country,
             BranchId: branchId,
-            FloorSectionId: floorSectionId,
-            ...(startDate && endDate ? { StartDate: startDate, EndDate: endDate } : {})
+            FloorSectionId: floorSectionId
           })
         ])
 
@@ -119,20 +111,50 @@ const TopNav = ({ onFiltersChange }) => {
             country,
             branchId,
             floorSectionId,
-            startDate,
-            endDate,
             entityCounts: entityCountsResponse.data?.data,
             sensorData: sensorSummaryResponse.data?.data
           })
         }
       } catch (err) {
-        console.error('Error fetching data:', err)
+        console.error('Error fetching entity counts or sensor summary:', err)
       }
       setLoading(false)
     }
 
-    fetchData()
-  }, [organizationId, country, branchId, floorSectionId, startDate, endDate, onFiltersChange])
+    fetchEntityCountsAndSensorSummary()
+  }, [organizationId, country, branchId, floorSectionId])
+  useEffect(() => {
+    let checkValidity = !!startDate && !!endDate
+    if (!checkValidity) return
+    const fetchSensorSummary = async () => {
+      setLoading(true)
+      try {
+        const sensorSummaryResponse = await ReportServices.getSensorSummary({
+          OrganizationId: organizationId,
+          OrgCountry: country,
+          BranchId: branchId,
+          FloorSectionId: floorSectionId,
+          StartDate: startDate || undefined,
+          EndDate: endDate || undefined
+        })
+        if (onFiltersChange) {
+          onFiltersChange({
+            organizationId,
+            country,
+            branchId,
+            floorSectionId,
+            startDate,
+            endDate,
+            sensorData: sensorSummaryResponse.data?.data
+          })
+        }
+      } catch (err) {
+        console.error('Error fetching sensor summary:', err)
+      }
+      setLoading(false)
+    }
+    fetchSensorSummary()
+  }, [startDate, endDate])
 
   return (
     <Box position='relative'>
@@ -156,20 +178,20 @@ const TopNav = ({ onFiltersChange }) => {
       )}
 
       <form id='edit-form' onSubmit={handleSubmit(() => {})}>
-        <Grid container spacing={2} mt={0.5} mb={2}>
+          <Grid container spacing={2} mt={0.5} mb={2}>
           <Grid item xs={12} sm={6} md={3}>
             <FormControl fullWidth error={!!errors.organizationId}>
               <InputLabel>Organization</InputLabel>
               <Select
-                value={watch('organizationId') || ''}
+                value={organizationId || ''}
                 {...register('organizationId')}
                 onChange={e => {
                   setValue('organizationId', e.target.value)
                   setBranches([])
                 }}
               >
-                {organizations.map(org => (
-                  <MenuItem key={org.organizationId} value={org.organizationId}>
+                {organizations.map((org, idx) => (
+                  <MenuItem key={`${org.organizationId}-${idx}`} value={org.organizationId}>
                     {org.organizationName}
                   </MenuItem>
                 ))}
@@ -182,12 +204,12 @@ const TopNav = ({ onFiltersChange }) => {
             <FormControl fullWidth error={!!errors.country}>
               <InputLabel>Country</InputLabel>
               <Select
-                value={watch('country') || ''}
+                value={country || ''}
                 {...register('country')}
                 onChange={e => setValue('country', e.target.value)}
               >
-                {Countries?.map((country, idx) => (
-                  <MenuItem key={idx} value={country.name}>
+                {Countries.map((country, idx) => (
+                  <MenuItem key={`${country.code || country.name}-${idx}`} value={country.name}>
                     {country.name}
                   </MenuItem>
                 ))}
@@ -200,12 +222,12 @@ const TopNav = ({ onFiltersChange }) => {
             <FormControl fullWidth error={!!errors.branch}>
               <InputLabel>Branch</InputLabel>
               <Select
-                value={watch('branch') || ''}
+                value={branchId || ''}
                 {...register('branch')}
                 onChange={e => setValue('branch', e.target.value)}
               >
                 {branches.map((branch, idx) => (
-                  <MenuItem key={idx} value={branch.branchId}>
+                  <MenuItem key={`${branch.branchId}-${idx}`} value={branch.branchId}>
                     {branch.branchName}
                   </MenuItem>
                 ))}
@@ -218,12 +240,12 @@ const TopNav = ({ onFiltersChange }) => {
             <FormControl fullWidth error={!!errors.floorSectionId}>
               <InputLabel>Floor Section</InputLabel>
               <Select
-                value={watch('floorSectionId') || ''}
+                value={floorSectionId || ''}
                 {...register('floorSectionId')}
                 onChange={e => setValue('floorSectionId', e.target.value)}
               >
                 {floorSections.map((section, idx) => (
-                  <MenuItem key={idx} value={section.floorSectionId}>
+                  <MenuItem key={`${section.floorSectionId}-${idx}`} value={section.floorSectionId}>
                     {section.floorSectionName}
                   </MenuItem>
                 ))}
