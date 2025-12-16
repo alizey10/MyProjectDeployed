@@ -10,7 +10,7 @@ import {
   Tab,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import QuestionCard from "./QuestionCard";
+import QuestionCard from "./question-card";
 import formService from "@/@services/formService";
 import { toast } from "react-toastify";
 import { getStatusCode, HttpStatus, getMessage } from "@/utils/getStatusCode";
