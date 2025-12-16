@@ -100,7 +100,7 @@ const DataTable = ({
 
                       return (
                         <td key={columnIndex}>
-                          <Typography>{value}</Typography>
+                          <Typography component="div">{value}</Typography>
                         </td>
                       )
                     })}

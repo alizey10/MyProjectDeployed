@@ -107,22 +107,14 @@ const FormsManagerPage = () => {
   }
 
   const handleConfirmDelete = async () => {
-    if (!selectedForm) return
-    try {
-      const res = await formService.deleteForm(selectedForm.id)
-      const code = getStatusCode(res)
+  if (!selectedForm) return
+  try {
+    const res = await formService.deleteForm(selectedForm.id)
+    const code = getStatusCode(res)
+    const message = getMessage(res) || 'Failed to delete form'
 
-      if (
-        code === HttpStatus.OK ||
-        code === HttpStatus.Deleted ||
-        code === 500
-      ) {
-        toast.success('Form deleted successfully')
-      } else {
-        toast.error('Failed to delete form')
-        return
-      }
-
+    if (code === HttpStatus.OK || code === HttpStatus.Deleted) {
+      toast.success('Form deleted successfully')
       setConfirmDialogOpen(false)
       setSelectedForm(null)
 
@@ -131,17 +123,16 @@ const FormsManagerPage = () => {
       } else {
         loadForms(page)
       }
-    } catch (error) {
-      if (error?.response?.status === 500) {
-        toast.success('Form deleted successfully')
-        setConfirmDialogOpen(false)
-        setSelectedForm(null)
-        loadForms(page)
-      } else {
-        toast.error(getMessage(error) || 'Failed to delete form')
-      }
+    } else {
+      toast.error(`Error ${code}: ${message}`)
     }
+  } catch (error) {
+    const status = error?.response?.status
+    const message = getMessage(error) || 'Failed to delete form'
+    toast.error(`Server error ${status}: ${message}`)
+    console.error('Delete form error:', error)
   }
+}
 
   const handleCancelDelete = () => {
     setConfirmDialogOpen(false)
@@ -191,17 +182,17 @@ const FormsManagerPage = () => {
             </DialogContent>
           </Dialog>
 
-          <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Button
+        <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
+              <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button 
                 variant='contained'
                 color='success'
                 onClick={handleAdd}
-              >
-                Add Form
-              </Button>
+                startIcon={<i className='ri-add-line' />}>
+                  Add Form
+                </Button>
+              </Grid>
             </Grid>
-          </Grid>
 
           {forms.length === 0 ? (
             <div style={{ textAlign: 'center', marginTop: '100px' }}>

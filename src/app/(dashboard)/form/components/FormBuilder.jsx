@@ -221,23 +221,30 @@ export default function FormBuilder({ onFormCreated, existingFormId }) {
         {formTitle}
       </Typography>
 
-      <Typography
-        variant="body2"
-        contentEditable
-        suppressContentEditableWarning
-        ref={descRef}
-        onBlur={() => setFormDescription(descRef.current.textContent)}
-        sx={{
-          color: "gray",
-          mb: 3,
-          "&:empty:before": {
-            content: '"Form Description"',
-            color: "#aaa",
-          },
-        }}
-      >
-        {formDescription}
-      </Typography>
+    <Typography
+  contentEditable
+  suppressContentEditableWarning
+  ref={descRef}
+  onBlur={() => setFormDescription(descRef.current.textContent)}
+  sx={{
+    color: formDescription ? "black" : "#999", 
+    mb: 3,
+    minHeight: 100,
+    border: "1px solid #ccc", 
+    borderRadius: 2,
+    p: 1.5, 
+    outline: "none",
+    "&:empty:before": {
+      content: '"Form Description"',
+      color: "#aaa",
+    },
+    "&:focus": {
+      borderColor: "#999", 
+    },
+  }}
+>
+  {formDescription}
+</Typography>
 
       {questions.map(q => (
         <QuestionCard
