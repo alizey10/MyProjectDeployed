@@ -6,7 +6,7 @@ class FormService extends BaseService {
   }
 
   getAllForms(page = 1, pageSize = 20) {
-    return this.Get('', { Page: page, PageSize: pageSize})
+    return this.Get('', { Page: page, PageSize: pageSize })
   }
 
   getFormById(formId) {
@@ -23,10 +23,6 @@ class FormService extends BaseService {
 
   deleteForm(formId) {
     return this.Delete(`${formId}`)
-  }
-
-  toggleFormStatus(formId, isActive) {
-    return this.Patch(`${formId}/status`, null, { isActive })
   }
 
   submitForm(payload) {
