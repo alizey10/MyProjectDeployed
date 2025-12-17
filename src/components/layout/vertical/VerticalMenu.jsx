@@ -104,10 +104,10 @@ const VerticalMenu = ({ scrollMenu }) => {
             </MenuItem>
             <MenuItem
               icon={<i className='ri-file-list-line'></i>}
-              href={`/grid-form`}
+              href={`/list`}
               // suffix={<Chip label='new' size='small' color='primary' variant='tonal' />} // Optional
             >
-              Form
+              List
             </MenuItem>
           </>
         )}

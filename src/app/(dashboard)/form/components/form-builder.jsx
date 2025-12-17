@@ -8,6 +8,9 @@ import {
   Tooltip,
   Tabs,
   Tab,
+  Grid,
+  Button,
+  CircularProgress
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import QuestionCard from "./question-card";
@@ -53,7 +56,7 @@ export default function FormBuilder({ onFormCreated, existingFormId }) {
             try {
               if (f.optionsJson) {
                 const raw = JSON.parse(f.optionsJson);
-
+                
                 if (
                   f.fieldType === QuestionType.MULTIPLE_CHOICE_GRID ||
                   f.fieldType === QuestionType.CHECKBOX_GRID
@@ -187,28 +190,39 @@ export default function FormBuilder({ onFormCreated, existingFormId }) {
     }
   };
 
+  const isAnyFieldEmpty = () => {
+    return questions.length === 0 || !formTitle.trim();
+  };
+
+  const handleCancel = () => {
+
+    setQuestions([]);
+    setFormTitle("Untitled Form");
+    setFormDescription("");
+
+    if (typeof onFormCreated === "function") {
+      onFormCreated(null);
+    }
+  };
+
   return (
-    <Box
+    <>
+  <Grid container spacing={2} sx={{ mb: 2, alignItems: "center" }}>
+  <Grid item xs={12} sx={{ display: "flex", justifyContent: "flex-start" }}>
+    <Typography
       sx={{
-        width: "100%",
-        maxWidth: 700,
-        bgcolor: "white",
-        borderRadius: 3,
-        boxShadow: 3,
-        p: 3,
-        mx: "auto",
-        my: 5,
-        minHeight: 600,
+        fontWeight: 500,   
+        fontSize: "18px", 
+        lineHeight: 1.5,
+          color: "black", 
       }}
     >
-      <Tabs
-        value={activeTab}
-        onChange={(e, v) => setActiveTab(v)}
-        centered
-        sx={{ mb: 3 }}
-      >
-        <Tab label="Questions" value={TabType.QUESTIONS} />
-      </Tabs>
+      Add List
+    </Typography>
+  </Grid>
+</Grid>
+
+
 
       <Typography
         variant="h5"
@@ -217,34 +231,35 @@ export default function FormBuilder({ onFormCreated, existingFormId }) {
         ref={titleRef}
         onBlur={() => setFormTitle(titleRef.current.textContent)}
         sx={{ fontWeight: 600, mb: 1 }}
+        mt={5}
       >
         {formTitle}
       </Typography>
 
-    <Typography
-  contentEditable
-  suppressContentEditableWarning
-  ref={descRef}
-  onBlur={() => setFormDescription(descRef.current.textContent)}
-  sx={{
-    color: formDescription ? "black" : "#999", 
-    mb: 3,
-    minHeight: 100,
-    border: "1px solid #ccc", 
-    borderRadius: 2,
-    p: 1.5, 
-    outline: "none",
-    "&:empty:before": {
-      content: '"Form Description"',
-      color: "#aaa",
-    },
-    "&:focus": {
-      borderColor: "#999", 
-    },
-  }}
->
-  {formDescription}
-</Typography>
+      <Typography
+        contentEditable
+        suppressContentEditableWarning
+        ref={descRef}
+        onBlur={() => setFormDescription(descRef.current.textContent)}
+        sx={{
+          color: formDescription ? "black" : "#999",
+          mb: 3,
+          minHeight: 100,
+          border: "1px solid #ccc",
+          borderRadius: 2,
+          p: 1.5,
+          outline: "none",
+          "&:empty:before": {
+            content: '"Form Description"',
+            color: "#aaa",
+          },
+          "&:focus": {
+            borderColor: "#999",
+          },
+        }}
+      >
+        {formDescription}
+      </Typography>
 
       {questions.map(q => (
         <QuestionCard
@@ -263,28 +278,39 @@ export default function FormBuilder({ onFormCreated, existingFormId }) {
         </Tooltip>
       </Box>
 
-      <Box textAlign="center" mt={3}>
-        <button
-          onClick={saveForm}
-          disabled={loading}
-          style={{
-            background: "#a855f7",
-            color: "white",
-            border: "none",
-            padding: "10px 20px",
-            borderRadius: 8,
-            cursor: "pointer",
-            fontWeight: "bold",
-            opacity: loading ? 0.7 : 1,
-          }}
+      <Box sx={{ height: 180 }} />
+
+      <Box
+        sx={{
+          position: "sticky",
+          bottom: 0,
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 4,
+          mt: 5,
+          background: "#fff",
+           pt: 3
+        }}
+      >
+          <Button
+          onClick={handleCancel}
+          color="secondary"
+          variant="outlined"
         >
-          {loading
-            ? "Saving..."
-            : existingFormId
-            ? "Update Form"
-            : "Save Form"}
-        </button>
+          Cancel
+        </Button>
+        <Button
+  onClick={saveForm}
+  variant="contained"
+  disabled={loading || isAnyFieldEmpty()}
+  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+  sx={{ minWidth: 90 }} 
+>
+  {existingFormId ? "Update" : "Save"}
+</Button>
+
+      
       </Box>
-    </Box>
+    </>
   );
 }

@@ -69,7 +69,6 @@ const FormsManagerPage = () => {
       const mappedForms = data.map(f => ({
         id: f.formId,
         name: f.formTitle || 'Untitled Form',
-        type: 'Dynamic',
         description: (
           <ExpandableDescription text={f.formDescription} />
         )
@@ -141,7 +140,6 @@ const FormsManagerPage = () => {
 
   const columns = [
     { label: 'Name', field: 'name' },
-    { label: 'Type', field: 'type' },
     { label: 'Description', field: 'description' }
   ]
 
@@ -189,7 +187,7 @@ const FormsManagerPage = () => {
                 color='success'
                 onClick={handleAdd}
                 startIcon={<i className='ri-add-line' />}>
-                  Add Form
+                  Add List
                 </Button>
               </Grid>
             </Grid>
