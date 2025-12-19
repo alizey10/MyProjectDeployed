@@ -17,74 +17,69 @@ import { useState } from "react";
 export default function QuestionCard({ data, onDelete, onChange, responseMode = false }) {
   const isEditable = !responseMode;
 
-  const rowLabels = data.rowLabels || [];
-  const columnLabels = data.columnLabels || [];
-  const options = data.options || { rows: [], columns: [] };
-const [submitting, setSubmitting] = useState(false);
+  const rows = data.options?.rows || [];
+  const columns = data.options?.columns || [];
+  const options = data.options || [];
+  const [submitting, setSubmitting] = useState(false);
   const handleLabelChange = (e) => {
     if (!isEditable) return;
     onChange({ ...data, label: e.target.value });
   };
 
-  const handleTypeChange = (e) => {
-    if (!isEditable) return;
-    const type = e.target.value;
+ const handleTypeChange = (e) => {
+  if (!isEditable) return;
+  const type = e.target.value;
 
-    onChange({
-      ...data,
-      type,
+  onChange({
+    ...data,
+    type,
 
-      options:
-        type.includes("grid")
-          ? { rows: ["", "", ""], columns: ["", "", ""] }
-          : type === QuestionType.DROPDOWN
-          ? [""]
-          : [],
 
-      rowLabels: type.includes("grid") ? ["", "", ""] : [],
-      columnLabels: type.includes("grid") ? ["", "", ""] : [],
-    });
-  };
+    options:
+      type === QuestionType.MULTIPLE_CHOICE_GRID ||
+      type === QuestionType.CHECKBOX_GRID
+        ? { rows: ["", ""], columns: ["", ""] }
+        : type === QuestionType.DROPDOWN
+        ? [""]
+        : []
+  });
+};
 
   const handleOptionChange = (index, value) => {
     if (!isEditable) return;
-    const updated = [...(data.options || [])];
+    const updated = [...options];
     updated[index] = value;
     onChange({ ...data, options: updated });
   };
 
   const addOption = () => {
     if (!isEditable) return;
-    onChange({ ...data, options: [...(data.options || []), ""] });
+    onChange({ ...data, options: [...options, ""] });
   };
 
   const removeOption = (index) => {
     if (!isEditable) return;
-    const updated = [...(data.options || [])];
+    const updated = [...options];
     updated.splice(index, 1);
     onChange({ ...data, options: updated });
   };
 
- const sendToBackend = async () => {
-  if (submitting) return; 
-  setSubmitting(true);
-
-  try {
-    const payload = {
-      [data.key || `q_${data.id}`]: data.response || data.value || ""
-    };
-    await formService.submitForm(payload);
-   
-  } catch (error) {
-    console.error("Failed to submit response:", error);
-  
-  } finally {
-    setSubmitting(false);
-  }
-};
+  const sendToBackend = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await formService.submitForm({
+        [data.key || `q_${data.id}`]: data.response || data.value || ""
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
-    <Box
+     <Box
       sx={{
         border: "1px solid #e0e0e0",
         borderRadius: 2,
@@ -93,7 +88,6 @@ const [submitting, setSubmitting] = useState(false);
         bgcolor: "#fafafa",
       }}
     >
-     
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <TextField
           label="Question"
@@ -119,8 +113,6 @@ const [submitting, setSubmitting] = useState(false);
               <MenuItem value={QuestionType.DROPDOWN}>Dropdown</MenuItem>
               <MenuItem value={QuestionType.MULTIPLE_CHOICE_GRID}>Multiple Choice Grid</MenuItem>
               <MenuItem value={QuestionType.CHECKBOX_GRID}>Checkbox Grid</MenuItem>
-              <MenuItem value={QuestionType.DATE}>Date</MenuItem>
-              <MenuItem value={QuestionType.TIME}>Time</MenuItem>
             </TextField>
             <IconButton onClick={onDelete} color="error">
               <DeleteIcon />
@@ -131,7 +123,7 @@ const [submitting, setSubmitting] = useState(false);
 
       {data.type === QuestionType.TEXT && (
         <TextField
-          placeholder="Short answer text"
+        placeholder="Short answer text"
           fullWidth
           variant="standard"
           sx={{ mt: 2 }}
@@ -143,7 +135,7 @@ const [submitting, setSubmitting] = useState(false);
 
       {data.type === QuestionType.PARAGRAPH && (
         <TextField
-          placeholder="Long answer text"
+         placeholder="Long answer text"
           fullWidth
           multiline
           rows={3}
@@ -160,16 +152,13 @@ const [submitting, setSubmitting] = useState(false);
           {isEditable ? (
             <>
               {options.map((opt, i) => (
-                <Box key={i} display="flex" alignItems="center" gap={1} mb={1}>
-                  <Typography>{i + 1}.</Typography>
+                 <Box key={i} display="flex" alignItems="center" gap={1} mb={1}>
                   <TextField
-                    placeholder={`Option ${i + 1}`}
-                    value={opt || ""}
-                    onChange={(e) => handleOptionChange(i, e.target.value)}
                     variant="standard"
-                    sx={{ width: 200 }}
+                    value={opt}
+                    onChange={(e) => handleOptionChange(i, e.target.value)}
                   />
-                  <IconButton color="error" onClick={() => removeOption(i)}>
+                  <IconButton onClick={() => removeOption(i)}>
                     <RemoveIcon />
                   </IconButton>
                 </Box>
@@ -189,12 +178,7 @@ const [submitting, setSubmitting] = useState(false);
               </Button>
             </>
           ) : (
-            <TextField
-              select
-              fullWidth
-              value={data.response || ""}
-              onChange={(e) => onChange({ ...data, response: e.target.value })}
-            >
+            <TextField select fullWidth>
               {options.map((opt, i) => (
                 <MenuItem key={i} value={opt}>
                   {opt}
@@ -205,7 +189,7 @@ const [submitting, setSubmitting] = useState(false);
         </Box>
       )}
 
-      {data.type === QuestionType.MULTIPLE_CHOICE && (
+       {data.type === QuestionType.MULTIPLE_CHOICE && (
         <Box sx={{ mt: 2 }}>
           {options.map((opt, i) => (
             <Box key={i} display="flex" alignItems="center" gap={1}>
@@ -254,183 +238,86 @@ const [submitting, setSubmitting] = useState(false);
       )}
 
 
-{(data.type === QuestionType.MULTIPLE_CHOICE_GRID ||
-  data.type === QuestionType.CHECKBOX_GRID) && (
-  <Box sx={{ mt: 2 }}>
-
-    {isEditable && (
-      <>
-
-        <Box display="flex" gap={2} mb={1}>
-          <Button
-            onClick={() =>
-              onChange({
-                ...data,
-                rowLabels: [...rowLabels, ""],
-                options: {
-                  rows: [...rowLabels, ""],
-                  columns: columnLabels
-                }
-              })
-            }
-            startIcon={<AddIcon />}
-          >
-            Add Row
-          </Button>
-
-          <Button
-            onClick={() =>
-              onChange({
-                ...data,
-                columnLabels: [...columnLabels, ""],
-                options: {
-                  rows: rowLabels,
-                  columns: [...columnLabels, ""]
-                }
-              })
-            }
-            startIcon={<AddIcon />}
-          >
-            Add Column
-          </Button>
-        </Box>
-
-        <Box mt={2} border="1px solid #e0e0e0" p={1}>
-          <Box display="flex">
-            <Box sx={{ width: 120 }} />
-            {columnLabels.map((col, cIdx) => (
-              <TextField
-                key={cIdx}
-                placeholder={`Col ${cIdx + 1}`}
-                value={col}
-                onChange={(e) => {
-                  const newCols = [...columnLabels];
-                  newCols[cIdx] = e.target.value;
+      {(data.type === QuestionType.MULTIPLE_CHOICE_GRID ||
+        data.type === QuestionType.CHECKBOX_GRID) && (
+        <Box sx={{ mt: 2 }}>
+          {isEditable && (
+            <Box display="flex" gap={2}>
+              <Button
+                startIcon={<AddIcon />}
+                onClick={() =>
                   onChange({
                     ...data,
-                    columnLabels: newCols,
-                    options: { rows: rowLabels, columns: newCols }
-                  });
-                }}
-                variant="standard"
-                sx={{ width: 120, mx: 0.5 }}
-              />
-            ))}
-          </Box>
+                    options: { rows: [...rows, ""], columns }
+                  })
+                }
+              >
+                Add Row
+              </Button>
 
-          {rowLabels.map((row, rIdx) => (
-            <Box key={rIdx} display="flex" alignItems="center" mt={1}>
-              <TextField
-                placeholder={`Row ${rIdx + 1}`}
-                value={row}
-                onChange={(e) => {
-                  const newRows = [...rowLabels];
-                  newRows[rIdx] = e.target.value;
+              <Button
+                startIcon={<AddIcon />}
+                onClick={() =>
                   onChange({
                     ...data,
-                    rowLabels: newRows,
-                    options: { rows: newRows, columns: columnLabels }
-                  });
-                }}
-                variant="standard"
-                sx={{ width: 120, mr: 1 }}
-              />
-
-          
-              {columnLabels.map((col, cIdx) =>
-                data.type === QuestionType.MULTIPLE_CHOICE_GRID ? (
-                  <Radio key={cIdx} disabled sx={{ mx: 0.5 }} />
-                ) : (
-                  <Checkbox key={cIdx} disabled sx={{ mx: 0.5 }} />
-                )
-              )}
+                    options: { rows, columns: [...columns, ""] }
+                  })
+                }
+              >
+                Add Column
+              </Button>
             </Box>
-          ))}
-        </Box>
-      </>
-    )}
+          )}
 
-    {!isEditable && (
-      <Box mt={2} border="1px solid #e0e0e0" p={1}>
-      
-        <Box display="flex">
-          <Box sx={{ width: 120, fontWeight: "bold" }} />
-          {columnLabels.map((col, cIdx) => (
-            <Box key={cIdx} sx={{ width: 120, textAlign: "center", fontWeight: "bold" }}>
-              {col}
-            </Box>
-          ))}
-        </Box>
-
-       
-        {rowLabels.map((row, rIdx) => (
-          <Box key={rIdx} display="flex" alignItems="center" mt={1}>
-            <Box sx={{ width: 120, fontWeight: "bold" }}>{row}</Box>
-
-            {columnLabels.map((col, cIdx) => {
-              const cellKey = `${rIdx}-${cIdx}`;
-
-              return data.type === QuestionType.MULTIPLE_CHOICE_GRID ? (
-                <Radio
-                  key={cellKey}
-                  checked={data.response === cellKey}
-                  onChange={() => onChange({ ...data, response: cellKey })}
-                />
-              ) : (
-                <Checkbox
-                  key={cellKey}
-                  checked={data.response?.includes(cellKey)}
-                  onChange={() => {
-                    const current = data.response || [];
-                    const updated = current.includes(cellKey)
-                      ? current.filter((x) => x !== cellKey)
-                      : [...current, cellKey];
-
-                    onChange({ ...data, response: updated });
+          <Box mt={2} border="1px solid #e0e0e0" p={1}>
+            <Box display="flex" >
+              <Box sx={{ width: 120 }} />
+              {columns.map((c, i) => (
+                <TextField
+                  key={i}
+                  variant="standard"
+                  value={c}
+                  onChange={(e) => {
+                    const cols = [...columns];
+                    cols[i] = e.target.value;
+                    onChange({ ...data, options: { rows, columns: cols } });
                   }}
+                   sx={{ width: 120, mx: 1 }}
                 />
-              );
-            })}
-          </Box>
-        ))}
-      </Box>
-    )}
+              ))}
+            </Box>
 
-  </Box>
-)}
+            {rows.map((r, rIdx) => (
+              <Box key={rIdx} display="flex" alignItems="center">
+                <TextField
+                  variant="standard"
+                  value={r}
+                  onChange={(e) => {
+                    const rs = [...rows];
+                    rs[rIdx] = e.target.value;
+                    onChange({ ...data, options: { rows: rs, columns } });
+                  }}
+                    sx={{ width: 120, mx: 4 }}
+                />
 
-
-      {data.type === QuestionType.DATE && (
-        <TextField
-          type="date"
-          fullWidth
-          variant="standard"
-          sx={{ mt: 2 }}
-          value={data.value || ""}
-          onChange={(e) => onChange({ ...data, value: e.target.value })}
-        />
-      )}
-
-      {data.type === QuestionType.TIME && (
-        <TextField
-          type="time"
-          fullWidth
-          variant="standard"
-          sx={{ mt: 2 }}
-          value={data.value || ""}
-          onChange={(e) => onChange({ ...data, value: e.target.value })}
-        />
+                {columns.map((_, cIdx) =>
+                  data.type === QuestionType.MULTIPLE_CHOICE_GRID ? (
+                    <Radio key={cIdx} disabled />
+                  ) : (
+                    <Checkbox key={cIdx} disabled />
+                  )
+                )}
+              </Box>
+            ))}
+          </Box>        
+        </Box>
       )}
 
       {responseMode && (
         <Box display="flex" justifyContent="flex-end" mt={2}>
-         <Button
-  variant="contained"
-  onClick={sendToBackend}
-  disabled={submitting}
->
-  {submitting ? "Submitting..." : "Submit Response"}
-</Button>
+          <Button variant="contained" onClick={sendToBackend} disabled={submitting}>
+            {submitting ? "Submitting..." : "Submit Response"}
+          </Button>
 
         </Box>
       )}

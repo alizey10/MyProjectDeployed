@@ -23,7 +23,7 @@ export const TabType = {
   RESPONSES: "responses",
 };
 
-export default function FormBuilder({ onFormCreated, existingFormId }) {
+export default function FormBuilder({ onFormCreated, existingFormId , onSave}) {
   const [questions, setQuestions] = useState([]);
   const [activeTab, setActiveTab] = useState(TabType.QUESTIONS);
   const [formTitle, setFormTitle] = useState("Untitled Form");
@@ -32,12 +32,14 @@ export default function FormBuilder({ onFormCreated, existingFormId }) {
 
   const titleRef = useRef(null);
   const descRef = useRef(null);
+const [pageLoading, setPageLoading] = useState(false);
 
   useEffect(() => {
     if (!existingFormId) return;
 
     (async () => {
       try {
+           setPageLoading(true);
         const response = await formService.getFormById(existingFormId);
         const data = response?.data?.data;
 
@@ -95,7 +97,11 @@ export default function FormBuilder({ onFormCreated, existingFormId }) {
       } catch (err) {
         toast.error(getMessage(err));
         console.error("Load form error:", err);
+        
       }
+      finally {
+      setPageLoading(false);
+    }
     })();
   }, [existingFormId]);
 
@@ -180,6 +186,7 @@ export default function FormBuilder({ onFormCreated, existingFormId }) {
       }
 
       toast.success(message || "Form saved successfully");
+        if (onSave) onSave(response?.data?.data);
 
       if (onFormCreated) onFormCreated(response?.data?.data);
     } catch (err) {
@@ -199,30 +206,51 @@ export default function FormBuilder({ onFormCreated, existingFormId }) {
     setQuestions([]);
     setFormTitle("Untitled Form");
     setFormDescription("");
-
-    if (typeof onFormCreated === "function") {
-      onFormCreated(null);
+  
+  if (typeof onFormCreated === "function") {
+    onFormCreated({ cancelled: true });
     }
   };
-
+if (pageLoading) {
   return (
-    <>
-  <Grid container spacing={2} sx={{ mb: 2, alignItems: "center" }}>
-  <Grid item xs={12} sx={{ display: "flex", justifyContent: "flex-start" }}>
-    <Typography
+    <Box
       sx={{
-        fontWeight: 500,   
-        fontSize: "18px", 
-        lineHeight: 1.5,
-          color: "black", 
+        height: "60vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
-      Add List
-    </Typography>
-  </Grid>
-</Grid>
+      <CircularProgress />
+    </Box>
+  );
+}
 
-
+ return (
+  <Box
+    sx={{
+      maxHeight: "75vh",
+      overflowY: "auto",
+      display: "flex",
+      flexDirection: "column",
+      backgroundColor: "#fff",
+    }}
+  >
+    <Box sx={{ flex: 1, padding: "16px", paddingBottom: "140px" }}>
+      <Grid container spacing={2} sx={{ mb: 2, alignItems: "center" }}>
+        <Grid item xs={12}>
+          <Typography
+            sx={{
+              fontWeight: 500,
+              fontSize: "18px",
+              lineHeight: 1.5,
+              color: "black",
+            }}
+          >
+            Add List
+          </Typography>
+        </Grid>
+      </Grid>
 
       <Typography
         variant="h5"
@@ -230,8 +258,22 @@ export default function FormBuilder({ onFormCreated, existingFormId }) {
         suppressContentEditableWarning
         ref={titleRef}
         onBlur={() => setFormTitle(titleRef.current.textContent)}
-        sx={{ fontWeight: 600, mb: 1 }}
-        mt={5}
+         sx={{
+          fontWeight: 700,
+          mb: 1,
+          minHeight: 15,
+          border: "1px solid #ccc",
+          borderRadius: 2,
+          p: 1.5,
+          outline: "none",
+          "&:empty:before": {
+            content: '"Form Description"',
+            color: "#aaa",
+          },
+          "&:focus": {
+            borderColor: "#999",
+          },
+        }}
       >
         {formTitle}
       </Typography>
@@ -278,39 +320,36 @@ export default function FormBuilder({ onFormCreated, existingFormId }) {
         </Tooltip>
       </Box>
 
-      <Box sx={{ height: 180 }} />
+    </Box>
 
-      <Box
-        sx={{
-          position: "sticky",
-          bottom: 0,
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 4,
-          mt: 5,
-          background: "#fff",
-           pt: 3
-        }}
+    <Box
+      sx={{
+        position: "sticky",
+        bottom: 0,
+        backgroundColor: "#fff",
+        borderTop: "1px solid #eee",
+        padding: "16px",
+        display: "flex",
+        justifyContent: "flex-end",
+        gap: 2,
+        zIndex: 20,
+      }}
+    >
+      <Button onClick={handleCancel}   color="secondary"
+          variant="outlined">
+        Cancel
+      </Button>
+      <Button
+        onClick={saveForm}
+        variant="contained"
+        disabled={loading || isAnyFieldEmpty()}
+        startIcon={
+          loading ? <CircularProgress size={20} color="inherit" /> : null
+        }
       >
-          <Button
-          onClick={handleCancel}
-          color="secondary"
-          variant="outlined"
-        >
-          Cancel
-        </Button>
-        <Button
-  onClick={saveForm}
-  variant="contained"
-  disabled={loading || isAnyFieldEmpty()}
-  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
-  sx={{ minWidth: 90 }} 
->
-  {existingFormId ? "Update" : "Save"}
-</Button>
-
-      
-      </Box>
-    </>
-  );
+        {existingFormId ? "Update" : "Save"}
+      </Button>
+    </Box>
+  </Box>
+);
 }

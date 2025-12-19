@@ -13,7 +13,9 @@ import formService from '@/@services/formService'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
-
+import userService from '@/@services/userService'
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from '@mui/material/TextField';
 const PAGE_SIZE = 10
 
 const ExpandableDescription = ({ text }) => {
@@ -48,6 +50,12 @@ const FormsManagerPage = () => {
 
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [selectedForm, setSelectedForm] = useState(null)
+
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false)
+  const [selectedAssignForm, setSelectedAssignForm] = useState(null)
+  const [allUsers, setAllUsers] = useState([])
+ const [selectedUserId, setSelectedUserId] = useState([]);
+
 
   const loadForms = async (currentPage = 1) => {
     setLoading(true)
@@ -106,37 +114,62 @@ const FormsManagerPage = () => {
   }
 
   const handleConfirmDelete = async () => {
-  if (!selectedForm) return
-  try {
-    const res = await formService.deleteForm(selectedForm.id)
-    const code = getStatusCode(res)
-    const message = getMessage(res) || 'Failed to delete form'
+    if (!selectedForm) return
+    try {
+      const res = await formService.deleteForm(selectedForm.id)
+      const code = getStatusCode(res)
+      const message = getMessage(res) || 'Failed to delete form'
 
-    if (code === HttpStatus.OK || code === HttpStatus.Deleted) {
-      toast.success('Form deleted successfully')
-      setConfirmDialogOpen(false)
-      setSelectedForm(null)
+      if (code === HttpStatus.OK || code === HttpStatus.Deleted) {
+        toast.success('Form deleted successfully')
+        setConfirmDialogOpen(false)
+        setSelectedForm(null)
 
-      if (forms.length === 1 && page > 1) {
-        setPage(prev => prev - 1)
+        if (forms.length === 1 && page > 1) {
+          setPage(prev => prev - 1)
+        } else {
+          loadForms(page)
+        }
       } else {
-        loadForms(page)
+        toast.error(`Error ${code}: ${message}`)
       }
-    } else {
-      toast.error(`Error ${code}: ${message}`)
+    } catch (error) {
+      const status = error?.response?.status
+      const message = getMessage(error) || 'Failed to delete form'
+      toast.error(`Server error ${status}: ${message}`)
+      console.error('Delete form error:', error)
     }
-  } catch (error) {
-    const status = error?.response?.status
-    const message = getMessage(error) || 'Failed to delete form'
-    toast.error(`Server error ${status}: ${message}`)
-    console.error('Delete form error:', error)
   }
-}
 
   const handleCancelDelete = () => {
     setConfirmDialogOpen(false)
     setSelectedForm(null)
   }
+const handleAssignClick = async (form) => {
+  setSelectedAssignForm(form);
+
+  setSelectedUserId(form.assignedUsers || []); 
+  setAssignDialogOpen(true); 
+
+  const res = await userService.getUsers(1, 1000);
+  setAllUsers(res?.data?.data || []);
+};
+
+
+
+ 
+const handleAssignSave = () => {
+  if (!selectedUserId.length) {
+    toast.error("Please select at least one user!");
+    return;
+  }
+
+  console.log("Assigned Form:", selectedAssignForm);
+  console.log("Assigned To Users:", selectedUserId.map(u => u.fullName));
+
+  toast.success("Form assigned successfully!");
+  setAssignDialogOpen(false);
+};
 
   const columns = [
     { label: 'Name', field: 'name' },
@@ -152,7 +185,7 @@ const FormsManagerPage = () => {
       )}
 
       {!loading && (
-        <>
+        <>   
           <ConfirmDialog
             open={confirmDialogOpen}
             title='Delete Form'
@@ -160,7 +193,7 @@ const FormsManagerPage = () => {
             onConfirm={handleConfirmDelete}
             onCancel={handleCancelDelete}
           />
-
+   
           <Dialog
             open={builderOpen}
             onClose={() => setBuilderOpen(false)}
@@ -170,8 +203,9 @@ const FormsManagerPage = () => {
             <DialogContent>
               <FormBuilder
                 existingFormId={editFormId}
-                onFormCreated={() => {
+                onFormCreated={(result) => {
                   setBuilderOpen(false)
+                  if (result?.cancelled) return
                   setPage(1)
                   loadForms(1)
                 }}
@@ -180,17 +214,54 @@ const FormsManagerPage = () => {
             </DialogContent>
           </Dialog>
 
-        <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
-              <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button 
+         <Dialog open={assignDialogOpen} onClose={() => setAssignDialogOpen(false)}>
+  <DialogContent>
+    <h3 style={{ marginBottom: "10px" }}>Assign List</h3>
+
+  <Autocomplete
+  multiple
+  options={allUsers}
+  getOptionLabel={(option) => option.fullName}
+  value={selectedUserId}
+  onChange={(event, newValue) => setSelectedUserId(newValue)}
+  disableClearable
+  disableCloseOnSelect
+  renderInput={(params) => (
+    <TextField
+      {...params}
+      variant="outlined"
+      label="Select Users"
+      placeholder={selectedUserId.length === 0 ? "Choose users" : ""}
+    />
+  )}
+  style={{ width: "100%" }}
+/>
+
+
+    <div style={{ marginTop: "20px", textAlign: "right" }}>
+      <Button onClick={() => setAssignDialogOpen(false)}>Cancel</Button>
+      <Button
+        variant="contained"
+        style={{ marginLeft: "10px" }}
+        onClick={handleAssignSave}
+      >
+        Assign
+      </Button>
+    </div>
+  </DialogContent>
+</Dialog>
+          <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
+            <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button 
                 variant='contained'
                 color='success'
                 onClick={handleAdd}
-                startIcon={<i className='ri-add-line' />}>
-                  Add List
-                </Button>
-              </Grid>
+                startIcon={<i className='ri-add-line' />}
+              >
+                Add List
+              </Button>
             </Grid>
+          </Grid>
 
           {forms.length === 0 ? (
             <div style={{ textAlign: 'center', marginTop: '100px' }}>
@@ -207,12 +278,13 @@ const FormsManagerPage = () => {
               showActions
               actionProps={{
                 edit: { onClick: handleEdit },
-                delete: { onClick: handleDeleteClick }
+                delete: { onClick: handleDeleteClick },
+                assign: { onClick: handleAssignClick }
               }}
             />
           )}
         </>
-      )}
+      )} 
     </>
   )
 }

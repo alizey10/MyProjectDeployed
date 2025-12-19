@@ -143,6 +143,18 @@ const DataTable = ({
                                   </Button>
                                 </span>
                               </Tooltip>
+                              <Tooltip>
+                                <span>
+                                  <Button
+                                    variant='outlined'
+                                    color='secondary'
+                                    size='small'
+                                    onClick={() => actionProps.assign.onClick(item)}
+                                  >
+                                    Assign
+                                  </Button>
+                                </span>
+                              </Tooltip>
                             </div>
                           )}
                         </div>

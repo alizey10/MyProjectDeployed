@@ -182,28 +182,7 @@ export default function DynamicForm({ form, onSubmit }) {
               </FormGroup>
             )}
 
-            {field.fieldType === 'date' && (
-              <TextField
-                type='date'
-                variant='standard'
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={responses[fieldId]?.value || ''}
-                onChange={e => handleChange(fieldId, e.target.value, 'date')}
-              />
-            )}
-
-            {field.fieldType === 'time' && (
-              <TextField
-                type='time'
-                variant='standard'
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={responses[fieldId]?.value || ''}
-                onChange={e => handleChange(fieldId, e.target.value, 'time')}
-              />
-            )}
-
+          
           
           </Box>
         )
