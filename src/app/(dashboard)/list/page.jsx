@@ -16,6 +16,7 @@ import { getStatusCode, HttpStatus, getMessage } from '@/utils/getStatusCode'
 import userService from '@/@services/userService'
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
+import ViewDynamicForm from '../form/components/view-card'
 const PAGE_SIZE = 10
 
 const ExpandableDescription = ({ text }) => {
@@ -54,8 +55,11 @@ const FormsManagerPage = () => {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
   const [selectedAssignForm, setSelectedAssignForm] = useState(null)
   const [allUsers, setAllUsers] = useState([])
- const [selectedUserId, setSelectedUserId] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState([]);
 
+  const [viewDialogOpen, setViewDialogOpen] = useState(false)
+  const [selectedViewForm, setSelectedViewForm] = useState(null)
+  const [selectedResponseId, setSelectedResponseId] = useState(null)
 
   const loadForms = async (currentPage = 1) => {
     setLoading(true)
@@ -77,9 +81,8 @@ const FormsManagerPage = () => {
       const mappedForms = data.map(f => ({
         id: f.formId,
         name: f.formTitle || 'Untitled Form',
-        description: (
-          <ExpandableDescription text={f.formDescription} />
-        )
+        description: <ExpandableDescription text={f.formDescription} />,
+        lastResponseId: f.lastResponseId || null 
       }))
 
       setForms(mappedForms)
@@ -145,36 +148,76 @@ const FormsManagerPage = () => {
     setConfirmDialogOpen(false)
     setSelectedForm(null)
   }
-const handleAssignClick = async (form) => {
-  setSelectedAssignForm(form);
+  const handleAssignClick = async (form) => {
+    setSelectedAssignForm(form);
 
-  setSelectedUserId(form.assignedUsers || []); 
-  setAssignDialogOpen(true); 
+    setSelectedUserId(form.assignedUsers || []);
+    setAssignDialogOpen(true);
 
-  const res = await userService.getUsers(1, 1000);
-  setAllUsers(res?.data?.data || []);
-};
+    const res = await userService.getUsers(1, 1000);
+    setAllUsers(res?.data?.data || []);
+  };
 
 
 
- 
-const handleAssignSave = () => {
-  if (!selectedUserId.length) {
-    toast.error("Please select at least one user!");
-    return;
-  }
 
-  console.log("Assigned Form:", selectedAssignForm);
-  console.log("Assigned To Users:", selectedUserId.map(u => u.fullName));
+  const handleAssignSave = () => {
+    if (!selectedUserId.length) {
+      toast.error("Please select at least one user!");
+      return;
+    }
 
-  toast.success("Form assigned successfully!");
-  setAssignDialogOpen(false);
-};
+    console.log("Assigned Form:", selectedAssignForm);
+    console.log("Assigned To Users:", selectedUserId.map(u => u.fullName));
+
+    toast.success("Form assigned successfully!");
+    setAssignDialogOpen(false);
+  };
 
   const columns = [
     { label: 'Name', field: 'name' },
     { label: 'Description', field: 'description' }
   ]
+
+const handleViewClick = async (form) => {
+    setViewDialogOpen(true)  
+  try {
+    const formRes = await formService.getFormById(form.id)
+    const formCode = getStatusCode(formRes)
+
+    if (formCode !== HttpStatus.OK) {
+      toast.error("Failed to load form data")
+      return
+    }
+
+    const fullForm = formRes?.data?.data
+    if (!fullForm) {
+      toast.error("Form data is empty")
+      return
+    }
+
+    const responseRes = await formService.getAllResponses(form.id, 1, 1)
+    const responses = responseRes?.data?.data || []
+
+    const latestResponseId = responses.length > 0
+      ? responses[0].responseId
+      : null
+
+    setSelectedViewForm(fullForm)
+    setSelectedResponseId(latestResponseId)
+    setViewDialogOpen(true)
+
+  } catch (err) {
+    toast.error("Error loading form")
+    console.error(err)
+  }
+}
+
+  const handleClosePopup = () => {
+    setViewDialogOpen(false)
+    setSelectedViewForm(null)
+    setSelectedResponseId(null)
+  }
 
   return (
     <>
@@ -185,7 +228,7 @@ const handleAssignSave = () => {
       )}
 
       {!loading && (
-        <>   
+        <>
           <ConfirmDialog
             open={confirmDialogOpen}
             title='Delete Form'
@@ -193,7 +236,27 @@ const handleAssignSave = () => {
             onConfirm={handleConfirmDelete}
             onCancel={handleCancelDelete}
           />
-   
+
+          <Dialog
+            open={viewDialogOpen}
+            onClose={handleClosePopup}
+            maxWidth='md'
+            fullWidth
+          >
+            <DialogContent>
+              {selectedViewForm?.fields ? (
+                <ViewDynamicForm
+                  key={`${selectedViewForm.formId}-${selectedResponseId || 'new'}`} 
+                  form={selectedViewForm}
+                  responseId={selectedResponseId} 
+                  onCancel={handleClosePopup}
+                />
+              ) : (
+                <Typography>Loading form</Typography>
+              )}
+            </DialogContent>
+          </Dialog>
+
           <Dialog
             open={builderOpen}
             onClose={() => setBuilderOpen(false)}
@@ -214,45 +277,45 @@ const handleAssignSave = () => {
             </DialogContent>
           </Dialog>
 
-         <Dialog open={assignDialogOpen} onClose={() => setAssignDialogOpen(false)}>
-  <DialogContent>
-    <h3 style={{ marginBottom: "10px" }}>Assign List</h3>
+          <Dialog open={assignDialogOpen} onClose={() => setAssignDialogOpen(false)}>
+            <DialogContent>
+              <h3 style={{ marginBottom: "10px" }}>Assign List</h3>
 
-  <Autocomplete
-  multiple
-  options={allUsers}
-  getOptionLabel={(option) => option.fullName}
-  value={selectedUserId}
-  onChange={(event, newValue) => setSelectedUserId(newValue)}
-  disableClearable
-  disableCloseOnSelect
-  renderInput={(params) => (
-    <TextField
-      {...params}
-      variant="outlined"
-      label="Select Users"
-      placeholder={selectedUserId.length === 0 ? "Choose users" : ""}
-    />
-  )}
-  style={{ width: "100%" }}
-/>
+              <Autocomplete
+                multiple
+                options={allUsers}
+                getOptionLabel={(option) => option.fullName}
+                value={selectedUserId}
+                onChange={(event, newValue) => setSelectedUserId(newValue)}
+                disableClearable
+                disableCloseOnSelect
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    variant="outlined"
+                    label="Select Users"
+                    placeholder={selectedUserId.length === 0 ? "Choose users" : ""}
+                  />
+                )}
+                style={{ width: "100%" }}
+              />
 
 
-    <div style={{ marginTop: "20px", textAlign: "right" }}>
-      <Button onClick={() => setAssignDialogOpen(false)}>Cancel</Button>
-      <Button
-        variant="contained"
-        style={{ marginLeft: "10px" }}
-        onClick={handleAssignSave}
-      >
-        Assign
-      </Button>
-    </div>
-  </DialogContent>
-</Dialog>
+              <div style={{ marginTop: "20px", textAlign: "right" }}>
+                <Button onClick={() => setAssignDialogOpen(false)}>Cancel</Button>
+                <Button
+                  variant="contained"
+                  style={{ marginLeft: "10px" }}
+                  onClick={handleAssignSave}
+                >
+                  Assign
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
           <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
             <Grid item xs sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Button 
+              <Button
                 variant='contained'
                 color='success'
                 onClick={handleAdd}
@@ -279,12 +342,13 @@ const handleAssignSave = () => {
               actionProps={{
                 edit: { onClick: handleEdit },
                 delete: { onClick: handleDeleteClick },
-                assign: { onClick: handleAssignClick }
+                assign: { onClick: handleAssignClick },
+                view: { onClick: handleViewClick }
               }}
             />
           )}
         </>
-      )} 
+      )}
     </>
   )
 }

@@ -143,19 +143,35 @@ const DataTable = ({
                                   </Button>
                                 </span>
                               </Tooltip>
-                              <Tooltip>
-                                <span>
-                                  <Button
-                                    variant='outlined'
-                                    color='secondary'
-                                    size='small'
-                                    onClick={() => actionProps.assign.onClick(item)}
-                                  >
-                                    Assign
-                                  </Button>
-                                </span>
-                              </Tooltip>
-                            </div>
+                           {sensorId == null && actionProps.assign && actionProps.view && (
+    <>
+      <Tooltip>
+        <span>
+          <Button
+            variant='outlined'
+            color='secondary'
+            size='small'
+            onClick={() => actionProps.assign.onClick(item)}
+          >
+            Assign
+          </Button>
+        </span>
+      </Tooltip>
+      <Tooltip>
+        <span>
+          <Button
+            variant='outlined'
+            color='info'
+            size='small'
+            onClick={() => actionProps.view.onClick(item)}
+          >
+            View
+          </Button>
+        </span>
+      </Tooltip>
+    </>
+  )}
+</div>
                           )}
                         </div>
                       </td>

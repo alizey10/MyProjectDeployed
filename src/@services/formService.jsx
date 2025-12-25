@@ -44,6 +44,10 @@ class FormService extends BaseService {
   getMyResponses(page = 1, pageSize = 20) {
     return this.Get('my-responses', { page, pageSize })
   }
+  updateResponse(responseId, payload) {
+  return this.Put(`responses/${responseId}`, payload)
+}
+
 }
 
 export default new FormService()
