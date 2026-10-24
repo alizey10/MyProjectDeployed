@@ -10,7 +10,7 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Box from '@mui/material/Box'
 import Tooltip from '@mui/material/Tooltip'
 import tableStyles from '@core/styles/table.module.css'
-
+import useAuth from '@/app/hooks/useAuth'
 const DataTable = ({
   columns = [],
   data = [],
@@ -22,9 +22,11 @@ const DataTable = ({
     delete: { onClick: () => {}, disabled: false },
     activate: { onClick: () => {}, disabled: false }
   },
+  
   onPageChange = () => {},
   sensorId = null,
-  showActions = true
+  showActions = true,
+    role, 
 }) => {
   return (
     <Card>
@@ -108,70 +110,94 @@ const DataTable = ({
                       <td>
                         <div className='flex gap-2 items-center justify-between'>
                           {!sensorId && (
-                            <div className='flex gap-2'>
-                              <Tooltip
-                                title={actionProps.edit.disabled ? 'You are not authorized to edit' : ''}
-                                arrow
-                                disableHoverListener={!actionProps.edit.disabled}
-                              >
-                                <span>
-                                  <Button
-                                    variant='outlined'
-                                    color='primary'
-                                    size='small'
-                                    onClick={() => actionProps.edit.onClick(item)}
-                                    disabled={actionProps.edit.disabled}
-                                  >
-                                    Edit
-                                  </Button>
-                                </span>
-                              </Tooltip>
-                              <Tooltip
-                                title={actionProps.delete.disabled ? 'You are not authorized to delete' : ''}
-                                arrow
-                                disableHoverListener={!actionProps.delete.disabled}
-                              >
-                                <span>
-                                  <Button
-                                    variant='contained'
-                                    color='error'
-                                    size='small'
-                                    onClick={() => actionProps.delete.onClick(item)}
-                                    disabled={actionProps.delete.disabled}
-                                  >
-                                    Delete
-                                  </Button>
-                                </span>
-                              </Tooltip>
-                           {sensorId == null && actionProps.assign && actionProps.view && (
-    <>
-      <Tooltip>
-        <span>
-          <Button
-            variant='outlined'
-            color='secondary'
-            size='small'
-            onClick={() => actionProps.assign.onClick(item)}
-          >
-            Assign
-          </Button>
-        </span>
-      </Tooltip>
-      <Tooltip>
-        <span>
-          <Button
-            variant='outlined'
-            color='info'
-            size='small'
-            onClick={() => actionProps.view.onClick(item)}
-          >
-            View
-          </Button>
-        </span>
-      </Tooltip>
-    </>
+                           <div className='flex gap-2'>
+  {/* Edit button */}
+  {actionProps.edit && (
+    <Tooltip
+      title={actionProps.edit.disabled ? 'You are not authorized to edit' : ''}
+      arrow
+      disableHoverListener={!actionProps.edit.disabled}
+    >
+      <span>
+        <Button
+          variant='outlined'
+          color='primary'
+          size='small'
+          onClick={() => actionProps.edit.onClick(item)}
+          disabled={actionProps.edit.disabled}
+        >
+          Edit
+        </Button>
+      </span>
+    </Tooltip>
   )}
+
+  {/* Delete button */}
+  {actionProps.delete && (
+    <Tooltip
+      title={actionProps.delete.disabled ? 'You are not authorized to delete' : ''}
+      arrow
+      disableHoverListener={!actionProps.delete.disabled}
+    >
+      <span>
+        <Button
+          variant='contained'
+          color='error'
+          size='small'
+          onClick={() => actionProps.delete.onClick(item)}
+          disabled={actionProps.delete.disabled}
+        >
+          Delete
+        </Button>
+      </span>
+    </Tooltip>
+  )}
+
+ {/* Assign button */}
+{sensorId == null && actionProps.assign && (
+  <Tooltip>
+    <span>
+      <Button
+        variant='outlined'
+        color='secondary'
+        size='small'
+        onClick={() => actionProps.assign.onClick(item)}
+      >
+        Assign
+      </Button>
+    </span>
+  </Tooltip>
+)}
+
+{/* View button */}
+{sensorId == null && actionProps.view && (
+  <Tooltip>
+    <span>
+      <Button
+        variant='outlined'
+        color='info'
+        size='small'
+        onClick={() => actionProps.view.onClick(item)}
+      >
+        View
+      </Button>
+    </span>
+  </Tooltip>
+)}
+{/* Responses button (Admin only) */}
+{role === 'Admin' && actionProps.responses && (
+  <Button
+    variant="outlined"
+    color="success"
+    size="small"
+    onClick={() => actionProps.responses.onClick(item)}
+  >
+    Responses
+  </Button>
+)}
+
 </div>
+
                           )}
                         </div>
                       </td>
@@ -197,4 +223,4 @@ const DataTable = ({
   )
 }
 
-export default DataTable
+export default DataTable  

@@ -1,9 +1,10 @@
+'use client'
 // Next Imports
 import Link from 'next/link'
 
 // MUI Imports
 import IconButton from '@mui/material/IconButton'
-
+import { useRef } from 'react'
 // Third-party Imports
 import classnames from 'classnames'
 
@@ -11,11 +12,13 @@ import classnames from 'classnames'
 import NavToggle from './NavToggle'
 import ModeDropdown from '@components/layout/shared/ModeDropdown'
 import UserDropdown from '@components/layout/shared/UserDropdown'
+import NotificationBell from '@/app/(dashboard)/notification/page'
 
 // Util Imports
 import { verticalLayoutClasses } from '@layouts/utils/layoutClasses'
 
 const NavbarContent = () => {
+    const notificationRef = useRef(null)
   return (
     <div className={classnames(verticalLayoutClasses.navbarContent, 'flex items-center justify-between gap-4 is-full')}>
       <div className='flex items-center gap-2 sm:gap-4'>
@@ -37,6 +40,7 @@ const NavbarContent = () => {
         {/* <IconButton className='text-textPrimary'>
           <i className='ri-notification-2-line' />
         </IconButton> */}
+          <NotificationBell  ref={notificationRef}/>
         <UserDropdown />
       </div>
     </div>

@@ -37,15 +37,39 @@ class FormService extends BaseService {
     return this.Delete(`responses/${responseId}`)
   }
 
-  getAllResponses(formId, page = 1, pageSize = 20) {
-    return this.Get(`${formId}/responses`, { page, pageSize })
-  }
+getAllResponses(formId, page = 1, pageSize = 20, inActive = false) {
+  return this.Get(`${formId}/responses`, {
+    Page: page,
+    PageSize: pageSize,
+    InActive: inActive
+  })
+}
+getAssignedUsersByFormId(formId) {
+  return this.Get(`${formId}/assignments`)
+}
+
 
   getMyResponses(page = 1, pageSize = 20) {
     return this.Get('my-responses', { page, pageSize })
   }
   updateResponse(responseId, payload) {
   return this.Put(`responses/${responseId}`, payload)
+}
+assignFormBulk(payload) {
+  return this.Post('assign/bulk', payload)
+}
+getMyAssignments(page = 1, pageSize = 20, inActive = false) {
+  return this.Get('my-assignments', {
+    Page: page,
+    PageSize: pageSize,
+    InActive: inActive
+  })
+}
+ getAssignmentById(assignmentId) {
+    return this.Get(`assignments/${assignmentId}`);
+  }
+updateAssignmentStatus(assignmentId, payload) {
+  return this.Patch(`assignments/${assignmentId}/status`, payload)
 }
 
 }

@@ -109,6 +109,13 @@ const VerticalMenu = ({ scrollMenu }) => {
             >
               List
             </MenuItem>
+            {/* <MenuItem
+              icon={<i className='ri-file-list-line'></i>}
+              href={`/assignment`}
+              // suffix={<Chip label='new' size='small' color='primary' variant='tonal' />} // Optional
+            >
+              Assignments
+            </MenuItem> */}
           </>
         )}
       </Menu>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import formService from '@/@services/formService'
+import { toast } from 'react-toastify'
 import {
   Box,
   Typography,
@@ -24,7 +25,7 @@ const normalize = val => {
   return result
 }
 
-export default function ViewDynamicForm({ form = {}, responseId = null, onCancel }) {
+export default function ViewDynamicForm({ form = {}, responseId = null, onCancel , onFormSubmitted}) {
   const [responses, setResponses] = useState({})
   const [loading, setLoading] = useState(false)
   const [currentResponseId, setCurrentResponseId] = useState(responseId)
@@ -157,74 +158,84 @@ export default function ViewDynamicForm({ form = {}, responseId = null, onCancel
     return { rows: [], columns: [] }
   }
   const handleSubmit = async () => {
-    if (!form?.formId) return
+  if (!form?.formId) return
 
-    const responseValues = (form?.fields || [])
-      .map(field => {
-        const value = responses[String(field.fieldId)]
+  const responseValues = (form?.fields || [])
+    .map(field => {
+      const value = responses[String(field.fieldId)]
 
-        if (
-          value === undefined ||
-          value === null ||
-          (Array.isArray(value) && value.length === 0) ||
-          (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0)
-        ) {
-          return null
-        }
-
-        switch (field.fieldType) {
-          case 'multiple_choice_grid':
-            return {
-              fieldId: field.fieldId,
-              fieldValue: Object.entries(value)
-                .map(([r, c]) => `${r}:${c}`)
-                .join(',')
-            }
-
-          case 'checkbox_grid':
-            return {
-              fieldId: field.fieldId,
-              fieldValue: Object.entries(value)
-                .map(([r, arr]) => `${r}:${arr.join(',')}`)
-                .join(';')
-            }
-
-          case 'checkbox':
-            return {
-              fieldId: field.fieldId,
-              fieldValue: value.join(',')
-            }
-
-          default:
-            return {
-              fieldId: field.fieldId,
-              fieldValue: String(value)
-            }
-        }
-      })
-      .filter(Boolean)
-
-    const payload = {
-      formId: form.formId,
-      responseValues
-    }
-
-    setLoading(true)
-
-    try {
-      const res = await formService.submitForm(payload)
-
-      if (res?.data?.success) {
-        handleClear()
-        setCurrentResponseId(null)
-        onCancel?.()
+      if (
+        value === undefined ||
+        value === null ||
+        (Array.isArray(value) && value.length === 0) ||
+        (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0)
+      ) {
+        return null
       }
-    } catch (err) {
-      console.error('Error submitting form:', err)
-    } finally {
-      setLoading(false)
-    }
+
+      switch (field.fieldType) {
+        case 'multiple_choice_grid':
+          return {
+            fieldId: field.fieldId,
+            fieldValue: Object.entries(value)
+              .map(([r, c]) => `${r}:${c}`)
+              .join(',')
+          }
+
+        case 'checkbox_grid':
+          return {
+            fieldId: field.fieldId,
+            fieldValue: Object.entries(value)
+              .map(([r, arr]) => `${r}:${arr.join(',')}`)
+              .join(';')
+          }
+
+        case 'checkbox':
+          return {
+            fieldId: field.fieldId,
+            fieldValue: value.join(',')
+          }
+
+        default:
+          return {
+            fieldId: field.fieldId,
+            fieldValue: String(value)
+          }
+      }
+    })
+    .filter(Boolean)
+
+  const payload = {
+    formId: form.formId,
+    responseValues
   }
+
+  setLoading(true)
+
+  try {
+    const res = await formService.submitForm(payload)
+
+    if (res?.data?.success) {
+    handleClear()
+    setCurrentResponseId(null)
+    toast.success('Form submitted successfully!', {
+      autoClose: 3000,
+      closeOnClick: true,
+      pauseOnHover: true
+    })
+    onFormSubmitted?.(form.assignmentId || form?.assignmentId || null) 
+    onCancel?.()
+  }else {
+      toast.error(res?.data?.message || 'Failed to submit form!')
+    }
+  } catch (err) {
+    console.error('Error submitting form:', err)
+
+    toast.error('Error submitting form!')
+  } finally {
+    setLoading(false)
+  }
+}
   if (!form?.fields || loading) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 10 }}>
